@@ -229,7 +229,7 @@
 
 ### 设计方向
 
-拆成两层：
+拆成三层：
 
 - `核心层`
   - 客户识别
@@ -238,6 +238,11 @@
   - 路由
   - 写回规则
   - schema 兼容
+
+- `配置层`
+  - 每个人自己的飞书资源映射
+  - 每个人自己的字段语义位映射
+  - 每个人自己的 task / doc / base 配置
 
 - `适配层`
   - Codex adapter
@@ -253,6 +258,8 @@
 - memory / trigger 接入方式
 
 而不是重写整个经营逻辑。
+
+同时未来给其他 AM 使用时，变的是 `配置层`，不是 `核心层`。
 
 ### 优先级
 
@@ -429,6 +436,23 @@
 - AI 探索型
 
 这会提升后续分析的专业度和一致性。
+
+### 4. 配置与安全模型
+
+如果后续要公开或给其他 AM 用，必须把：
+
+- 通用规则
+- 私有配置
+- 安全护栏
+
+明确分开。
+
+建议配套两份设计：
+
+- [CONFIG-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/CONFIG-MODEL.md)
+- [SECURITY-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/SECURITY-MODEL.md)
+
+这条支线不是“锦上添花”，而是未来通用化的前置条件。
 
 ---
 

@@ -39,6 +39,10 @@
   - 当前 skill 版本
 - [ROADMAP.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/ROADMAP.md)
   - skill 的中长期演进路线图
+- [CONFIG-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/CONFIG-MODEL.md)
+  - 通用 skill 与个人私有飞书环境之间的配置分层设计
+- [SECURITY-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/SECURITY-MODEL.md)
+  - skill 公开或给其他人使用时的安全设计
 - [.github/](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/.github)
   - GitHub issue / PR 模板
 
