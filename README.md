@@ -37,6 +37,8 @@
   - skill 的版本变更记录
 - [VERSION](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/VERSION)
   - 当前 skill 版本
+- [ROADMAP.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/ROADMAP.md)
+  - skill 的中长期演进路线图
 - [.github/](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/.github)
   - GitHub issue / PR 模板
 
