@@ -33,6 +33,12 @@ This repository version-controls the skill that analyzes customer materials, Fei
   - skill metadata for agent discovery
 - [references/](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/references)
   - supporting rules, field mappings, routing rules, and compatibility notes
+- [CHANGELOG.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/CHANGELOG.md)
+  - lightweight release history
+- [VERSION](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/VERSION)
+  - current skill version
+- [.github/](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/.github)
+  - issue and PR templates for governed iteration
 
 ## Current design stance
 
