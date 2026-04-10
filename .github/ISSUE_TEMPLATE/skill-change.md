@@ -1,37 +1,37 @@
 ---
-name: Skill change
-about: Propose a behavior, rule, mapping, or workflow change for feishu-am-workbench
-title: "[Skill] "
+name: Skill 变更
+about: 提出 feishu-am-workbench 的行为、规则、映射或工作流调整
+title: "[Skill变更] "
 labels: skill
 assignees: ""
 ---
 
-## Background
+## 背景
 
-What changed in the real workbench, workflow, or AM operating model?
+当前真实工作流、经营工作台、客户经营方式发生了什么变化？
 
-## Problem
+## 问题
 
-What is wrong or incomplete in the current skill?
+当前 skill 哪部分不对、不完整，或已经不适配？
 
-## Expected behavior
+## 期望行为
 
-What should the skill do instead?
+你希望 skill 改成什么样？
 
-## Affected scope
+## 影响范围
 
 - [ ] `SKILL.md`
-- [ ] Base field mapping
-- [ ] Routing / idempotency
-- [ ] Customer archive rules
-- [ ] Task / Todo rules
-- [ ] Schema compatibility
-- [ ] Other
+- [ ] Base 字段快照
+- [ ] 路由 / 幂等规则
+- [ ] 客户档案规则
+- [ ] 任务 / Todo 规则
+- [ ] Schema 兼容策略
+- [ ] 其他
 
-## Real examples
+## 真实例子
 
-Add concrete customer, table, field, task, or document examples when possible.
+尽量补充具体客户、表、字段、任务、文档或场景。
 
-## Risk if unchanged
+## 如果不改的风险
 
-What incorrect behavior, data drift, or operating cost happens if this is not fixed?
+如果不处理，会造成什么错误行为、数据漂移或经营成本？

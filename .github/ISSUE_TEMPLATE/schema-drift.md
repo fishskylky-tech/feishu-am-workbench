@@ -1,44 +1,44 @@
 ---
-name: Schema drift
-about: Report a Feishu Base or task-schema change that may break the skill
-title: "[Schema drift] "
+name: Schema 漂移
+about: 报告飞书 Base 或任务清单字段变化，避免 skill 误写或失效
+title: "[Schema漂移] "
 labels: schema
 assignees: ""
 ---
 
-## Drift type
+## 漂移类型
 
-- [ ] Field renamed
-- [ ] Field deleted
-- [ ] Field added
-- [ ] Select option changed
-- [ ] Table changed
-- [ ] Task custom field changed
-- [ ] Other
+- [ ] 字段改名
+- [ ] 字段删除
+- [ ] 字段新增
+- [ ] 单选 / 多选选项变化
+- [ ] 表结构变化
+- [ ] 任务清单自定义字段变化
+- [ ] 其他
 
-## Where it happened
+## 发生位置
 
-- Base / tasklist:
-- Table:
-- Field:
+- Base / tasklist：
+- 表：
+- 字段：
 
-## Old state
+## 旧状态
 
-Describe the old field or option behavior.
+描述原来的字段或选项情况。
 
-## New state
+## 新状态
 
-Describe the new field or option behavior.
+描述现在的字段或选项情况。
 
-## Current skill impact
+## 当前 skill 影响
 
-What fails, becomes ambiguous, or needs fallback?
+现在会导致什么失败、歧义、错误写入风险或降级场景？
 
-## Safe expected behavior
+## 期望的安全行为
 
-Should the skill:
+你希望 skill 怎么处理？
 
-- [ ] auto-match via alias
-- [ ] stay in recommendation mode
-- [ ] require explicit user confirmation
-- [ ] update cached mapping only
+- [ ] 自动通过 alias 安全匹配
+- [ ] 保持在建议态，不直接写入
+- [ ] 必须人工确认
+- [ ] 只更新缓存快照即可

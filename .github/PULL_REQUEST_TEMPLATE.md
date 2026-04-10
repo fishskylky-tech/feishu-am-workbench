@@ -1,29 +1,29 @@
-## What changed
+## 本次变更
 
-Describe the actual skill change.
+说明这次 skill 改了什么。
 
-## Why
+## 变更原因
 
-What real operating problem, schema drift, or workflow issue does this solve?
+解决了什么真实经营问题、schema 漂移问题，或者工作流问题？
 
-## Scope
+## 影响范围
 
-- [ ] Skill rules
-- [ ] Field mapping snapshot
-- [ ] Routing / idempotency
-- [ ] Customer archive behavior
-- [ ] Todo / task behavior
-- [ ] Schema compatibility
-- [ ] Documentation only
+- [ ] Skill 主规则
+- [ ] 字段快照
+- [ ] 路由 / 幂等规则
+- [ ] 客户档案行为
+- [ ] Todo / 任务行为
+- [ ] Schema 兼容策略
+- [ ] 仅文档说明
 
-## Validation
+## 验证情况
 
-- [ ] Checked against current live Base schema
-- [ ] Checked affected select / custom-field options
-- [ ] Checked no protected fields are being relaxed unintentionally
-- [ ] Checked archive uniqueness behavior
-- [ ] Checked date rules still require absolute dates
+- [ ] 已对照当前 live Base schema
+- [ ] 已检查相关单选 / 自定义字段选项
+- [ ] 已确认没有放松保护字段约束
+- [ ] 已确认客户档案唯一性规则未被破坏
+- [ ] 已确认日期规则仍要求绝对时间
 
-## Residual risk
+## 剩余风险
 
-List anything still uncertain.
+列出还不确定或还没完全验证的部分。

@@ -1,39 +1,39 @@
-# Changelog
+# 变更记录
 
-All notable changes to `feishu-am-workbench` should be recorded here.
+这里记录 `feishu-am-workbench` 的重要变化。
 
-This project follows a lightweight changelog style:
+使用轻量分类：
 
-- `Added` for new capabilities
-- `Changed` for behavior updates
-- `Fixed` for corrections
-- `Removed` for retired behavior
+- `新增`：新能力
+- `变更`：已有行为调整
+- `修复`：问题修正
+- `移除`：废弃能力
 
 ## [0.1.0] - 2026-04-10
 
-### Added
+### 新增
 
-- Initial GitHub-managed repository for `feishu-am-workbench`
-- Core skill workflow for Feishu AM analysis, recommendation, and confirmed write-back
-- Reference rules for:
-  - field mapping
-  - routing and idempotency
-  - fact grading
-  - contract and money interpretation
-  - customer archive rules
-  - task patterns
-  - workbench information architecture
-  - schema compatibility
+- `feishu-am-workbench` 的 GitHub 仓库初始化
+- 面向飞书 AM 经营工作台的核心 skill 工作流
+- 以下参考规则文件：
+  - 字段快照
+  - 路由与幂等规则
+  - 事实分级
+  - 金额与合同解释规则
+  - 客户档案规则
+  - Todo / 行动模式
+  - 经营工作台信息架构
+  - schema 兼容策略
 
-### Changed
+### 变更
 
-- Promoted live schema discovery and live option discovery to primary write-safety mechanisms
-- Treated cached mapping files as compatibility snapshots instead of permanent truth
+- 将 live schema discovery 和 live option discovery 提升为写回前的主机制
+- 将静态字段映射降级为兼容性快照，而不是永久真相
 
-### Fixed
+### 修复
 
-- Clarified Todo rules:
-  - explicit owner required
-  - semantic dedupe required
-  - parent/subtask structure preferred for related work
-- Clarified customer archive uniqueness and meeting-note cold-memory routing
+- 明确 Todo 规则：
+  - 必须有责任人
+  - 必须做语义去重
+  - 同一经营主线优先用父任务 + 子任务组织
+- 明确客户档案唯一性和会议纪要冷记忆规则
