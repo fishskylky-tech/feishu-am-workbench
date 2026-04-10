@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feishu AM Workbench"
+  short_description: "Analyze and update Feishu AM records."
+  default_prompt: "Use $feishu-am-workbench to analyze customer inputs, propose Feishu workbench updates, and wait for confirmation before writing."
