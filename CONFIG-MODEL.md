@@ -161,13 +161,13 @@
 
 当前仓库已经补齐：
 
-- [config/template.yaml](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/config/template.yaml)
+- [config/template.yaml](./config/template.yaml)
   - 通用配置模板，包含 live schema preflight、语义字段位、严格枚举字段和 Todo 映射
-- [config/example.yaml](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/config/example.yaml)
+- [config/example.yaml](./config/example.yaml)
   - 脱敏示例，方便直接照着填本地私有配置
-- [references/live-schema-preflight.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/references/live-schema-preflight.md)
+- [references/live-schema-preflight.md](./references/live-schema-preflight.md)
   - 写前 preflight 的运行时契约，定义输入、解析顺序、漂移分类和输出结构
-- [references/minimal-stable-core.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/references/minimal-stable-core.md)
+- [references/minimal-stable-core.md](./references/minimal-stable-core.md)
   - 标记最小稳定内核、扩展面和变更策略，用来降低后续 skill 迭代返工
 
 也就是说：

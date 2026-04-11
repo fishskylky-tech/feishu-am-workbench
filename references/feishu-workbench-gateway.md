@@ -2,7 +2,7 @@
 
 Use this file when a scenario needs to touch Feishu workbench resources.
 
-For meeting inputs, also apply [meeting-live-first-policy.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-live-first-policy.md).
+For meeting inputs, also apply [meeting-live-first-policy.md](./meeting-live-first-policy.md).
 
 This is the skill-internal gateway workflow.
 It is a reusable operating pattern for this skill's own scenarios, not a separate product or shared platform.
@@ -29,9 +29,9 @@ For meeting inputs, this gateway acts as a mandatory execution gate before forma
 
 Read:
 
-- [feishu-runtime-sources.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-runtime-sources.md)
-- [actual-field-mapping.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/actual-field-mapping.md)
-- [workbench-information-architecture.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/workbench-information-architecture.md)
+- [feishu-runtime-sources.md](./feishu-runtime-sources.md)
+- [actual-field-mapping.md](./actual-field-mapping.md)
+- [workbench-information-architecture.md](./workbench-information-architecture.md)
 
 Do not treat "no obvious env/config was found" as a completed Stage 1 result.
 Stage 1 is complete only after this repository source layer has been checked.
@@ -113,7 +113,7 @@ This stage is still planning, not mutation.
 
 Before any write suggestion becomes write-ready:
 
-- run the checks in [live-schema-preflight.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/live-schema-preflight.md)
+- run the checks in [live-schema-preflight.md](./live-schema-preflight.md)
 
 Output:
 

@@ -29,52 +29,54 @@
 
 ## 仓库结构
 
-- [SKILL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/SKILL.md)
+- [SKILL.md](./SKILL.md)
   - skill 主说明，定义工作流、写回边界和硬约束
-- [agents/openai.yaml](/Users/liaoky/.codex/skills/feishu-am-workbench/agents/openai.yaml)
+- [ARCHITECTURE.md](./ARCHITECTURE.md)
+  - 当前架构分层、gateway 位置和 runtime 边界
+- [agents/openai.yaml](./agents/openai.yaml)
   - agent 展示信息和默认 prompt
-- [references/](/Users/liaoky/.codex/skills/feishu-am-workbench/references)
+- [references/](./references)
   - 规则说明、字段快照、路由规则、兼容性策略等参考文件
-- [CHANGELOG.md](/Users/liaoky/.codex/skills/feishu-am-workbench/CHANGELOG.md)
+- [CHANGELOG.md](./CHANGELOG.md)
   - skill 的版本变更记录
-- [VERSION](/Users/liaoky/.codex/skills/feishu-am-workbench/VERSION)
+- [VERSION](./VERSION)
   - 当前 skill 版本
-- [config/](/Users/liaoky/.codex/skills/feishu-am-workbench/config)
+- [config/](./config)
   - workspace config 模板和脱敏示例，用来承接 live schema 兼容落地
-- [ROADMAP.md](/Users/liaoky/.codex/skills/feishu-am-workbench/ROADMAP.md)
+- [ROADMAP.md](./ROADMAP.md)
   - skill 的中长期演进路线图
-- [CONFIG-MODEL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/CONFIG-MODEL.md)
+- [CONFIG-MODEL.md](./CONFIG-MODEL.md)
   - 通用 skill 与个人私有飞书环境之间的配置分层设计
-- [SECURITY-MODEL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/SECURITY-MODEL.md)
+- [SECURITY-MODEL.md](./SECURITY-MODEL.md)
   - skill 公开或给其他人使用时的安全设计
-- [VALIDATION.md](/Users/liaoky/.codex/skills/feishu-am-workbench/VALIDATION.md)
+- [VALIDATION.md](./VALIDATION.md)
   - 当前版本的真实场景回归检查清单
-- [STATUS.md](/Users/liaoky/.codex/skills/feishu-am-workbench/STATUS.md)
+- [STATUS.md](./STATUS.md)
   - 当前实现进度、阻点和下一步，避免部分完成状态丢失
-- [WORKFLOW.md](/Users/liaoky/.codex/skills/feishu-am-workbench/WORKFLOW.md)
+- [WORKFLOW.md](./WORKFLOW.md)
   - 开发分支迭代和合并节奏说明
-- [runtime/](/Users/liaoky/.codex/skills/feishu-am-workbench/runtime)
+- [runtime/](./runtime)
   - skill 内部底座执行层，包含 gateway、resolver、hydrator、preflight、write guard 的本地模块
   - 当前已支持通过 `lark-cli` 产出 live capability report，并返回 resource catalog / query guide，告诉上层有哪些资源可查、优先用什么工具查
-- [references/meeting-context-recovery.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-context-recovery.md)
+- [references/meeting-context-recovery.md](./references/meeting-context-recovery.md)
   - 会议纪要场景下的上下文恢复流程
-- [references/meeting-type-classification.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-type-classification.md)
+- [references/meeting-type-classification.md](./references/meeting-type-classification.md)
   - 会议类型分类和不同类型对应的写回上限
-- [references/meeting-note-doc-standard.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-note-doc-standard.md)
+- [references/meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md)
   - 结构化会议纪要文档标准、保真边界和 AI 提示语
-- [references/meeting-output-standard.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-output-standard.md)
+- [references/meeting-output-standard.md](./references/meeting-output-standard.md)
   - 会议纪要最终输出结构、中文标题规范和动态建议态更新规则
-- [references/feishu-runtime-sources.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-runtime-sources.md)
+- [references/feishu-runtime-sources.md](./references/feishu-runtime-sources.md)
   - 当前个人环境下飞书资源线索从哪里取
-- [references/live-resource-links.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/live-resource-links.md)
+- [references/live-resource-links.md](./references/live-resource-links.md)
   - 当前个人环境的真实飞书入口 URL，供 runtime 直接解析 Base / folder / tasklist 入口
-- [references/feishu-workbench-gateway.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-workbench-gateway.md)
+- [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md)
   - skill 内部统一的飞书工作台访问底座
-- [references/base-integration-model.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/base-integration-model.md)
+- [references/base-integration-model.md](./references/base-integration-model.md)
   - 多维表格接入模型：只维护最小语义面，不做全字段镜像
-- [references/minimal-stable-core.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/minimal-stable-core.md)
+- [references/minimal-stable-core.md](./references/minimal-stable-core.md)
   - 定义哪些是后续优化时不应轻易改动的最小稳定内核
-- [.github/](/Users/liaoky/.codex/skills/feishu-am-workbench/.github)
+- [.github/](./.github)
   - GitHub issue / PR 模板
 
 ## 当前设计原则

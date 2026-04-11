@@ -2,7 +2,7 @@
 
 Use this file before interpreting a meeting note, transcript, or post-meeting summary.
 
-Also apply [meeting-live-first-policy.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-live-first-policy.md).
+Also apply [meeting-live-first-policy.md](./meeting-live-first-policy.md).
 
 The default rule is:
 

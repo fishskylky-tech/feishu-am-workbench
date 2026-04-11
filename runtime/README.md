@@ -73,11 +73,11 @@ Current design rule:
 Run one command to inspect the current local environment:
 
 ```bash
-python3 -m runtime /Users/liaoky/.codex/skills/feishu-am-workbench
+python3 -m runtime .
 ```
 
 Use JSON output when another tool or scene needs to consume the report:
 
 ```bash
-python3 -m runtime /Users/liaoky/.codex/skills/feishu-am-workbench --json
+python3 -m runtime . --json
 ```

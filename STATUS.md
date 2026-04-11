@@ -4,11 +4,11 @@
 
 它和其他文档的分工是：
 
-- [ROADMAP.md](/Users/liaoky/.codex/skills/feishu-am-workbench/ROADMAP.md)
+- [ROADMAP.md](./ROADMAP.md)
   - 记录后续要做什么
-- [CHANGELOG.md](/Users/liaoky/.codex/skills/feishu-am-workbench/CHANGELOG.md)
+- [CHANGELOG.md](./CHANGELOG.md)
   - 记录已经改了什么
-- [VALIDATION.md](/Users/liaoky/.codex/skills/feishu-am-workbench/VALIDATION.md)
+- [VALIDATION.md](./VALIDATION.md)
   - 记录应该怎么验证
 - `STATUS.md`
   - 记录“现在到底做到哪了、卡在哪、下一步是什么”
@@ -49,7 +49,7 @@
 
 已完成：
 
-- 当前个人环境真实入口已记录在 [references/live-resource-links.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/live-resource-links.md)
+- 当前个人环境真实入口已记录在 [references/live-resource-links.md](./references/live-resource-links.md)
 - runtime 已能从该文件解析：
   - Base token
   - `客户主数据` table id
@@ -105,10 +105,10 @@
 
 已完成：
 
-- [references/live-schema-preflight.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/live-schema-preflight.md) 契约已存在
+- [references/live-schema-preflight.md](./references/live-schema-preflight.md) 契约已存在
 - runtime 里已有：
-  - [runtime/schema_preflight.py](/Users/liaoky/.codex/skills/feishu-am-workbench/runtime/schema_preflight.py)
-  - [runtime/live_adapter.py](/Users/liaoky/.codex/skills/feishu-am-workbench/runtime/live_adapter.py)
+  - [runtime/schema_preflight.py](./runtime/schema_preflight.py)
+  - [runtime/live_adapter.py](./runtime/live_adapter.py)
 - 已支持：
   - live field schema 读取
   - semantic slot -> live field 映射
@@ -172,7 +172,7 @@
 运行命令：
 
 ```bash
-python3 -m runtime /Users/liaoky/.codex/skills/feishu-am-workbench
+python3 -m runtime .
 ```
 
 当前真实输出结论：

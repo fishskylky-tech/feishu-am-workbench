@@ -641,8 +641,8 @@
 
 建议配套两份设计：
 
-- [CONFIG-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/CONFIG-MODEL.md)
-- [SECURITY-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/SECURITY-MODEL.md)
+- [CONFIG-MODEL.md](./CONFIG-MODEL.md)
+- [SECURITY-MODEL.md](./SECURITY-MODEL.md)
 
 这条支线不是“锦上添花”，而是未来通用化的前置条件。
 

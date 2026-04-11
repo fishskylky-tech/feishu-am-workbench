@@ -38,7 +38,7 @@ It exists to support:
 - drift detection
 
 Reference snapshots such as
-[actual-field-mapping.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/actual-field-mapping.md)
+[actual-field-mapping.md](./actual-field-mapping.md)
 remain compatibility caches, not the source of truth.
 
 ## Layer 2: Minimal Semantic Contract
