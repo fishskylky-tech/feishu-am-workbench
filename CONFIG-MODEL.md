@@ -7,6 +7,7 @@
 - 共用的是 `skill`
 - 私有的是 `workspace config`
 - 任何真实飞书资源都不应硬编码进通用 skill 仓库
+- 稳定的是“语义边界和安全边界”，不是某一版字段名或某一套 runtime 实现
 
 ---
 
@@ -158,6 +159,17 @@
 - `config/local.<owner>.yaml`
   - 每个人自己的本地私有配置，不进仓库
 
+当前仓库已经补齐：
+
+- [config/template.yaml](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/config/template.yaml)
+  - 通用配置模板，包含 live schema preflight、语义字段位、严格枚举字段和 Todo 映射
+- [config/example.yaml](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/config/example.yaml)
+  - 脱敏示例，方便直接照着填本地私有配置
+- [references/live-schema-preflight.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/references/live-schema-preflight.md)
+  - 写前 preflight 的运行时契约，定义输入、解析顺序、漂移分类和输出结构
+- [references/minimal-stable-core.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/references/minimal-stable-core.md)
+  - 标记最小稳定内核、扩展面和变更策略，用来降低后续 skill 迭代返工
+
 也就是说：
 
 - 仓库里放模板和示例
@@ -192,6 +204,7 @@
 
 - `skill` 决定怎么思考、怎么判断、怎么路由
 - `config` 决定去哪张表、哪个字段、哪个目录、哪个任务清单
+- `preflight contract` 决定写前必须证明什么才允许真正落盘
 
 也就是：
 
@@ -205,6 +218,7 @@
 1. 先把当前仓库里的真实环境信息逐步识别出来
 2. 将“规则”和“个人环境”分离
 3. 补模板配置
-4. 再考虑给其他 AM 使用
+4. 落地 live schema preflight 契约
+5. 再考虑给其他 AM 使用
 
 如果不先做配置层，后续“给别人用”会变成复制一份你的个人 skill，而不是复用一个通用内核。

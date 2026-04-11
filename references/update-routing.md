@@ -41,6 +41,8 @@ Route each extracted item to the correct object. Avoid duplicate rows and contra
 - `客户联系记录` should store only the meeting-note document link plus the concise structured summary needed for day-to-day use.
 - Load the meeting-note doc only when deeper backtracking is needed.
 - Default meeting-note folder: `OlBCfU7IKl2oSbd09lXckKJlnTc`
+- The formal meeting-note doc should be a structured synthesized note, not the raw transcript by default.
+- The formal meeting-note doc should include a short AI-generated disclosure and a source-record section.
 
 ## Multi-brand naming rule
 
@@ -114,6 +116,9 @@ If a likely existing row is found, update it instead of creating a duplicate.
 
 Before writing, produce a change plan with:
 
+- Whether context recovery succeeded or remained `context-limited`
+- Meeting type
+- Write ceiling applied for this meeting type
 - Target object
 - Create or update
 - Unique key or matching basis
@@ -143,6 +148,31 @@ Before any Base write:
 
 Alias fallback is a compatibility tool, not a default write path.
 Prefer direct live matches whenever possible.
+
+## Meeting type write ceiling
+
+When the input is a meeting note or transcript:
+
+- `stage_review`
+  - `客户联系记录`: allowed
+  - meeting-note doc: allowed
+  - `行动计划`: recommendation mode by default
+  - `客户主数据`: no-write by default
+  - Todo: no-write unless owner and execution commitment are explicit
+- `alignment_clarification`
+  - `客户联系记录`: allowed
+  - meeting-note doc: allowed when useful
+  - `行动计划`: recommendation mode by default
+  - `客户主数据`: no-write by default
+  - Todo: no-write unless owner is explicit
+- `decision_confirmation`
+  - `客户联系记录`: allowed
+  - meeting-note doc: allowed
+  - `行动计划`: allowed
+  - Todo: allowed after owner resolution and dedupe
+  - `客户主数据`: only if the decision clearly changes account posture
+- `unknown`
+  - apply the stricter ceiling and prefer recommendation mode
 
 ## Write ordering
 

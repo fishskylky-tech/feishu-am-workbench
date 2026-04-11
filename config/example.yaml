@@ -1,0 +1,165 @@
+version: 1
+
+workspace:
+  workspace_name: "am-personal-workbench"
+  owner_name: "example-owner"
+  locale: "zh-CN"
+  timezone: "Asia/Shanghai"
+  tool_runtime: "codex"
+
+resources:
+  base:
+    app_token: "app_xxx_redacted"
+    tables:
+      customer_master:
+        table_id: "tbl_xxx_customer_master"
+        label: "客户主数据"
+      contracts:
+        table_id: "tbl_xxx_contracts"
+        label: "合同清单"
+      action_plan:
+        table_id: "tbl_xxx_action_plan"
+        label: "行动计划"
+      contact_map:
+        table_id: "tbl_xxx_contact_map"
+        label: "客户关键人地图"
+      contact_log:
+        table_id: "tbl_xxx_contact_log"
+        label: "客户联系记录"
+      competitor_encounters:
+        table_id: "tbl_xxx_competitor_encounters"
+        label: "竞品交锋记录"
+  docs:
+    customer_archive_folder_token: "fld_xxx_archive"
+    meeting_notes_folder_token: "fld_xxx_meeting_notes"
+  todo:
+    tasklist_guid: "tsk_xxx_guid"
+
+schema_resolution:
+  truth_order:
+    - "live_schema"
+    - "workspace_semantic_slots"
+    - "narrow_alias_match"
+    - "cached_mapping"
+    - "no_write_fallback"
+  preflight:
+    enabled: true
+    cache_ttl_minutes: 30
+    require_live_table_check: true
+    require_live_field_check: true
+    require_live_type_check: true
+    require_live_option_check: true
+    block_write_on_unresolved_table: true
+    block_write_on_unresolved_field: true
+    block_write_on_type_mismatch: true
+    block_write_on_missing_strict_option: true
+    report_drift_in_change_plan: true
+  alias_match:
+    normalize:
+      - "trim"
+      - "collapse_space"
+      - "strip_fullwidth_space"
+      - "strip_parenthetical_suffix"
+      - "lower_ascii_only"
+    allow_cross_semantic_slot_fallback: false
+  option_resolution:
+    strict_enum_fields:
+      - table: "customer_master"
+        semantic_field: "strategy_direction"
+      - table: "customer_master"
+        semantic_field: "renewal_risk"
+      - table: "action_plan"
+        semantic_field: "action_type"
+      - table: "action_plan"
+        semantic_field: "completion_status"
+    controlled_extension_fields:
+      - table: "contact_log"
+        semantic_field: "contact_channel"
+
+semantics:
+  customer_master:
+    key_fields:
+      customer_id:
+        canonical_name: "客户ID"
+        allowed_types: ["text"]
+        aliases: ["Customer ID"]
+        write_policy: "required_lookup"
+      customer_short_name:
+        canonical_name: "简称"
+        allowed_types: ["text"]
+        aliases: ["客户简称"]
+        write_policy: "read_only_for_match"
+      archive_link:
+        canonical_name: "客户档案"
+        allowed_types: ["url", "text"]
+        aliases: ["客户档案链接"]
+        write_policy: "safe_update"
+      last_contact_at:
+        canonical_name: "上次接触日期"
+        allowed_types: ["date", "datetime", "text"]
+        aliases: ["最近接触时间"]
+        write_policy: "safe_update"
+      next_action_summary:
+        canonical_name: "下次行动计划"
+        allowed_types: ["text"]
+        aliases: ["下一步计划"]
+        write_policy: "safe_update"
+      strategy_direction:
+        canonical_name: "26年策略方向"
+        allowed_types: ["single_select"]
+        aliases: ["策略方向"]
+        write_policy: "guarded_update"
+      renewal_risk:
+        canonical_name: "续费风险"
+        allowed_types: ["single_select"]
+        aliases: ["续约风险"]
+        write_policy: "guarded_update"
+    protected_fields:
+      - "strategy_direction"
+      - "renewal_risk"
+  action_plan:
+    key_fields:
+      customer_id:
+        canonical_name: "客户ID"
+        allowed_types: ["text", "relation"]
+        aliases: ["关联客户ID"]
+        write_policy: "required_lookup"
+      subject:
+        canonical_name: "行动主题"
+        allowed_types: ["text"]
+        aliases: ["行动事项"]
+        write_policy: "required_create"
+      owner:
+        canonical_name: "负责人"
+        allowed_types: ["user", "text"]
+        aliases: ["责任人"]
+        write_policy: "required_create"
+      due_date:
+        canonical_name: "截止日期"
+        allowed_types: ["date", "datetime", "text"]
+        aliases: ["计划截止时间"]
+        write_policy: "safe_update"
+      action_type:
+        canonical_name: "行动类型_单选"
+        allowed_types: ["single_select"]
+        aliases: ["行动类型"]
+        write_policy: "safe_update"
+      completion_status:
+        canonical_name: "完成状态_单选"
+        allowed_types: ["single_select"]
+        aliases: ["完成状态"]
+        write_policy: "safe_update"
+
+todo:
+  semantic_fields:
+    customer:
+      custom_field_id: "cf_xxx_customer"
+      value_type: "text"
+    priority:
+      custom_field_id: "cf_xxx_priority"
+      value_type: "single_select"
+      synonyms:
+        p0: "最高"
+        p1: "高"
+        p2: "中"
+        p3: "低"

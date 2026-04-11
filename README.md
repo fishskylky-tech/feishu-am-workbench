@@ -4,6 +4,8 @@
 
 这个仓库用于版本化管理 `feishu-am-workbench`，让 skill 的规则、字段映射、路由逻辑、兼容性策略和模板演进都能通过 GitHub 持续治理。
 
+当前阶段的主线不是“先做成通用产品”，而是优先把这套 skill 打磨成对你个人高频 AM 工作真正有用的能力层；配置抽离和通用化继续保留，但排在后面。
+
 ## 这个 skill 做什么
 
 - 分析多种 AM 输入：
@@ -27,23 +29,52 @@
 
 ## 仓库结构
 
-- [SKILL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/SKILL.md)
+- [SKILL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/SKILL.md)
   - skill 主说明，定义工作流、写回边界和硬约束
-- [agents/openai.yaml](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/agents/openai.yaml)
+- [agents/openai.yaml](/Users/liaoky/.codex/skills/feishu-am-workbench/agents/openai.yaml)
   - agent 展示信息和默认 prompt
-- [references/](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/references)
+- [references/](/Users/liaoky/.codex/skills/feishu-am-workbench/references)
   - 规则说明、字段快照、路由规则、兼容性策略等参考文件
-- [CHANGELOG.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/CHANGELOG.md)
+- [CHANGELOG.md](/Users/liaoky/.codex/skills/feishu-am-workbench/CHANGELOG.md)
   - skill 的版本变更记录
-- [VERSION](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/VERSION)
+- [VERSION](/Users/liaoky/.codex/skills/feishu-am-workbench/VERSION)
   - 当前 skill 版本
-- [ROADMAP.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/ROADMAP.md)
+- [config/](/Users/liaoky/.codex/skills/feishu-am-workbench/config)
+  - workspace config 模板和脱敏示例，用来承接 live schema 兼容落地
+- [ROADMAP.md](/Users/liaoky/.codex/skills/feishu-am-workbench/ROADMAP.md)
   - skill 的中长期演进路线图
-- [CONFIG-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/CONFIG-MODEL.md)
+- [CONFIG-MODEL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/CONFIG-MODEL.md)
   - 通用 skill 与个人私有飞书环境之间的配置分层设计
-- [SECURITY-MODEL.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/SECURITY-MODEL.md)
+- [SECURITY-MODEL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/SECURITY-MODEL.md)
   - skill 公开或给其他人使用时的安全设计
-- [.github/](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/.github)
+- [VALIDATION.md](/Users/liaoky/.codex/skills/feishu-am-workbench/VALIDATION.md)
+  - 当前版本的真实场景回归检查清单
+- [STATUS.md](/Users/liaoky/.codex/skills/feishu-am-workbench/STATUS.md)
+  - 当前实现进度、阻点和下一步，避免部分完成状态丢失
+- [WORKFLOW.md](/Users/liaoky/.codex/skills/feishu-am-workbench/WORKFLOW.md)
+  - 开发分支迭代和合并节奏说明
+- [runtime/](/Users/liaoky/.codex/skills/feishu-am-workbench/runtime)
+  - skill 内部底座执行层，包含 gateway、resolver、hydrator、preflight、write guard 的本地模块
+  - 当前已支持通过 `lark-cli` 产出 live capability report，并返回 resource catalog / query guide，告诉上层有哪些资源可查、优先用什么工具查
+- [references/meeting-context-recovery.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-context-recovery.md)
+  - 会议纪要场景下的上下文恢复流程
+- [references/meeting-type-classification.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-type-classification.md)
+  - 会议类型分类和不同类型对应的写回上限
+- [references/meeting-note-doc-standard.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-note-doc-standard.md)
+  - 结构化会议纪要文档标准、保真边界和 AI 提示语
+- [references/meeting-output-standard.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-output-standard.md)
+  - 会议纪要最终输出结构、中文标题规范和动态建议态更新规则
+- [references/feishu-runtime-sources.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-runtime-sources.md)
+  - 当前个人环境下飞书资源线索从哪里取
+- [references/live-resource-links.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/live-resource-links.md)
+  - 当前个人环境的真实飞书入口 URL，供 runtime 直接解析 Base / folder / tasklist 入口
+- [references/feishu-workbench-gateway.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-workbench-gateway.md)
+  - skill 内部统一的飞书工作台访问底座
+- [references/base-integration-model.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/base-integration-model.md)
+  - 多维表格接入模型：只维护最小语义面，不做全字段镜像
+- [references/minimal-stable-core.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/minimal-stable-core.md)
+  - 定义哪些是后续优化时不应轻易改动的最小稳定内核
+- [.github/](/Users/liaoky/.codex/skills/feishu-am-workbench/.github)
   - GitHub issue / PR 模板
 
 ## 当前设计原则
@@ -53,27 +84,24 @@
 它采用的是：
 
 - skill 内固化稳定的业务规则
+- config 内定义每个 workspace 的资源映射、语义字段位和枚举治理
 - reference 文件保存当前 schema 快照和字段意图
 - 真正写回前，实时读取 live schema 和 live options
+- 写回前按照 live schema preflight contract 输出可审计的 drift / block 结果
 - 字段改名时，优先 live 匹配，其次才是 alias fallback
 - 一旦无法安全匹配，就停留在建议态，不做盲写
+- 优先保持 minimal stable core 稳定，把 runtime 细节放在扩展层演进
+- 当前已补一层本地 `runtime/` 骨架，用来承接飞书工作台底座的执行层
+- 当前多维表格接入已引入 `table profile` 模型：
+  - profile 可以先纳入表级角色和约束
+  - semantic slots 只在场景真正需要时再补
 
 ## 本地安装方式
 
-如果这个仓库是后续唯一维护源，可以把它同步为 Codex 实际使用的 skill。
-
-两种方式都可以：
-
-1. 直接复制到 `~/.codex/skills/feishu-am-workbench`
-2. 从本仓库创建软链接到 `~/.codex/skills/feishu-am-workbench`
-
-推荐软链接方式，因为后续仓库变更会直接反映到本地生效版本。
-
-示例：
+当前真源目录就是：
 
 ```bash
-mv ~/.codex/skills/feishu-am-workbench ~/.codex/skills/feishu-am-workbench.bak
-ln -s "/Users/liaoky/Documents/工作/神策/feishu-am-workbench" ~/.codex/skills/feishu-am-workbench
+~/.codex/skills/feishu-am-workbench
 ```
 
 ## 迭代方式
@@ -98,4 +126,4 @@ ln -s "/Users/liaoky/Documents/工作/神策/feishu-am-workbench" ~/.codex/skill
 
 ## 当前状态
 
-这个仓库已经是 `feishu-am-workbench` 的 GitHub 管理源，且本地 Codex 使用的 skill 已经指向这份仓库。
+这个仓库已经是 `feishu-am-workbench` 的唯一真源，且本地 Codex 直接从这个目录加载。

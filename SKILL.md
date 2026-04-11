@@ -35,16 +35,19 @@ The workbench is layered:
 
 1. Identify the customer intent and candidate customer names from the input.
 2. Resolve the customer to one `客户ID` from the customer master table before planning any write.
-3. Extract all relevant entities from the input before routing anything. Do not write while still extracting.
-4. Read the minimum additional context needed from local files, Feishu workbench objects, and public sources if requested.
-5. Before any write plan, run a live schema preflight for every Base table and field you may touch.
-6. Separate facts from judgment. Use the fact grading rules in [references/fact-grading.md](./references/fact-grading.md).
-7. Produce two outputs:
+3. If the task touches Feishu workbench data, use the Feishu workbench gateway first. Use [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md).
+4. For meeting-note or transcript scenarios, recover the minimum necessary historical context before deep interpretation. Use [references/meeting-context-recovery.md](./references/meeting-context-recovery.md) and [references/meeting-live-first-policy.md](./references/meeting-live-first-policy.md).
+5. Classify the meeting type before deciding write scope. Use [references/meeting-type-classification.md](./references/meeting-type-classification.md).
+6. Extract all relevant entities from the input before routing anything. Do not write while still extracting.
+7. Read the minimum additional context needed from local files, Feishu workbench objects, and public sources if requested.
+8. Before any write plan, run a live schema preflight for every Base table and field you may touch.
+9. Separate facts from judgment. Use the fact grading rules in [references/fact-grading.md](./references/fact-grading.md).
+10. Produce two outputs:
    - Account analysis and recommendations
    - A structured change plan listing each target object, whether it is a create or update, and the key fields involved
-8. Wait for explicit confirmation before any Feishu write.
-9. After confirmation, write structured tables first, archive and meeting-note docs second, and Todo last.
-10. Report success, partial failure, schema drift, or blocked status clearly.
+11. Wait for explicit confirmation before any Feishu write.
+12. After confirmation, write structured tables first, archive and meeting-note docs second, and Todo last.
+13. Report success, partial failure, schema drift, or blocked status clearly.
 
 ## Hard Rules
 
@@ -52,6 +55,7 @@ The workbench is layered:
 - If customer matching is ambiguous, do not write. Ask for clarification or provide a no-write recommendation.
 - Treat the customer master table as protected. Only update fields allowed by [references/master-data-guardrails.md](./references/master-data-guardrails.md).
 - Use the actual Base schema, not guessed field names. Treat [references/actual-field-mapping.md](./references/actual-field-mapping.md) as a cached schema snapshot, not the sole source of truth.
+- If a workspace config exists, resolve table ids, semantic field slots, and enum policies from that config before falling back to the cached mapping.
 - Before any Base write:
   - confirm the target table still exists in the live Base
   - confirm the target field still exists
@@ -64,6 +68,14 @@ The workbench is layered:
 - Do not mix public news into meeting notes, and do not mix meeting notes into `最新资讯`.
 - Store full meeting notes as Feishu docs and keep only the document link in tables. Treat those docs as cold memory that should be loaded only when needed.
 - Unless the user says otherwise, store meeting-note cold-memory docs in the dedicated Feishu folder `OlBCfU7IKl2oSbd09lXckKJlnTc`.
+- For meeting-note handling, do not treat the transcript as self-sufficient if recoverable context exists in Feishu records or customer archive materials.
+- For meeting-note handling, default to a live-first attempt. Do not stay on single-file analysis if gateway Stage 1-3 can be executed.
+- For meeting-note handling, run the meeting live-first execution gate before formal analysis. Do not output a formal context-recovery result, meeting type, or write ceiling before the gate result is known.
+- For meeting-note handling, do not conclude that live lookup is unavailable just because no obvious env var or direct config is visible. Check the repository runtime source layer first.
+- For meeting-note handling, determine the meeting type first and let the meeting type define the default write ceiling.
+- For meeting-note handling, the scenario should call foundation primitives explicitly. Do not rely on the foundation to assemble a default meeting context bundle.
+- For meeting-note handling, do not output `completed`、`partial`、`context-limited` context recovery unless the foundation was actually executed. If the foundation was not executed, mark the run as `not-run`.
+- Do not store a raw transcript as the formal meeting-note doc by default. Use [references/meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md).
 - Do not present inferred business judgment as objective fact.
 - Do not treat historical plans, modelled incentives, or draft commercials as actual revenue unless the source clearly says they were signed and paid.
 - By default, historical contracts belong in the customer archive doc, not in `合同清单`. Use `合同清单` only for current or still-operational contracts that matter to active tracking such as validity, renewal, collections, or ongoing execution.
@@ -113,19 +125,32 @@ If one input yields items for multiple tables, show all of them in the change pl
 - Read [references/workbench-information-architecture.md](./references/workbench-information-architecture.md) whenever the task touches how the workbench should be interpreted, routed, or updated.
 - Read [references/actual-field-mapping.md](./references/actual-field-mapping.md) whenever the task touches real Base fields or table-specific write behavior.
 - Read [references/schema-compatibility.md](./references/schema-compatibility.md) whenever the task may be affected by renamed fields, added fields, deleted fields, option changes, or other schema drift.
+- Read [references/live-schema-preflight.md](./references/live-schema-preflight.md) whenever the task is preparing a Base write path, a Todo write path, or a runtime/tool contract.
+- Read [references/feishu-runtime-sources.md](./references/feishu-runtime-sources.md) whenever the task needs to know where the current live Feishu resource hints come from.
+- Read [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md) whenever the task needs to access Feishu workbench context or prepare a write plan.
+- Read [references/meeting-context-recovery.md](./references/meeting-context-recovery.md) whenever the task involves a meeting note, transcript, or post-meeting update.
+- Read [references/meeting-live-first-policy.md](./references/meeting-live-first-policy.md) whenever the task involves a meeting note, transcript, or post-meeting update.
+- Read [references/meeting-type-classification.md](./references/meeting-type-classification.md) whenever the task involves interpreting a meeting and deciding write scope.
+- Read [references/meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md) whenever the task may create a meeting-note cold-memory doc.
+- Read [references/meeting-output-standard.md](./references/meeting-output-standard.md) whenever the task is preparing the final user-facing output for a meeting note, transcript, or post-meeting update.
 
 ## Output Pattern
 
 Default to this shape:
 
-1. Analysis and judgment
-2. Proposed updates
-3. Open questions or blocked items
-4. Only after user confirmation: write results and return a change summary
+1. Meeting framing and context recovery
+2. Confirmed facts and judgment
+3. Structured summary
+4. Recommendation-mode updates
+5. Open questions or blocked items
+6. Only after user confirmation: write results and return a change summary
 
 For proposed updates, include:
 
 - Resolved customer and `客户ID`
+- Whether context recovery was completed or the run stayed in `context-limited` fallback mode
+- Meeting type and resulting write ceiling
+- Auditable context-recovery sources
 - Extracted entities
 - Target objects to update
 - Create vs update decision for each object
@@ -133,6 +158,8 @@ For proposed updates, include:
 - Normalized absolute dates and any date precision gaps
 - Any protected fields that were intentionally left unchanged
 - Any schema drift, alias fallback, or unresolved live-field mismatch
+- Use Chinese section titles and Chinese structured-summary labels by default for meeting outputs
+- Let recommendation-mode updates be driven by actual extracted entities, not by a fixed object list
 
 ## Write Order
 

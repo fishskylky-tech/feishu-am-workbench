@@ -3,3 +3,4 @@
 *.swo
 *.tmp
 *.bak
+config/local.*.yaml

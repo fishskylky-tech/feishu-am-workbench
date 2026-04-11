@@ -20,8 +20,41 @@ Output should include:
 
 Input may be a meeting note, transcript, or user summary.
 
+Apply [meeting-live-first-policy.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-live-first-policy.md) before entering this flow.
+
+Technical interface:
+
+- the meeting scenario should call foundation primitives explicitly
+- do not expect the foundation to return a pre-assembled meeting context
+- do not introduce a separate bridge layer unless the meeting scenario later becomes a shared runtime module
+- before producing any context-recovery conclusion, the scenario must actually execute customer resolution from live `客户主数据`
+- before producing any formal meeting analysis, the scenario must know the result of the meeting live-first execution gate
+
+Process:
+
+1. Recover the minimum relevant background from `客户主数据`、最近 `客户联系记录`、最近 `行动计划`、客户档案、相关历史会议纪要
+2. Resolve `客户ID`
+3. Classify the meeting type
+4. Only then perform extraction and routing
+5. Apply the meeting type's default write ceiling
+
+If the skill cannot recover enough context:
+
+6. Continue in `context-limited` mode
+7. Lower confidence on account judgment
+8. Prefer recommendation mode and avoid strong strategy-field updates
+
+If the skill did not execute foundation calls at all:
+
+6. Mark the run as `not-run`, not `context-limited`
+7. State that the foundation entry was skipped or not executed
+8. Do not describe missing live data as if it had already been queried
+
 Output should include:
 
+- Whether context recovery succeeded or stayed in fallback mode
+- Auditable context-recovery sources and missing-but-expected materials
+- Meeting type
 - Structured extraction bundle
 - Analysis and account judgment
 - Proposed changes across all affected objects
@@ -36,6 +69,7 @@ Output should include:
   - `客户顾虑/风险`
   - `会议纪要文档`
 - Whether a meeting-note cold-memory doc should be created
+- If a cold-memory doc is created, it should be a structured note rather than the raw transcript
 - Todo decision for each action item:
   - create task
   - create subtask
@@ -44,6 +78,19 @@ Output should include:
 - Absolute dates only, with any missing precision explicitly called out
 - Open questions
 - Wait for confirmation before writing
+
+Write candidate interface:
+
+- if the scenario proposes a Base update, it should produce an explicit target table and field payload before calling live preflight
+- if the scenario proposes a Todo create or update, it should produce an explicit Todo candidate with owner, summary, and any custom fields before calling the Todo writer
+- the scenario layer, not the foundation, is responsible for deciding which objects to touch
+
+For the final user-facing structure:
+
+- keep headings in Chinese
+- separate `会议已确认事实` from `基于事实的经营判断`
+- separate `建议的推进方向` from confirmed schedule
+- make `建议态更新` dynamic based on the actual extracted entities in this case
 
 ## Archive refresh
 
