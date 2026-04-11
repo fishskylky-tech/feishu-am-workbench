@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 
-REPO_ROOT = Path("/Users/liaoky/.codex/skills/feishu-am-workbench")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 EVALS_PATH = REPO_ROOT / "evals" / "evals.json"
 VALIDATION_PATH = REPO_ROOT / "VALIDATION.md"
 CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
@@ -39,6 +39,7 @@ class ValidationAssetTests(unittest.TestCase):
         self.assertIn("20260410-联合利华 Campaign活动分析优化-阶段汇报.txt", files)
         self.assertIn("20260409 神策AI 产品和永和大王会议记录.txt", files)
         self.assertIn("2026-3-18 达美乐神策会议纪要.txt", files)
+        self.assertTrue(all(not Path(path).is_absolute() for item in evals for path in item.get("files", [])))
 
     def test_validation_doc_defines_baseline_green_and_regression_protocol(self) -> None:
         text = VALIDATION_PATH.read_text()

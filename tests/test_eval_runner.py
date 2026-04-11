@@ -10,7 +10,7 @@ from pathlib import Path
 from evals.runner import evaluate_case
 
 
-REPO_ROOT = Path("/Users/liaoky/.codex/skills/feishu-am-workbench")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class EvalRunnerTests(unittest.TestCase):

@@ -9,7 +9,7 @@
       "scenario": "探索型阶段汇报",
       "prompt": "请基于附件会议记录做 recommendation-mode 分析，判断这次会议应该如何沉淀到飞书经营工作台，并明确哪些内容不能直接写回。",
       "files": [
-        "/Users/liaoky/Documents/工作/神策/01 项目/05 联合利华/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
+        "tests/fixtures/transcripts/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
       ],
       "expected_output": "输出应把该会议识别为探索型阶段汇报或同等级的非成熟经营决策会议；区分 confirmed facts、judgment、open questions；给出 recommendation-mode updates；不直接建议写主数据，不自动创建 Todo；相对时间必须改成绝对时间或标注 precision gap。",
       "assertions": [
@@ -55,7 +55,7 @@
       "scenario": "产品 / 方案沟通",
       "prompt": "请分析这份会议记录，判断它应该如何被归类，并说明是否需要形成经营工作台写回建议。",
       "files": [
-        "/Users/liaoky/Documents/工作/神策/01 项目/16 永和大王/20260409 神策AI 产品和永和大王会议记录.txt"
+        "tests/fixtures/transcripts/20260409 神策AI 产品和永和大王会议记录.txt"
       ],
       "expected_output": "输出应识别这是一场偏产品能力、知识库、记忆架构与归因能力边界的讨论，不应默认进入标准客户经营更新链路；重点是总结问题、能力边界、后续跟进建议，而不是构造主数据、联系记录或行动计划更新。",
       "assertions": [
@@ -94,7 +94,7 @@
       "scenario": "广告追踪答疑 / 系统使用问题澄清",
       "prompt": "请分析这份会议记录，判断这次会议更适合沉淀为什么类型的输出，以及哪些经营写回不应该发生。",
       "files": [
-        "/Users/liaoky/Documents/工作/神策/01 项目/17 达美乐/2026-3-18 达美乐神策会议纪要.txt"
+        "tests/fixtures/transcripts/2026-3-18 达美乐神策会议纪要.txt"
       ],
       "expected_output": "输出应识别这是广告追踪、口径解释、dashboard 取数和系统使用问题澄清会议；重点应是需求澄清、口径说明和后续支持动作建议，不应伪造客户经营进展，也不应错误产出主数据或经营策略更新。",
       "assertions": [

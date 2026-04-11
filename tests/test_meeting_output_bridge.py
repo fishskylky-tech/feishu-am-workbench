@@ -9,7 +9,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-REPO_ROOT = Path("/Users/liaoky/.codex/skills/feishu-am-workbench")
+REPO_ROOT = Path(__file__).resolve().parents[1]
+TRANSCRIPTS_DIR = REPO_ROOT / "tests" / "fixtures" / "transcripts"
+UNILEVER_TRANSCRIPT = TRANSCRIPTS_DIR / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
+YONGHE_TRANSCRIPT = TRANSCRIPTS_DIR / "20260409 神策AI 产品和永和大王会议记录.txt"
+DOMINOS_TRANSCRIPT = TRANSCRIPTS_DIR / "2026-3-18 达美乐神策会议纪要.txt"
 sys.path.insert(0, str(REPO_ROOT))
 
 from evals.runner import evaluate_case  # noqa: E402
@@ -133,9 +137,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         gateway = FakeGateway()
         output_text, gateway_result = run_gateway_and_build_meeting_output(
             eval_name="unilever-stage-review",
-            transcript_path=Path(
-                "/Users/liaoky/Documents/工作/神策/01 项目/05 联合利华/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
-            ),
+            transcript_path=UNILEVER_TRANSCRIPT,
             customer_query="联合利华",
             gateway=gateway,
             query_backend=EmptyQueryBackend(),
@@ -170,9 +172,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
         output_text, gateway_result = run_gateway_and_build_meeting_output(
             eval_name="yonghe-product-solution-discussion",
-            transcript_path=Path(
-                "/Users/liaoky/Documents/工作/神策/01 项目/16 永和大王/20260409 神策AI 产品和永和大王会议记录.txt"
-            ),
+            transcript_path=YONGHE_TRANSCRIPT,
             customer_query="永和大王",
             gateway=FakeGateway(),
             query_backend=EmptyQueryBackend(),
@@ -211,9 +211,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         output_text = build_meeting_output(
             eval_name="unilever-stage-review",
-            transcript_path=Path(
-                "/Users/liaoky/Documents/工作/神策/01 项目/05 联合利华/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
-            ),
+            transcript_path=UNILEVER_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="completed",
             used_sources=["客户主数据", "客户联系记录", "行动计划", "客户档案"],
@@ -233,9 +231,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         output_text = build_meeting_output(
             eval_name="yonghe-product-solution-discussion",
-            transcript_path=Path(
-                "/Users/liaoky/Documents/工作/神策/01 项目/16 永和大王/20260409 神策AI 产品和永和大王会议记录.txt"
-            ),
+            transcript_path=YONGHE_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="not-run",
             fallback_reason="customer cannot be resolved with enough confidence from current live customer master",
@@ -258,9 +254,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         output_text = build_meeting_output(
             eval_name="dominos-ad-tracking-qa",
-            transcript_path=Path(
-                "/Users/liaoky/Documents/工作/神策/01 项目/17 达美乐/2026-3-18 达美乐神策会议纪要.txt"
-            ),
+            transcript_path=DOMINOS_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="not-run",
             fallback_reason="permission scope insufficient for current live lookup",
@@ -277,7 +271,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 "--eval-name",
                 "yonghe-product-solution-discussion",
                 "--transcript-file",
-                "/Users/liaoky/Documents/工作/神策/01 项目/16 永和大王/20260409 神策AI 产品和永和大王会议记录.txt",
+                str(YONGHE_TRANSCRIPT),
                 "--resource-status",
                 "partial",
                 "--customer-status",
@@ -324,7 +318,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                         "--eval-name",
                         "unilever-stage-review",
                         "--transcript-file",
-                        "/Users/liaoky/Documents/工作/神策/01 项目/05 联合利华/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt",
+                        str(UNILEVER_TRANSCRIPT),
                         "--customer-query",
                         "联合利华",
                         "--repo-root",
