@@ -153,7 +153,7 @@ flowchart TD
 
 当前仓库中，这一层已经开始落地到：
 
-- [runtime/](/Users/liaoky/.codex/skills/feishu-am-workbench/runtime)
+- [runtime/](./runtime)
 
 但当前只完成了本地执行骨架和统一数据模型，live Feishu adapter 仍然是下一步。
 
@@ -189,8 +189,8 @@ flowchart LR
 
 具体执行应遵守：
 
-- [feishu-runtime-sources.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-runtime-sources.md)
-- [feishu-workbench-gateway.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/feishu-workbench-gateway.md)
+- [feishu-runtime-sources.md](./references/feishu-runtime-sources.md)
+- [feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md)
 
 ### 4.2 Context Hydrator
 
@@ -202,7 +202,7 @@ flowchart LR
 - 会后更新
 - 会前准备
 
-最小上下文恢复顺序应与 [meeting-context-recovery.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-context-recovery.md) 保持一致：
+最小上下文恢复顺序应与 [meeting-context-recovery.md](./references/meeting-context-recovery.md) 保持一致：
 
 1. `客户主数据`
 2. 最近 `客户联系记录`
@@ -222,7 +222,7 @@ flowchart LR
 - `select` / `multi_select` 选项是否还可写
 - 是否存在 drift
 
-这层应遵守 [live-schema-preflight.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/live-schema-preflight.md)。
+这层应遵守 [live-schema-preflight.md](./references/live-schema-preflight.md)。
 
 ### 4.4 Write Guard
 

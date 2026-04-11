@@ -24,15 +24,15 @@
 本轮固定使用 3 个真实案例：
 
 1. 联合利华
-   - 文件：`/Users/liaoky/Documents/工作/神策/01 项目/05 联合利华/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt`
+   - 文件：`tests/fixtures/transcripts/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt`
    - 类型：探索型阶段汇报
    - 风险：把探索性内容误写成成熟经营结论、误建 Todo、相对时间不归一
 2. 永和大王
-   - 文件：`/Users/liaoky/Documents/工作/神策/01 项目/16 永和大王/20260409 神策AI 产品和永和大王会议记录.txt`
+   - 文件：`tests/fixtures/transcripts/20260409 神策AI 产品和永和大王会议记录.txt`
    - 类型：产品 / 方案沟通
    - 风险：误识别为标准会后更新，错误生成客户经营写回计划
 3. 达美乐
-   - 文件：`/Users/liaoky/Documents/工作/神策/01 项目/17 达美乐/2026-3-18 达美乐神策会议纪要.txt`
+   - 文件：`tests/fixtures/transcripts/2026-3-18 达美乐神策会议纪要.txt`
    - 类型：广告追踪答疑 / 系统使用问题澄清
    - 风险：把“问题澄清会议”误判成经营推进会议，错误抽取行动计划或主数据更新
 
@@ -137,9 +137,9 @@
 
 ## 当前验证报告
 
-- [2026-04-10-unilever-campaign-phase-report.md](/Users/liaoky/.codex/skills/feishu-am-workbench/validation-reports/2026-04-10-unilever-campaign-phase-report.md)
+- [2026-04-10-unilever-campaign-phase-report.md](./validation-reports/2026-04-10-unilever-campaign-phase-report.md)
   - 单案例探索型阶段汇报验证
-- [2026-04-11-multi-case-skill-validation.md](/Users/liaoky/.codex/skills/feishu-am-workbench/validation-reports/2026-04-11-multi-case-skill-validation.md)
+- [2026-04-11-multi-case-skill-validation.md](./validation-reports/2026-04-11-multi-case-skill-validation.md)
   - 本轮 3 案例 baseline / current-branch / regression 统一结论
 
 ## 验证完成标准

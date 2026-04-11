@@ -20,7 +20,7 @@ Output should include:
 
 Input may be a meeting note, transcript, or user summary.
 
-Apply [meeting-live-first-policy.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/meeting-live-first-policy.md) before entering this flow.
+Apply [meeting-live-first-policy.md](./meeting-live-first-policy.md) before entering this flow.
 
 Technical interface:
 

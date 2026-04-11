@@ -49,7 +49,7 @@ Before declaring runtime sources unavailable, the skill must first read:
 
 Current source:
 
-- [actual-field-mapping.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/actual-field-mapping.md)
+- [actual-field-mapping.md](./actual-field-mapping.md)
 
 Use this file to understand:
 
@@ -67,7 +67,7 @@ Treat it as:
 
 Current source:
 
-- [workbench-information-architecture.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/workbench-information-architecture.md)
+- [workbench-information-architecture.md](./workbench-information-architecture.md)
 
 Current known folder:
 
@@ -77,9 +77,9 @@ Current known folder:
 
 Current sources:
 
-- [SKILL.md](/Users/liaoky/.codex/skills/feishu-am-workbench/SKILL.md)
-- [update-routing.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/update-routing.md)
-- [workbench-information-architecture.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/workbench-information-architecture.md)
+- [SKILL.md](../SKILL.md)
+- [update-routing.md](./update-routing.md)
+- [workbench-information-architecture.md](./workbench-information-architecture.md)
 
 Current known folder:
 
@@ -89,7 +89,7 @@ Current known folder:
 
 Current source:
 
-- [actual-field-mapping.md](/Users/liaoky/.codex/skills/feishu-am-workbench/references/actual-field-mapping.md)
+- [actual-field-mapping.md](./actual-field-mapping.md)
 
 Current known resources:
 

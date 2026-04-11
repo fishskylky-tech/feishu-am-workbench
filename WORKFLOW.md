@@ -47,7 +47,7 @@
 
 ## 当前第一阶段做什么
 
-当前先按 [VALIDATION.md](/Users/liaoky/Documents/工作/神策/feishu-am-workbench/VALIDATION.md) 跑真实场景验证。
+当前先按 [VALIDATION.md](./VALIDATION.md) 跑真实场景验证。
 
 优先顺序：
 

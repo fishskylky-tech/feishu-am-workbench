@@ -5,7 +5,7 @@
 - Date: `2026-04-10`
 - Scenario: post-meeting update
 - Customer mention: `联合利华`
-- Source file: `/Users/liaoky/Documents/工作/神策/01 项目/05 联合利华/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt`
+- Source file: `tests/fixtures/transcripts/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt`
 - Validation goal: check whether the current skill can safely handle a mixed transcript containing scope clarification, delivery discussion, open questions, and tentative optimization directions
 
 ## Result
