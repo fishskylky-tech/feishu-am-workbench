@@ -11,17 +11,136 @@
 
 ## [Unreleased]
 
+## [0.2.11] - 2026-04-11
+
+### 新增
+
+- `evals/runner.py`
+  - 新增最小可执行 eval runner，用结构化断言复核真实会议输出
+- `evals/meeting_output_bridge.py`
+  - 新增 meeting output bridge，支持 gateway 结果承接、最小 Stage 3 context recovery 和 CLI 生成待检输出
+- `tests/test_eval_runner.py`、`tests/test_meeting_output_bridge.py`、`tests/test_validation_assets.py`
+  - 补齐 runner、bridge 和验证资产的回归测试
+- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+  - 统一沉淀 3 个真实案例的 baseline / green / regression 结论
+
+### 变更
+
+- `VALIDATION.md`
+  - 从单案例回归清单升级为多案例验证协议，并将 live-first 设为会议类案例的强制前置条件
+- `evals/evals.json`
+  - 收口为 3 个真实案例的结构化 eval 资产，并与 runner 断言协议对齐
+- `SKILL.md`
+  - 压缩高频加载区重复表达，保留 live-first、no-write、absolute-date、owner-required 等核心规则
+- `ROADMAP.md`
+  - 明确将 archive doc 正文读取、历史 meeting-note docs 定向读取和 ontology 设计后置到 roadmap
+- `STATUS.md`
+  - 更新为 meeting 场景最小 `live-first` 闭环已验证完成，并明确当前 `completed` 仅代表最小 live context recovered
+
+### 修复
+
+- 统一 `VERSION`、`CHANGELOG.md`、`evals/evals.json` 与验证报告的版本口径
+- 清理分支收尾阶段的状态漂移，移除“meeting 场景尚未正式验证”的过时描述
+
+## [0.2.10] - 2026-04-11
+
+### 新增
+
+- `evals/meeting_output_bridge.py`
+  - 新增 Stage 3 最小 context recovery：基于已解析 `客户ID` 读取 `客户联系记录`、`行动计划` 和客户档案链接
+  - 当最小读取集齐全时，bridge 现在可输出 `上下文恢复状态: completed`
+  - 输出中新增 `关键补充背景` 和 `未找到但应存在的资料`
+
+### 变更
+
+- `tests/test_meeting_output_bridge.py`
+  - 增加 Stage 3 context recovery 回归测试
+  - 校验最小 Base 上下文恢复可将 meeting 场景从 `partial` 推进到 `completed`
+- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+  - 更新为真实 live-first Stage 1/2/3 最小闭环已验证通过
+- `VALIDATION.md`
+  - 执行层说明更新为：bridge 已可读取最小 live context，而不只是承接 gateway 结果
+
+## [0.2.9] - 2026-04-11
+
+### 新增
+
+- `evals/meeting_output_bridge.py`
+  - 新增 `run_gateway_and_build_meeting_output(...)`，可先执行 gateway，再把真实 `GatewayResult` 接进 bridge 输出
+  - `--run-gateway` CLI 模式已可直接使用，不再要求手工传 `resource-status`、`customer-status`、`context-status`
+
+### 变更
+
+- `tests/test_meeting_output_bridge.py`
+  - 增加 gateway 集成回归测试
+  - 覆盖 resolved customer -> `partial`、missing customer -> `context-limited`、以及 `--run-gateway` CLI 路径
+- `VALIDATION.md`
+  - 执行层说明从“静态 bridge”升级为“可调用 gateway 的 bridge”
+- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+  - 补充当前 bridge 已能接收真实 gateway 结果，但 live gateway 全链路仍待实测
+
+## [0.2.8] - 2026-04-11
+
+### 新增
+
+- `evals/meeting_output_bridge.py`
+  - 新增最小 meeting output bridge，负责把 transcript、gateway 结果和 fallback / used-source 证据拼成 runner 可检查的结构化输出
+  - 提供轻量 CLI，便于用真实会议文件快速生成待检输出文本
+- `tests/test_meeting_output_bridge.py`
+  - 为 3 个真实案例增加 bridge 回归测试
+  - 覆盖 resolved live-first、显式 fallback、以及 CLI 输出可被 runner 接受的路径
+
+### 变更
+
+- `VALIDATION.md`
+  - 执行层新增 meeting output bridge，明确“真实会议输出接 runner”的最小实现路径
+- `tests/test_validation_assets.py`
+  - 版本更新到 `0.2.8`
+  - 增加对 meeting output bridge 存在性的验证
+- `SKILL.md`
+  - 继续压缩高频加载区的重复表达，保持 live-first / no-write / absolute-date / owner-required 规则醒目
+
+## [0.2.7] - 2026-04-11
+
+### 新增
+
+- `evals/runner.py`
+  - 新增最小 eval runner，可读取案例、接收 agent 输出文本，并逐条执行断言
+  - 当前支持 `contains_all`、`contains_any`、`not_contains_any`、`live_first_gate` 四类断言
+- `tests/test_eval_runner.py`
+  - 为最小 runner 增加回归测试
+  - 覆盖联合利华 live-first 正例、缺少 live-first 证据的失败样例、显式 fallback 的通过样例
+
+### 变更
+
+- `evals/evals.json`
+  - 版本更新到 `0.2.7`
+  - 为 3 个真实案例补充 machine-readable 断言
+  - 新增 live-first gate 断言，要求输出显式记录 gateway 尝试、客户解析、上下文状态和飞书资料 / fallback 原因
+  - 移除本轮范围之外的 `scene type` 断言，避免把已搁置的 P2 又做回来
+- `VALIDATION.md`
+  - 增加 live-first 强制前置验证协议
+  - 明确当前验证资产由文档层、数据层和最小 runner 三层组成
+- `SKILL.md`
+  - 做一轮高频加载成本压缩，减少重复说明，不改变核心规则语义
+- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+  - 更新为 P1 / P3 方向的统一结论
+  - 区分“runner 已落地”和“真实 live-first 全链路仍待业务场景实测”
+
 ## [0.2.6] - 2026-04-11
 
 ### 新增
 
 - `evals/evals.json`
-  - 首版自动化测试集，覆盖会前准备、会后更新、档案刷新三个高频场景
-  - 每个场景包含预期输出说明和 4-6 条可验证断言
-  - 对应 skill-creator 规范中要求的 eval 体系，可供后续 benchmark 迭代使用
+  - 收口为 3 个真实案例的结构化 eval 资产：联合利华、永和大王、达美乐
+  - 每个案例包含真实文件路径、预期行为说明和可复核断言
+  - 当前版本用于可重复执行的人工复核协议，不再把它表述为已落地的自动化 runner
 - `references/INDEX.md`
   - 21 个 reference 文件的一句话说明 + "何时加载"快速索引
   - 解决 reference 文件多但无导航入口的问题
+- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+  - 统一记录 3 个真实案例的 baseline / current-branch / regression 结论
+  - 给出按 P1 / P2 / P3 排序的修改建议
 
 ### 变更
 
@@ -37,6 +156,9 @@
   - 5 条关键规则补充了 "why" 解释，减少机械执行风险，提升意图理解
   - 涉及：客户解析、绝对日期、会议纪要冷记忆标准、客户档案叙事性、Todo 责任人
 - `SKILL.md` — 参考文件区新增 INDEX.md 引用入口
+- `VALIDATION.md`
+  - 从第一轮单案例检查清单升级为多案例验证协议
+  - 明确 `RED / baseline`、`GREEN / current-branch`、`REFACTOR / regression` 的执行方式
 
 ## [0.2.5] - 2026-04-11
 
