@@ -1,0 +1,117 @@
+{
+  "skill_name": "feishu-am-workbench",
+  "version": "0.2.5",
+  "description": "真实场景回归测试集，覆盖会前准备、会后更新、档案刷新三类高频场景",
+  "evals": [
+    {
+      "id": 1,
+      "name": "meeting-prep-basic",
+      "scenario": "会前准备",
+      "prompt": "明天上午我要去拜访联合利华，他们是我的大客户，帮我准备一下会议。我想了解一下他们最近的状态、有哪些关键联系人、当前有哪些在跑的行动计划，以及我有什么需要重点确认的问题。",
+      "expected_output": "输出应包含：(1) 从飞书工作台读取该客户的主数据和近期联系记录；(2) 列出已识别的关键联系人及其角色；(3) 梳理当前行动计划状态；(4) 提出针对该客户当前经营阶段的会议目标和问题清单；(5) 区分事实和判断；(6) 不应在会前准备阶段执行任何写回。",
+      "files": [],
+      "assertions": [
+        {
+          "id": "a1-customer-resolved",
+          "description": "输出中包含明确的 客户ID 解析结果，不依赖模糊匹配",
+          "check": "output contains resolved customer_id for 联合利华"
+        },
+        {
+          "id": "a2-no-write-in-prep",
+          "description": "会前准备阶段不产生任何 Feishu 写回操作",
+          "check": "output does not contain any write confirmation or write result section"
+        },
+        {
+          "id": "a3-facts-vs-judgment",
+          "description": "输出明确区分确认事实和经营判断",
+          "check": "output separates 确认事实/已知事实 from 经营判断/推断"
+        },
+        {
+          "id": "a4-action-items-present",
+          "description": "输出包含当前行动计划或 Todo 的状态概览",
+          "check": "output includes current action plan status or open todos"
+        },
+        {
+          "id": "a5-questions-proposed",
+          "description": "输出包含至少 3 个具体的、可执行的会议问题",
+          "check": "output includes at least 3 specific meeting questions or agenda items"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "post-meeting-update",
+      "scenario": "会后更新",
+      "prompt": "刚刚结束了和联合利华 Lisa（她是他们的采购总监）的会议，以下是会议纪要：\n\n---\n会议时间：2026-04-11\n参会人：Fisher（我方）、Lisa Chen（采购总监）、王磊（项目经理）\n\n主要内容：\n1. Lisa 确认 Q2 预算已获批，金额约 300 万，主要用于数字化营销工具采购\n2. 他们在看另外一家竞品（提到了名字叫 GrowthPro），主要因为价格低\n3. 王磊提到内部还有一个反对声音，来自 IT 部门，担心集成复杂度\n4. Lisa 希望我们下次会议提供一份集成方案的 demo，最好两周内\n5. 续费合同到期日是 6 月底，当前续费意愿模糊\n---\n\n帮我提炼会议信号、更新飞书工作台的相关记录，包括联系记录、行动计划、主数据。",
+      "expected_output": "输出应包含：(1) 先尝试从飞书拉取该客户历史上下文，不能直接单文件分析；(2) 识别会议类型（客户拜访）并确定写回上限；(3) 全量信息抽取（联系人变化、竞品、预算、风险、机会、行动项、时间节点）；(4) 事实与判断分离；(5) 结构化的变更计划，列明目标表、操作类型和关键字段；(6) 所有日期使用绝对时间；(7) 等待用户确认后才执行写回。",
+      "files": [],
+      "assertions": [
+        {
+          "id": "b1-live-first-attempted",
+          "description": "在分析前先尝试通过 gateway 读取客户历史上下文，不直接单文件分析",
+          "check": "output shows an attempt to fetch customer context from Feishu before deep analysis"
+        },
+        {
+          "id": "b2-entities-extracted",
+          "description": "抽取出所有关键实体：联系人、竞品、预算金额、风险信号、行动项、截止日期",
+          "check": "output includes contacts (Lisa Chen + 王磊), competitor (GrowthPro), budget (300万), renewal risk, and next action with deadline"
+        },
+        {
+          "id": "b3-absolute-dates",
+          "description": "所有日期使用绝对时间（YYYY-MM-DD 或 YYYY年M月）",
+          "check": "output contains no relative date expressions like 近期/两周内/下次/最近 in the change plan"
+        },
+        {
+          "id": "b4-change-plan-structured",
+          "description": "变更计划明确列出每个目标对象（表/文档/Todo）、操作类型（新建/更新）和关键字段",
+          "check": "output includes a structured change plan with target table, create/update decision, and key fields"
+        },
+        {
+          "id": "b5-confirmation-required",
+          "description": "写回操作等待用户明确确认，不自动执行",
+          "check": "output requests user confirmation before any write operation"
+        },
+        {
+          "id": "b6-competitor-recorded",
+          "description": "竞品信息被路由到 竞品交锋记录，而不是混入主数据或联系记录",
+          "check": "competitor GrowthPro is routed to 竞品交锋记录 table, not mixed into 客户主数据"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "archive-refresh",
+      "scenario": "客户档案刷新",
+      "prompt": "我想刷新一下联合利华的客户档案。他们是我的 TOP 客户之一，合作了大概 3 年，去年有一次比较大的风险，差点流失，后来通过一个关键演示挽回了。最近 Q1 的续费已经签了，金额比上年增长了 10%。但我感觉档案里的内容有点旧了，帮我根据飞书工作台里的最新记录和以上背景信息，给我一版更新建议。",
+      "expected_output": "输出应包含：(1) 读取飞书客户档案和主数据现状；(2) 识别档案中需要更新的章节（历史弧线、当前状态、经营判断基础）；(3) 提炼新背景和已有记录的增量内容；(4) 保持档案的叙事性，不做流水账式附加；(5) 明确哪些是事实、哪些是用户的判断性补充；(6) 确认档案唯一性（不创建第二份档案）；(7) 等待确认后写回。",
+      "files": [],
+      "assertions": [
+        {
+          "id": "c1-archive-uniqueness-checked",
+          "description": "在创建或更新档案前，先确认该客户已有的唯一正式档案，不创建第二份",
+          "check": "output checks for existing customer archive before proposing create or update"
+        },
+        {
+          "id": "c2-narrative-not-dump",
+          "description": "档案更新建议是叙事性的，不是字段列表或流水账",
+          "check": "proposed archive content reads as narrative explanation, not a list of raw facts or table dump"
+        },
+        {
+          "id": "c3-strategy-fields-guarded",
+          "description": "主数据中的策略字段（如续费风险、策略方向）有明确的更新理由，不因一次会议就轻易改动",
+          "check": "if strategy_direction or renewal_risk is proposed to change, output includes explicit rationale and marks as guarded update"
+        },
+        {
+          "id": "c4-facts-vs-user-input",
+          "description": "区分来自飞书记录的客观事实和用户口述的背景补充",
+          "check": "output distinguishes between facts from Feishu records and user-provided context"
+        },
+        {
+          "id": "c5-write-order-correct",
+          "description": "写回顺序正确：Base 表先于档案文档",
+          "check": "write plan lists 客户主数据 and detail tables before 客户档案 document update"
+        }
+      ]
+    }
+  ]
+}

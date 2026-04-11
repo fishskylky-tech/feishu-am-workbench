@@ -11,6 +11,33 @@
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-04-11
+
+### 新增
+
+- `evals/evals.json`
+  - 首版自动化测试集，覆盖会前准备、会后更新、档案刷新三个高频场景
+  - 每个场景包含预期输出说明和 4-6 条可验证断言
+  - 对应 skill-creator 规范中要求的 eval 体系，可供后续 benchmark 迭代使用
+- `references/INDEX.md`
+  - 21 个 reference 文件的一句话说明 + "何时加载"快速索引
+  - 解决 reference 文件多但无导航入口的问题
+
+### 变更
+
+- `SKILL.md` — description（frontmatter）
+  - 补充中文触发词（飞书工作台、客户档案、会议纪要、行动计划等）
+  - 补充典型用户表达示例（"帮我整理一下今天的会议"、"更新飞书行动计划" 等）
+  - 与 skill-creator 规范要求的"稍微强势的触发描述"对齐
+- `SKILL.md` — 新增 compatibility 字段
+  - 声明 lark-cli 和 Python 3.10+ 依赖
+- `SKILL.md` — 新增 Runtime Prerequisites 小节
+  - 明确 runtime/ 模块的使用方式、诊断命令和 fallback 说明
+- `SKILL.md` — Hard Rules 优化
+  - 5 条关键规则补充了 "why" 解释，减少机械执行风险，提升意图理解
+  - 涉及：客户解析、绝对日期、会议纪要冷记忆标准、客户档案叙事性、Todo 责任人
+- `SKILL.md` — 参考文件区新增 INDEX.md 引用入口
+
 ## [0.2.5] - 2026-04-11
 
 ### 新增
