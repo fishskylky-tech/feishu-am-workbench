@@ -1,47 +1,55 @@
 ---
 name: feishu-am-workbench
-description: Analyze customer materials, Feishu workbench records, user notes, and public updates for an AM. Use when the user wants account analysis, meeting prep, post-meeting synthesis, update recommendations, or confirmed write-back into a Feishu-based account management platform.
+description: >
+  Personal AM workflow skill for Feishu-based account management. Use this skill whenever the user
+  mentions: 飞书工作台, 客户档案, 会议纪要, 行动计划, 客户主数据, 合同, 联系记录, 竞品, Todo, 客户更新, 会前准备, 会后总结,
+  account analysis, meeting prep, post-meeting synthesis, or wants to write back to Feishu Base, Docs, or Todo.
+  Also trigger when the user pastes a meeting transcript, shares a customer file, or asks questions like
+  "这个客户最近怎样", "帮我整理一下今天的会议", "更新一下飞书上的行动计划", "帮我准备一下明天的拜访". When in doubt, use this skill.
+compatibility: requires lark-cli in PATH; Python 3.10+ for runtime/ modules; personal Feishu token configured in environment
 ---
 
 # Feishu AM Workbench
 
 ## Overview
 
-Use this skill for a personal AM workflow built around Feishu Base, Feishu docs, and Feishu Todo. The skill turns mixed inputs into a structured account view, proposes updates across the workbench, and only writes after explicit user confirmation.
+Use this skill for a personal AM workflow built around Feishu Base, docs, and Todo. It turns mixed inputs into a structured account view, proposes updates across the workbench, and only writes after explicit user confirmation.
+
+## Runtime Prerequisites
+
+This skill has an optional local runtime layer (`runtime/`) for live Feishu access, schema preflight, and write guard. To use live features:
+
+- `lark-cli` must be in PATH and authenticated with a valid Feishu token
+- Python 3.10+ required for `runtime/` modules
+- Personal resource hints must exist in `references/live-resource-links.md`
+
+Run `python3 -m runtime <skill-path>` before first use. If the runtime is unavailable, stay in recommendation mode.
 
 The workbench is layered:
 
-- `客户主数据`
-  - Index and snapshot layer for one customer
-- Detail tables
-  - `合同清单`
-  - `行动计划`
-  - `客户关键人地图`
-  - `客户联系记录`
-  - `竞品交锋记录`
-- `客户档案`
-  - Narrative archive and decision-support layer
-- Feishu Todo
-  - Reminder and execution layer, including customer work and non-customer work
+- `客户主数据`: index and snapshot layer
+- Detail tables: `合同清单` / `行动计划` / `客户关键人地图` / `客户联系记录` / `竞品交锋记录`
+- `客户档案`: narrative archive and decision-support layer
+- Feishu Todo: reminder and execution layer
 
 ## Use This Skill When
 
-- The user asks for account analysis based on local files, Feishu records, notes, or public information.
+- The user wants account analysis from local files, Feishu records, notes, or public information.
 - The user wants meeting prep, post-meeting synthesis, or customer strategy suggestions.
-- The user wants to update Feishu customer archives, master data, action plans, contact maps, contract records, or Todo items.
-- The input may mix several dimensions at once, such as contacts, competitors, contracts, risks, opportunities, schedules, and action items.
+- The user wants to update customer archives, master data, action plans, contact maps, contract records, or Todo.
+- The input mixes several dimensions at once, such as contacts, competitors, contracts, risks, opportunities, schedules, and action items.
 
 ## Core Workflow
 
 1. Identify the customer intent and candidate customer names from the input.
-2. Resolve the customer to one `客户ID` from the customer master table before planning any write.
-3. If the task touches Feishu workbench data, use the Feishu workbench gateway first. Use [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md).
-4. For meeting-note or transcript scenarios, recover the minimum necessary historical context before deep interpretation. Use [references/meeting-context-recovery.md](./references/meeting-context-recovery.md) and [references/meeting-live-first-policy.md](./references/meeting-live-first-policy.md).
-5. Classify the meeting type before deciding write scope. Use [references/meeting-type-classification.md](./references/meeting-type-classification.md).
-6. Extract all relevant entities from the input before routing anything. Do not write while still extracting.
-7. Read the minimum additional context needed from local files, Feishu workbench objects, and public sources if requested.
-8. Before any write plan, run a live schema preflight for every Base table and field you may touch.
-9. Separate facts from judgment. Use the fact grading rules in [references/fact-grading.md](./references/fact-grading.md).
+2. Resolve one `客户ID` from `客户主数据` before planning any write.
+3. If the task touches Feishu workbench data, use the Feishu workbench gateway first. See [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md).
+4. For meeting notes or transcripts, run the live-first gate before formal analysis. See [references/meeting-context-recovery.md](./references/meeting-context-recovery.md) and [references/meeting-live-first-policy.md](./references/meeting-live-first-policy.md).
+5. Classify the meeting type before deciding write scope. See [references/meeting-type-classification.md](./references/meeting-type-classification.md).
+6. Extract all relevant entities before routing anything. Do not write while still extracting.
+7. Read only the minimum extra context needed from local files, Feishu workbench objects, and public sources if requested.
+8. Before any write plan, run live schema preflight for every Base table and field you may touch.
+9. Separate facts from judgment. Use [references/fact-grading.md](./references/fact-grading.md).
 10. Produce two outputs:
    - Account analysis and recommendations
    - A structured change plan listing each target object, whether it is a create or update, and the key fields involved
@@ -51,8 +59,8 @@ The workbench is layered:
 
 ## Hard Rules
 
-- Always use `客户主数据` as the source of truth for `客户ID`.
-- If customer matching is ambiguous, do not write. Ask for clarification or provide a no-write recommendation.
+- Always use `客户主数据` as the source of truth for `客户ID`. Downstream routing and archive lookup depend on one stable customer identifier.
+- If customer matching is ambiguous, stop and ask for clarification before writing. Wrong customer resolution is worse than a blocked write.
 - Treat the customer master table as protected. Only update fields allowed by [references/master-data-guardrails.md](./references/master-data-guardrails.md).
 - Use the actual Base schema, not guessed field names. Treat [references/actual-field-mapping.md](./references/actual-field-mapping.md) as a cached schema snapshot, not the sole source of truth.
 - If a workspace config exists, resolve table ids, semantic field slots, and enum policies from that config before falling back to the cached mapping.
@@ -63,28 +71,27 @@ The workbench is layered:
   - if the field is `select` or `multi_select`, fetch live options first and resolve against those live options
 - If the live schema disagrees with the cached mapping, trust the live schema and surface the drift in the change plan.
 - Treat `客户主数据` as an index and current snapshot, not as a running log. Do not push detailed historical facts, long meeting notes, or dense delivery history into the master table.
-- All date output and write-back must use absolute time expressions. Do not write relative dates such as `近期`, `昨天`, `明天`, `今年`, or `明年`.
-- If the source only provides an imprecise date, keep the highest-confidence absolute form available, such as `YYYY-MM-DD`, `YYYY-MM`, `YYYY年Qn`, or `YYYY年M月`, and call out any missing precision before writing.
+- All date output and write-back must use absolute time expressions — never relative ones like `近期`, `昨天`, `明天`, `今年`, or `明年`. If the source is vague, keep the highest-confidence absolute form available and flag the precision gap.
 - Do not mix public news into meeting notes, and do not mix meeting notes into `最新资讯`.
 - Store full meeting notes as Feishu docs and keep only the document link in tables. Treat those docs as cold memory that should be loaded only when needed.
 - Unless the user says otherwise, store meeting-note cold-memory docs in the dedicated Feishu folder `OlBCfU7IKl2oSbd09lXckKJlnTc`.
 - For meeting-note handling, do not treat the transcript as self-sufficient if recoverable context exists in Feishu records or customer archive materials.
-- For meeting-note handling, default to a live-first attempt. Do not stay on single-file analysis if gateway Stage 1-3 can be executed.
+- For meeting-note handling, default to a live-first attempt. Do not stay on single-file analysis if gateway Stage 1-3 can run.
 - For meeting-note handling, run the meeting live-first execution gate before formal analysis. Do not output a formal context-recovery result, meeting type, or write ceiling before the gate result is known.
 - For meeting-note handling, do not conclude that live lookup is unavailable just because no obvious env var or direct config is visible. Check the repository runtime source layer first.
 - For meeting-note handling, determine the meeting type first and let the meeting type define the default write ceiling.
 - For meeting-note handling, the scenario should call foundation primitives explicitly. Do not rely on the foundation to assemble a default meeting context bundle.
 - For meeting-note handling, do not output `completed`、`partial`、`context-limited` context recovery unless the foundation was actually executed. If the foundation was not executed, mark the run as `not-run`.
-- Do not store a raw transcript as the formal meeting-note doc by default. Use [references/meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md).
+- Never store a raw transcript as the formal meeting-note doc. Cold memory should contain structured notes a future reader can act on. See [references/meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md).
 - Do not present inferred business judgment as objective fact.
 - Do not treat historical plans, modelled incentives, or draft commercials as actual revenue unless the source clearly says they were signed and paid.
 - By default, historical contracts belong in the customer archive doc, not in `合同清单`. Use `合同清单` only for current or still-operational contracts that matter to active tracking such as validity, renewal, collections, or ongoing execution.
 - Each customer must have only one canonical customer archive doc. Before creating or linking any archive content, first find the existing archive linked from customer master data and update that doc instead of creating a second archive.
 - If the archive link in customer master is empty, invalid, or obviously stale, search the customer-archive folder by `客户ID` and `简称` before creating a new archive doc.
 - If one `客户ID` covers multiple brands, product lines, or project tracks, do not add a generic `品牌` field just for that customer. Use a stable text prefix such as `品牌｜主题` in titles, key nodes, notes, and action subjects instead.
-- `客户档案` is not a table dump and not a running log. It should explain the customer's full picture, historical arc, current state, and the basis for strategy changes.
+- `客户档案` is neither a table dump nor a running log. It should explain the customer's full picture, historical arc, and the reasoning behind strategy changes.
 - `行动计划` and Feishu Todo are not the same thing. `行动计划` is the structured customer-operating detail table. Todo is the reminder and execution carrier.
-- Any new Feishu Todo task must have an explicit owner. If no responsible person can be resolved with confidence, do not create the task yet; surface the missing owner in the change plan.
+- Any new Feishu Todo task must have an explicit, resolvable owner. If no owner can be resolved with confidence, surface that gap and hold task creation.
 - Strategy fields in `客户主数据` should move slowly. Do not update them just because a new meeting happened. Update them only when the evidence is mature enough to change the account's operating posture.
 - Before writing, apply idempotency rules from [references/update-routing.md](./references/update-routing.md) to avoid duplicates.
 - For Todo creation, dedupe by meaning, not just by exact title match. If a closely related task already exists, prefer updating it or attaching a subtask instead of creating a new sibling task.
@@ -103,18 +110,16 @@ The extraction bundle should cover, when present:
 - Contacts and org changes
 - Competitors
 - Contracts, amounts, and collections
-- Risks
-- Opportunities
-- Key progress and blockers
-- Todos
+- Risks and opportunities
+- Key progress, blockers, and Todos
 - Schedules and milestone dates
-- Public updates
-- Communication records
-- Account judgment
+- Public updates, communication records, and account judgment
 
 If one input yields items for multiple tables, show all of them in the change plan. Do not collapse them into a single summary field.
 
 ## Read These References As Needed
+
+For a quick overview of all reference files, see [references/INDEX.md](./references/INDEX.md).
 
 - Read [references/entity-extraction-schema.md](./references/entity-extraction-schema.md) before parsing mixed inputs.
 - Read [references/master-data-guardrails.md](./references/master-data-guardrails.md) before changing customer master data.
@@ -158,7 +163,7 @@ For proposed updates, include:
 - Normalized absolute dates and any date precision gaps
 - Any protected fields that were intentionally left unchanged
 - Any schema drift, alias fallback, or unresolved live-field mismatch
-- Use Chinese section titles and Chinese structured-summary labels by default for meeting outputs
+- Use Chinese section titles and structured-summary labels by default for meeting outputs
 - Let recommendation-mode updates be driven by actual extracted entities, not by a fixed object list
 
 ## Write Order

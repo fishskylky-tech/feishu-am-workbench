@@ -15,18 +15,18 @@
 
 ## 当前结论
 
-当前仓库已经进入“底座可执行、但未完全收口”的阶段。
+当前仓库已经进入“底座可执行、meeting 场景最小 `live-first` 闭环已验证完成、后续以 roadmap 增强为主”的阶段。
 
 - Base: 已可 live 读取
 - Todo: 已可 live 读取
 - Docs / Drive folder: 已可 live 读取
-- Meeting 场景: 还没正式接回主流程验证
+- Meeting 场景: 已完成真实 `gateway -> Stage 3 最小 context recovery -> bridge -> runner` 验证
 
 ## 模块状态
 
 ### 1. Runtime 底座
 
-状态：`已实现第一版`
+状态：`已实现第一版，并已接入 meeting 场景最小闭环`
 
 已完成：
 
@@ -41,7 +41,7 @@
 
 当前限制：
 
-- 上层业务场景尚未系统接入这套底座
+- 当前验证完成的是 meeting 场景最小闭环，不代表所有写回场景都已完成系统联调
 
 ### 2. Live Resource 接入
 
@@ -79,15 +79,23 @@
 
 ### 4. Context Hydration
 
-状态：`已移出底座主实现`
+状态：`已改为上层显式 Stage 3 恢复，并完成最小闭环验证`
 
 已完成：
 
 - 底座默认 gateway 已不再自动执行“客户背景恢复”
 - `live_adapter.py` 中的默认业务查询实现已删除
+- `evals/meeting_output_bridge.py` 已可在 gateway 之后继续执行最小 Stage 3 恢复
+- 当前最小恢复范围包括：
+  - `客户主数据`
+  - 最近 `客户联系记录`
+  - 最近 `行动计划`
+  - 客户档案链接
+- 3 个真实 meeting 案例已完成 `resolved -> completed` 验证
 
 当前限制：
 
+- 当前 `completed` 仅代表“最小 live context recovered”，不是“已读取档案正文和历史 meeting thread”
 - 当前 meeting notes 仍主要按文件名中的 `客户ID` 做匹配
 - 还没补更强的文档筛选和相关性排序
 
@@ -175,25 +183,27 @@ python3 -m runtime /Users/liaoky/.codex/skills/feishu-am-workbench
 
 ## 当前阻点
 
-当前没有新的运行前权限阻点。
+当前没有新的运行前权限阻点，也没有阻断当前分支收尾的 P1 实现缺口。
 
 当前更偏实现层的待补项是：
 
 - 会议纪要目录命中策略仍偏简单
 - live schema 还没完全覆盖 Todo / write guard 的真实写回联调验证
-- 上层业务场景还没正式接入这套底座做系统验证
+- Stage 3 目前只恢复 Base 上下文和 archive link，尚未定向读取 archive doc 正文和相关历史 meeting-note docs
 - 多维表格扩表还没按统一接入模型推进到查询优化和写面，目前写面仍只覆盖 3 张核心表
 - 新增表目前只完成 profile 层，尚未进入真实读写链路
 - Base 查询目前仍有“先拉再本地筛”的实现，需要继续收口到精准查询优先
+- ontology 仍未开始设计，已明确后置到 roadmap 主线
 
 ## 下一步
 
 当前最自然的下一步是：
 
-1. 把会议场景正式接回到底座做真实验证
+1. 收尾当前分支文档和状态口径，确认只剩 roadmap 级增强项
 2. 补更强的 meeting-note 命中和排序策略
 3. 继续收口 live schema 的 Todo / write guard 相关真实联调验证
 4. 把 Base 读取从“大批量读取后本地筛选”继续改成“精准查询优先”
+5. 把 archive doc 正文读取、历史 meeting-note docs 定向读取、ontology 建模留到 roadmap 后续阶段
 
 ## 更新时间
 

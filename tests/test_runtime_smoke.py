@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 
 
-REPO_ROOT = Path("/Users/liaoky/.codex/skills/feishu-am-workbench")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from runtime import (  # noqa: E402

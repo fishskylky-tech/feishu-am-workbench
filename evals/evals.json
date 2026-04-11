@@ -1,0 +1,131 @@
+{
+  "skill_name": "feishu-am-workbench",
+  "version": "0.2.11",
+  "description": "真实场景多案例回归集，覆盖探索型阶段汇报、产品/方案沟通、广告追踪答疑三类高风险会议场景",
+  "evals": [
+    {
+      "id": 1,
+      "name": "unilever-stage-review",
+      "scenario": "探索型阶段汇报",
+      "prompt": "请基于附件会议记录做 recommendation-mode 分析，判断这次会议应该如何沉淀到飞书经营工作台，并明确哪些内容不能直接写回。",
+      "files": [
+        "tests/fixtures/transcripts/20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
+      ],
+      "expected_output": "输出应把该会议识别为探索型阶段汇报或同等级的非成熟经营决策会议；区分 confirmed facts、judgment、open questions；给出 recommendation-mode updates；不直接建议写主数据，不自动创建 Todo；相对时间必须改成绝对时间或标注 precision gap。",
+      "assertions": [
+        {
+          "id": "u1-live-first-gate",
+          "description": "输出显式记录 live-first gateway 是否执行，以及是否使用了飞书资料或为什么 fallback",
+          "check": "output shows resource resolution, customer resolution, context status, and either used Feishu sources or an explicit fallback reason",
+          "type": "live_first_gate"
+        },
+        {
+          "id": "u2-no-master-data-write",
+          "description": "不直接推进客户主数据写回",
+          "check": "output marks 客户主数据 as no-write, blocked, or recommendation-only",
+          "type": "contains_any",
+          "patterns": ["客户主数据: no-write", "客户主数据：no-write", "客户主数据: blocked", "客户主数据：blocked", "客户主数据: recommendation-only", "客户主数据：recommendation-only"]
+        },
+        {
+          "id": "u3-no-auto-todo",
+          "description": "不自动创建 Todo",
+          "check": "output marks Todo as no-write or recommendation-only because owner and maturity are insufficient",
+          "type": "contains_any",
+          "patterns": ["Todo: no-write", "Todo：no-write", "Todo: recommendation-only", "Todo：recommendation-only", "Todo: blocked", "Todo：blocked"]
+        },
+        {
+          "id": "u4-open-questions-present",
+          "description": "输出包含明确 open questions",
+          "check": "output includes open questions such as 招募来源/激活来源口径 or 画像如何落地到投放",
+          "type": "contains_any",
+          "patterns": ["Open questions", "open questions", "招募来源", "激活来源", "画像如何落地到投放"]
+        },
+        {
+          "id": "u5-absolute-date-handling",
+          "description": "相对时间已规范化或标注精度缺口",
+          "check": "output converts 八九月份/下半年 to absolute forms or marks precision gap explicitly",
+          "type": "contains_any",
+          "patterns": ["precision gap", "2026-08", "2026-09", "2026年下半年", "2026年末"]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "yonghe-product-solution-discussion",
+      "scenario": "产品 / 方案沟通",
+      "prompt": "请分析这份会议记录，判断它应该如何被归类，并说明是否需要形成经营工作台写回建议。",
+      "files": [
+        "tests/fixtures/transcripts/20260409 神策AI 产品和永和大王会议记录.txt"
+      ],
+      "expected_output": "输出应识别这是一场偏产品能力、知识库、记忆架构与归因能力边界的讨论，不应默认进入标准客户经营更新链路；重点是总结问题、能力边界、后续跟进建议，而不是构造主数据、联系记录或行动计划更新。",
+      "assertions": [
+        {
+          "id": "y1-live-first-gate",
+          "description": "输出显式记录 live-first gateway 是否执行，以及是否使用了飞书资料或为什么 fallback",
+          "check": "output shows resource resolution, customer resolution, context status, and either used Feishu sources or an explicit fallback reason",
+          "type": "live_first_gate"
+        },
+        {
+          "id": "y2-no-standard-workbench-write",
+          "description": "不默认生成典型客户经营写回计划",
+          "check": "output does not propose standard 客户主数据, 客户联系记录, or 行动计划 writes unless explicitly justified as recommendation-only",
+          "type": "not_contains_any",
+          "patterns": ["客户主数据: update", "客户主数据：update", "客户联系记录: create", "客户联系记录：create", "行动计划: create", "行动计划：create"]
+        },
+        {
+          "id": "y3-focus-on-capability-boundaries",
+          "description": "输出重点放在能力边界与后续跟进",
+          "check": "output focuses on topics such as 知识库, 记忆, 归因能力边界, and next-step clarification",
+          "type": "contains_any",
+          "patterns": ["知识库", "记忆", "归因", "能力边界", "后续跟进"]
+        },
+        {
+          "id": "y4-no-fabricated-account-state",
+          "description": "不伪造客户经营状态变化",
+          "check": "output does not invent renewal status, budget changes, or account-strategy shifts",
+          "type": "not_contains_any",
+          "patterns": ["续费", "预算已获批", "经营状态变化", "策略更新"]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "dominos-ad-tracking-qa",
+      "scenario": "广告追踪答疑 / 系统使用问题澄清",
+      "prompt": "请分析这份会议记录，判断这次会议更适合沉淀为什么类型的输出，以及哪些经营写回不应该发生。",
+      "files": [
+        "tests/fixtures/transcripts/2026-3-18 达美乐神策会议纪要.txt"
+      ],
+      "expected_output": "输出应识别这是广告追踪、口径解释、dashboard 取数和系统使用问题澄清会议；重点应是需求澄清、口径说明和后续支持动作建议，不应伪造客户经营进展，也不应错误产出主数据或经营策略更新。",
+      "assertions": [
+        {
+          "id": "d1-live-first-gate",
+          "description": "输出显式记录 live-first gateway 是否执行，以及是否使用了飞书资料或为什么 fallback",
+          "check": "output shows resource resolution, customer resolution, context status, and either used Feishu sources or an explicit fallback reason",
+          "type": "live_first_gate"
+        },
+        {
+          "id": "d2-no-business-progress-fabrication",
+          "description": "不伪造客户经营进展",
+          "check": "output does not invent business progress, contract change, renewal signal, or strategy shift",
+          "type": "not_contains_any",
+          "patterns": ["合同变化", "续费信号", "经营进展", "策略变化", "策略更新"]
+        },
+        {
+          "id": "d3-focus-on-logic-and-support",
+          "description": "输出聚焦口径解释和后续支持建议",
+          "check": "output focuses on attribution logic, tracking logic, landing definition, dashboard or next-step support",
+          "type": "contains_any",
+          "patterns": ["归因", "UTM", "landing", "dashboard", "口径", "支持动作"]
+        },
+        {
+          "id": "d4-no-master-data-route",
+          "description": "不错误路由到主数据或标准经营动作",
+          "check": "output keeps 客户主数据 and strategic workbench updates in no-write or not-applicable state",
+          "type": "contains_any",
+          "patterns": ["客户主数据: no-write", "客户主数据：no-write", "客户主数据: not-applicable", "客户主数据：not-applicable", "客户主数据: blocked", "客户主数据：blocked"]
+        }
+      ]
+    }
+  ]
+}

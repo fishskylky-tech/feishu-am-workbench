@@ -1,0 +1,2 @@
+神策 AI 产品和永和大王会议记录占位逐字稿。
+该文件用于 repo-relative validation fixtures，不代表完整真实会议内容。
