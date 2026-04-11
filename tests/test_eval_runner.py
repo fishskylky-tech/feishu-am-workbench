@@ -61,6 +61,20 @@ fallback 原因: permission scope insufficient for current live lookup
         result = evaluate_case(eval_name="dominos-ad-tracking-qa", output_text=output_text)
         self.assertTrue(result["passed"])
 
+    def test_runner_rejects_generic_reason_words_without_explicit_fallback_field(self) -> None:
+        output_text = """
+资源解析状态: unresolved
+客户解析结果: missing
+上下文恢复状态: not-run
+This output mentions reason and scope in ordinary prose only.
+输出重点:
+- 归因逻辑解释
+"""
+        result = evaluate_case(eval_name="dominos-ad-tracking-qa", output_text=output_text)
+        self.assertFalse(result["passed"])
+        live_first_assertion = next(item for item in result["assertions"] if item["id"] == "d1-live-first-gate")
+        self.assertFalse(live_first_assertion["details"]["has_fallback_reason"])
+
     def test_cli_returns_json_and_exit_code(self) -> None:
         output_text = """
 资源解析状态: unresolved

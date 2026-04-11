@@ -29,6 +29,34 @@ from evals.meeting_output_bridge import run_gateway_and_build_meeting_output  # 
 
 
 class MeetingOutputBridgeTests(unittest.TestCase):
+    def test_build_meeting_output_handles_missing_transcript_file(self) -> None:
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[
+                    CustomerMatch(
+                        customer_id="C_002",
+                        short_name="联合利华",
+                    )
+                ],
+            ),
+        )
+
+        output_text = build_meeting_output(
+            eval_name="unilever-stage-review",
+            transcript_path=Path("/tmp/feishu-am-workbench-missing-transcript.txt"),
+            gateway_result=gateway_result,
+            context_status="partial",
+            fallback_reason="transcript file not available in current environment",
+        )
+
+        self.assertIn("Transcript source: feishu-am-workbench-missing-transcript.txt", output_text)
+        self.assertIn("Transcript status: missing", output_text)
+        self.assertIn("fallback 原因: transcript file not available in current environment", output_text)
+
     def test_recover_live_context_reads_minimum_base_sources(self) -> None:
         class FakeQueryBackend:
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):

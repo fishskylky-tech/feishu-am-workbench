@@ -120,7 +120,7 @@ def _evaluate_live_first_gate(output_text: str) -> dict[str, Any]:
     )
     fallback_reason = _contains_any(
         text,
-        ["fallback 原因", "未执行原因", "原因", "reason", "permission", "scope", "customer cannot be resolved"],
+        ["fallback 原因", "未执行原因", "fallback reason"],
     )
     passed = has_resource and has_customer and has_context and (used_sources or fallback_reason)
     return {

@@ -34,10 +34,11 @@ def build_meeting_output(
     key_context: list[str] | None = None,
     missing_sources: list[str] | None = None,
 ) -> str:
-    transcript_text = transcript_path.read_text()
     transcript_title = transcript_path.name
+    transcript_text, transcript_status = _read_transcript_text(transcript_path)
     lines = [
         f"Transcript source: {transcript_title}",
+        f"Transcript status: {transcript_status}",
         f"资源解析状态: {gateway_result.resource_resolution.status}",
         f"客户解析结果: {_render_customer_resolution(gateway_result)}",
         f"上下文恢复状态: {context_status}",
@@ -58,6 +59,13 @@ def build_meeting_output(
 
     lines.extend(_render_case_body(eval_name, transcript_text))
     return "\n".join(lines)
+
+
+def _read_transcript_text(transcript_path: Path) -> tuple[str, str]:
+    try:
+        return transcript_path.read_text(), "available"
+    except FileNotFoundError:
+        return "", "missing"
 
 
 def run_gateway_and_build_meeting_output(
