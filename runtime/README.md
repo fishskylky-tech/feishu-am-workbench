@@ -14,7 +14,7 @@ Current goal:
   - shared data models
 - `runtime_sources.py`
   - load current runtime hints from repository files
-  - includes parsing current live URLs from `references/live-resource-links.md`
+  - includes parsing current live URLs from `references/live-resource-links.example.md`
 - `resource_resolver.py`
   - resolve currently known resource hints
 - `lark_cli.py`

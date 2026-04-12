@@ -79,6 +79,18 @@ Feishu AM Workbench 是一个面向客户经营（AM）工作的飞书技能。
 2. 已完成飞书认证并具备目标资源访问权限
 3. 本地 Python 3.10+
 
+### 安全配置指南
+
+1. 使用 `.env.example` 作为模板，在本地创建 `.env` 并填入真实资源。
+2. 真实 token、folder token、tasklist guid 只放环境变量，不提交到仓库。
+3. `references/live-resource-links.example.md` 只保留示例值，用于说明格式。
+4. 可选安装 pre-commit 并启用 `detect-secrets`：
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
 ### 1) 先跑环境诊断
 
 ```bash
