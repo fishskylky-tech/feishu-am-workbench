@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 
 from .lark_cli import LarkCliClient
@@ -291,12 +291,14 @@ class TodoWriter:
                 return {"timestamp": raw, "is_all_day": False}
             try:
                 if len(raw) == 10:
-                    dt = datetime.strptime(raw, "%Y-%m-%d")
+                    dt = datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=timezone.utc)
                     return {
                         "timestamp": str(int(dt.timestamp() * 1000)),
                         "is_all_day": True,
                     }
                 dt = datetime.fromisoformat(raw)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
                 return {
                     "timestamp": str(int(dt.timestamp() * 1000)),
                     "is_all_day": False,

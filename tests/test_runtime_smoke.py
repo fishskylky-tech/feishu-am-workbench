@@ -251,7 +251,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华续费方案", '
-                '"due": {"timestamp": "1776614400000", "is_all_day": true}, '
+                '"due": {"timestamp": "1776643200000", "is_all_day": true}, '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
                 '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
                 '"update_fields": ["summary", "due", "custom_fields"]}'
@@ -1025,7 +1025,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 '{"summary": "跟进联合利华续费", "tasklists": [{"tasklist_guid": "e50dda19-63e4-410a-a167-6813f3b3c86d"}], '
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"description": "带客户档案链接", '
-                '"due": {"timestamp": "1776096000000", "is_all_day": true}, '
+                '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
                 '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}'
             ): subprocess.CompletedProcess(
@@ -1132,7 +1132,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks patch --params {"task_guid": "task_guid_1"} --data '
                 '{"task": {"summary": "更新后的标题", "description": "更新后的描述", '
-                '"due": {"timestamp": "1776096000000", "is_all_day": true}, '
+                '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
                 '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "6238286f-b2e2-5ab8-e902-a3bb9dc242b0"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
@@ -1258,7 +1258,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", "description": "补充新的会后上下文", '
-                '"due": {"timestamp": "1776096000000", "is_all_day": true}, '
+                '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}, '
                 '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
