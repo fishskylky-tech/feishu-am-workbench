@@ -45,32 +45,35 @@ class TodoWriter:
         duplicate_task = self._find_duplicate_task(candidate)
         if duplicate_task:
             duplicate_task_guid = str(duplicate_task.get("guid") or "")
-            decision = self._decide_duplicate_action(candidate, duplicate_task)
-            if decision == "create_subtask":
-                if self._should_execute_create_subtask(candidate):
-                    return self._create_subtask(
-                        parent_task_guid=duplicate_task_guid,
-                        candidate=candidate,
-                        report=report,
+            if not duplicate_task_guid:
+                duplicate_task = None
+            else:
+                decision = self._decide_duplicate_action(candidate, duplicate_task)
+                if decision == "create_subtask":
+                    if self._should_execute_create_subtask(candidate):
+                        return self._create_subtask(
+                            parent_task_guid=duplicate_task_guid,
+                            candidate=candidate,
+                            report=report,
+                        )
+                    return TodoWriteResult(
+                        target_object=candidate.target_object or "todo",
+                        attempted=False,
+                        allowed=False,
+                        preflight_status=report.status,
+                        guard_status="blocked",
+                        dedupe_decision="create_subtask",
+                        executed_operation="blocked",
+                        remote_object_id=duplicate_task_guid or None,
+                        blocked_reasons=["semantic_duplicate_detected", "subtask_recommended"],
+                        drift_items=self._collect_drift_items(report),
+                        source_context=dict(candidate.source_context),
+                        preflight_report=report,
                     )
-                return TodoWriteResult(
-                    target_object=candidate.target_object or "todo",
-                    attempted=False,
-                    allowed=False,
-                    preflight_status=report.status,
-                    guard_status="blocked",
-                    dedupe_decision="create_subtask",
-                    executed_operation="blocked",
-                    remote_object_id=duplicate_task_guid or None,
-                    blocked_reasons=["semantic_duplicate_detected", "subtask_recommended"],
-                    drift_items=self._collect_drift_items(report),
-                    source_context=dict(candidate.source_context),
-                    preflight_report=report,
-                )
-            update_candidate = self._build_duplicate_update_candidate(candidate)
-            result = self.update(duplicate_task_guid, update_candidate)
-            result.dedupe_decision = "update_existing"
-            return result
+                update_candidate = self._build_duplicate_update_candidate(candidate)
+                result = self.update(duplicate_task_guid, update_candidate)
+                result.dedupe_decision = "update_existing"
+                return result
 
         guard = self.write_guard.evaluate(candidate, report, owner_required=True)
         if not guard.allowed:
@@ -586,7 +589,7 @@ class TodoWriter:
 
     def _is_same_time_window(self, candidate_due_at: str, existing_due_at: str) -> bool:
         if not candidate_due_at or not existing_due_at:
-            return True
+            return False
         candidate_window = candidate_due_at[:7]
         existing_window = existing_due_at[:7]
         return candidate_window == existing_window

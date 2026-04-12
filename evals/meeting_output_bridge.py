@@ -140,6 +140,7 @@ def build_meeting_todo_candidates(
             },
             match_basis={
                 "customer": customer.short_name,
+                "time_window": "2026-04",
             },
             source_context={
                 "scenario": "post_meeting",
@@ -158,6 +159,19 @@ def run_confirmed_todo_write(
     results: list[WriteExecutionResult] = []
     for candidate in candidates:
         if candidate.operation == "update":
+            results.append(
+                WriteExecutionResult(
+                    target_object=candidate.target_object,
+                    attempted=False,
+                    allowed=False,
+                    preflight_status="safe",
+                    guard_status="blocked",
+                    dedupe_decision="no_write",
+                    executed_operation="blocked",
+                    blocked_reasons=["update_operation_not_supported_in_confirmed_write"],
+                    source_context=dict(candidate.source_context),
+                )
+            )
             continue
         results.append(todo_writer.create(candidate))
     return results
@@ -270,7 +284,7 @@ def _rank_related_meeting_notes(
     if not contact_rows:
         return []
     topic_terms = _topic_terms(topic_text)
-    candidates: list[tuple[int, str]] = []
+    candidates: list[tuple[int, datetime | None, str]] = []
     seen_links: set[str] = set()
     for row in contact_rows:
         title = str(
@@ -290,10 +304,13 @@ def _rank_related_meeting_notes(
             continue
         seen_links.add(link)
         score = _meeting_note_score(title=title, date=date, topic_terms=topic_terms)
-        candidates.append((score, f"{title}｜{date or '日期未提供'}｜{link}"))
+        candidates.append((score, _parse_note_date(date), f"{title}｜{date or '日期未提供'}｜{link}"))
 
-    candidates.sort(key=lambda item: item[0], reverse=True)
-    return [item[1] for item in candidates[:limit]]
+    candidates.sort(
+        key=lambda item: (item[0], item[1] if item[1] is not None else datetime.min),
+        reverse=True,
+    )
+    return [item[2] for item in candidates[:limit]]
 
 
 def _topic_terms(text: str) -> set[str]:
@@ -310,13 +327,6 @@ def _meeting_note_score(*, title: str, date: str, topic_terms: set[str]) -> int:
     score = overlap * 10
     if date:
         score += 3
-        note_dt = _parse_note_date(date)
-        if note_dt is not None:
-            days = abs((datetime.utcnow() - note_dt).days)
-            if days <= 30:
-                score += 20
-            elif days <= 90:
-                score += 10
     return score
 
 

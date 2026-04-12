@@ -124,6 +124,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(candidate.operation, "create")
         self.assertEqual(candidate.source_context["scenario"], "post_meeting")
         self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.match_basis["time_window"], "2026-04")
         self.assertNotIn("owner", candidate.payload)
 
     def test_run_confirmed_todo_write_uses_unified_todo_writer(self) -> None:
@@ -168,6 +169,30 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(writer.calls[0].target_object, "todo")
         self.assertEqual(results[0].executed_operation, "create")
         self.assertEqual(results[0].remote_object_id, "task_guid_1")
+
+    def test_run_confirmed_todo_write_blocks_update_candidates(self) -> None:
+        class FakeTodoWriter:
+            def create(self, candidate):
+                raise AssertionError("update candidate should not call create")
+
+        candidate = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=GatewayResult(
+                resource_resolution=ResourceResolution(status="resolved"),
+                customer_resolution=CustomerResolution(
+                    status="resolved",
+                    query="联合利华",
+                    candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                ),
+            ),
+        )[0]
+        candidate.operation = "update"
+
+        results = run_confirmed_todo_write(candidates=[candidate], todo_writer=FakeTodoWriter())
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].executed_operation, "blocked")
+        self.assertIn("update_operation_not_supported_in_confirmed_write", results[0].blocked_reasons)
 
     def test_recover_live_context_reads_minimum_base_sources(self) -> None:
         class FakeQueryBackend:
