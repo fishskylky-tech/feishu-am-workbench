@@ -309,7 +309,7 @@ Phase 3 (Later): 跨平台、跨工具 🔮
 - ✅ **写回前多重校验**: Schema Preflight + Write Guard + Semantic Dedupe + 用户确认
 
 **待改进**:
-- ⚠️ references/live-resource-links.md 可能包含真实资源 URL
+- ⚠️ references/live-resource-links.md 包含真实资源 URL 以及可定位个人 workspace 的资源 ID（如 Base token、folder token、tasklist GUID）
 
 #### 改进建议 (P0)
 
