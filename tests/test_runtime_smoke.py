@@ -149,6 +149,413 @@ class FakeRunner:
 
 
 class RuntimeSmokeTests(unittest.TestCase):
+    def test_write_candidate_supports_shared_write_metadata(self) -> None:
+        candidate = WriteCandidate(
+            object_name="待办",
+            layer="reminder",
+            semantic_fields=["summary", "owner"],
+            payload={"summary": "跟进联合利华续费", "owner": "ou_owner"},
+            operation="create",
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            source_context={"scenario": "post_meeting", "customer_id": "C_002"},
+            target_object="todo",
+        )
+        self.assertEqual(candidate.operation, "create")
+        self.assertEqual(candidate.target_object, "todo")
+        self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.source_context["scenario"], "post_meeting")
+
+    def test_todo_writer_returns_shared_execution_result_for_blocked_candidate(self) -> None:
+        class RaisingRunner:
+            def __call__(self, command, capture_output, text, check):
+                raise AssertionError("task create should not be invoked when preflight is blocked")
+
+        client = LarkCliClient(runner=RaisingRunner())
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=client,
+            config=config,
+            schema_preflight=SchemaPreflightRunner(FakeSchemaBackend()),
+        )
+        candidate = WriteCandidate(
+            object_name="待办",
+            layer="reminder",
+            semantic_fields=["summary", "owner", "priority", "customer"],
+            payload={
+                "summary": "跟进联合利华续费",
+                "owner": "ou_owner",
+                "priority": "高",
+                "customer": "联合利华",
+            },
+            operation="create",
+            target_object="todo",
+        )
+        result = writer.create(candidate)
+        self.assertEqual(result.preflight_status, "blocked")
+        self.assertEqual(result.guard_status, "blocked")
+        self.assertEqual(result.executed_operation, "blocked")
+        self.assertEqual(result.dedupe_decision, "no_write")
+        self.assertIn("todo_custom_field_missing", result.blocked_reasons)
+
+    def test_todo_writer_updates_semantic_duplicate_instead_of_creating(self) -> None:
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "owner": {
+                        "field_id": "members.assignee",
+                        "name": "负责人",
+                        "type": "user",
+                        "allowed_live_types": ["user"],
+                        "write_policy": "required_create",
+                        "valid_member_ids": ["ou_owner"],
+                    },
+                    "customer": {
+                        "field_id": "customer_guid",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                    "priority": {
+                        "field_id": "priority_guid",
+                        "name": "优先级",
+                        "type": "single_select",
+                        "options": ["高", "中", "低"],
+                        "allowed_live_types": ["single_select"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        responses = {
+            (
+                'task tasks get --params {"task_guid": "task_existing"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"task":{"guid":"task_existing","url":"https://applink.feishu.cn/client/todo/detail?guid=task_existing",'
+                    '"members":[{"id":"ou_owner","role":"assignee","type":"user"}]}}}'
+                ),
+                stderr="",
+            ),
+            (
+                'task tasks patch --params {"task_guid": "task_existing"} --data '
+                '{"task": {"summary": "跟进联合利华续费方案", '
+                '"due": {"timestamp": "1776643200000", "is_all_day": true}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
+                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"update_fields": ["summary", "due", "custom_fields"]}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"task":{"guid":"task_existing","url":"https://applink.feishu.cn/client/todo/detail?guid=task_existing"}}}',
+                stderr="",
+            ),
+        }
+        client = LarkCliClient(runner=FakeRunner(responses))
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=client,
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "guid": "task_existing",
+                    "summary": "推进联合利华续费方案确认",
+                    "customer": "联合利华",
+                    "due_at": "2026-04-18",
+                }
+            ],
+        )
+        candidate = WriteCandidate(
+            object_name="待办",
+            layer="reminder",
+            semantic_fields=["summary", "owner", "customer", "priority"],
+            payload={
+                "summary": "跟进联合利华续费方案",
+                "owner": "ou_owner",
+                "customer": "联合利华",
+                "priority": "高",
+                "due_at": "2026-04-20",
+            },
+            operation="create",
+            target_object="todo",
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+        )
+        result = writer.create(candidate)
+        self.assertTrue(result.attempted)
+        self.assertTrue(result.allowed)
+        self.assertEqual(result.dedupe_decision, "update_existing")
+        self.assertEqual(result.executed_operation, "update")
+        self.assertEqual(result.remote_object_id, "task_existing")
+        self.assertEqual(result.blocked_reasons, [])
+
+    def test_todo_writer_handles_chinese_punctuation_variant_as_duplicate(self) -> None:
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "owner": {
+                        "field_id": "members.assignee",
+                        "name": "负责人",
+                        "type": "user",
+                        "allowed_live_types": ["user"],
+                        "write_policy": "required_create",
+                        "valid_member_ids": ["ou_owner"],
+                    },
+                    "customer": {
+                        "field_id": "customer_guid",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                    "priority": {
+                        "field_id": "priority_guid",
+                        "name": "优先级",
+                        "type": "single_select",
+                        "options": ["高", "中", "低"],
+                        "allowed_live_types": ["single_select"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        responses = {
+            (
+                'task tasks get --params {"task_guid": "task_existing"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"task":{"guid":"task_existing","url":"https://applink.feishu.cn/client/todo/detail?guid=task_existing",'
+                    '"members":[{"id":"ou_owner","role":"assignee","type":"user"}]}}}'
+                ),
+                stderr="",
+            ),
+            (
+                'task tasks patch --params {"task_guid": "task_existing"} --data '
+                '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
+                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"update_fields": ["summary", "custom_fields"]}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"task":{"guid":"task_existing","url":"https://applink.feishu.cn/client/todo/detail?guid=task_existing"}}}',
+                stderr="",
+            ),
+        }
+        client = LarkCliClient(runner=FakeRunner(responses))
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=client,
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "guid": "task_existing",
+                    "summary": "联合利华-AI埋点产品介绍给触脉（王奇）",
+                    "customer": "联合利华",
+                    "due_at": "2026-04-18",
+                }
+            ],
+        )
+        candidate = WriteCandidate(
+            object_name="待办",
+            layer="reminder",
+            semantic_fields=["summary", "owner", "customer", "priority"],
+            payload={
+                "summary": "跟进联合利华 AI 埋点产品介绍给触脉确认",
+                "owner": "ou_owner",
+                "customer": "联合利华",
+                "priority": "高",
+            },
+            operation="create",
+            target_object="todo",
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+        )
+        result = writer.create(candidate)
+        self.assertEqual(result.dedupe_decision, "update_existing")
+        self.assertEqual(result.executed_operation, "update")
+        self.assertEqual(result.remote_object_id, "task_existing")
+
+    def test_todo_writer_recommends_create_subtask_for_step_level_duplicate(self) -> None:
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "owner": {
+                        "field_id": "members.assignee",
+                        "name": "负责人",
+                        "type": "user",
+                        "allowed_live_types": ["user"],
+                        "write_policy": "required_create",
+                        "valid_member_ids": ["ou_owner"],
+                    },
+                    "customer": {
+                        "field_id": "customer_guid",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        class RaisingRunner:
+            def __call__(self, command, capture_output, text, check):
+                raise AssertionError("no write should be attempted when subtask is recommended")
+
+        client = LarkCliClient(runner=RaisingRunner())
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=client,
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "guid": "task_parent",
+                    "summary": "联合利华 活动 优化 方案",
+                    "customer": "联合利华",
+                    "due_at": "2026-04-20",
+                }
+            ],
+        )
+        candidate = WriteCandidate(
+            object_name="待办",
+            layer="reminder",
+            semantic_fields=["summary", "owner", "customer"],
+            payload={
+                "summary": "整理联合利华活动优化方案并发送会前资料",
+                "owner": "ou_owner",
+                "customer": "联合利华",
+            },
+            operation="create",
+            target_object="todo",
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+        )
+        result = writer.create(candidate)
+        self.assertFalse(result.attempted)
+        self.assertEqual(result.dedupe_decision, "create_subtask")
+        self.assertEqual(result.executed_operation, "blocked")
+        self.assertIn("subtask_recommended", result.blocked_reasons)
+
+    def test_todo_writer_creates_subtask_when_explicitly_confirmed(self) -> None:
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "owner": {
+                        "field_id": "members.assignee",
+                        "name": "负责人",
+                        "type": "user",
+                        "allowed_live_types": ["user"],
+                        "write_policy": "required_create",
+                        "valid_member_ids": ["ou_owner"],
+                    },
+                    "customer": {
+                        "field_id": "customer_guid",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        responses = {
+            (
+                'task tasks create --data '
+                '{"summary": "整理联合利华活动优化方案并发送会前资料", '
+                '"tasklists": [{"tasklist_guid": "e50dda19-63e4-410a-a167-6813f3b3c86d"}], '
+                '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}], '
+                '"parent_task_guid": "task_parent"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"task":{"guid":"task_sub_1",'
+                    '"url":"https://applink.feishu.cn/client/todo/detail?guid=task_sub_1"}}}'
+                ),
+                stderr="",
+            )
+        }
+
+        client = LarkCliClient(runner=FakeRunner(responses))
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=client,
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "guid": "task_parent",
+                    "summary": "联合利华 活动 优化 方案",
+                    "customer": "联合利华",
+                    "due_at": "2026-04-20",
+                }
+            ],
+        )
+
+        candidate = WriteCandidate(
+            object_name="待办",
+            layer="reminder",
+            semantic_fields=["summary", "owner", "customer"],
+            payload={
+                "summary": "整理联合利华活动优化方案并发送会前资料",
+                "owner": "ou_owner",
+                "customer": "联合利华",
+            },
+            operation="create",
+            target_object="todo",
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            source_context={"confirm_create_subtask": True},
+        )
+        result = writer.create(candidate)
+
+        self.assertTrue(result.attempted)
+        self.assertTrue(result.allowed)
+        self.assertEqual(result.dedupe_decision, "create_subtask")
+        self.assertEqual(result.executed_operation, "create")
+        self.assertEqual(result.remote_object_id, "task_sub_1")
+
     def test_table_profiles_cover_runtime_and_expansion_tables(self) -> None:
         self.assertEqual(TABLE_PROFILES["客户主数据"].table_role, "snapshot")
         self.assertEqual(TABLE_PROFILES["客户联系记录"].table_role, "detail")
@@ -618,7 +1025,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 '{"summary": "跟进联合利华续费", "tasklists": [{"tasklist_guid": "e50dda19-63e4-410a-a167-6813f3b3c86d"}], '
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"description": "带客户档案链接", '
-                '"due": {"timestamp": "1776096000000", "is_all_day": true}, '
+                '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
                 '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}'
             ): subprocess.CompletedProcess(
@@ -725,7 +1132,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks patch --params {"task_guid": "task_guid_1"} --data '
                 '{"task": {"summary": "更新后的标题", "description": "更新后的描述", '
-                '"due": {"timestamp": "1776096000000", "is_all_day": true}, '
+                '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
                 '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "6238286f-b2e2-5ab8-e902-a3bb9dc242b0"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
@@ -834,6 +1241,286 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertIn("patch", result.request_payload)
         self.assertIn("member_add", result.request_payload)
         self.assertIn("member_remove", result.request_payload)
+
+    def test_todo_writer_updates_existing_task_when_duplicate_detected(self) -> None:
+        responses = {
+            (
+                'task tasks get --params {"task_guid": "task_existing"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"task":{"guid":"task_existing","url":"https://applink.feishu.cn/client/todo/detail?guid=task_existing",'
+                    '"members":[{"id":"ou_old","role":"assignee","type":"user"}]}}}'
+                ),
+                stderr="",
+            ),
+            (
+                'task tasks patch --params {"task_guid": "task_existing"} --data '
+                '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", "description": "补充新的会后上下文", '
+                '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}, '
+                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"update_fields": ["summary", "description", "due", "custom_fields"]}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"task":{"guid":"task_existing","url":"https://applink.feishu.cn/client/todo/detail?guid=task_existing"}}}',
+                stderr="",
+            ),
+        }
+        client = LarkCliClient(runner=FakeRunner(responses))
+
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "description": {
+                        "field_id": "description",
+                        "name": "描述",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                    "due_at": {
+                        "field_id": "due",
+                        "name": "截止时间",
+                        "type": "datetime",
+                        "allowed_live_types": ["datetime"],
+                        "write_policy": "safe_update",
+                    },
+                    "customer": {
+                        "field_id": "a7009aff-7d85-4378-82c9-1584873f469d",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                    "priority": {
+                        "field_id": "f7587037-8ad1-443c-b350-f6600e0ccadd",
+                        "name": "优先级",
+                        "type": "single_select",
+                        "options": ["高", "中", "低"],
+                        "allowed_live_types": ["single_select"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=client,
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "guid": "task_existing",
+                    "summary": "联合利华-AI埋点产品介绍给触脉（王奇）",
+                    "customer": "联合利华（UFS）",
+                    "due_at": "2026-04-14",
+                }
+            ],
+        )
+        candidate = WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "description", "due_at", "customer", "priority"],
+            payload={
+                "summary": "跟进联合利华 AI 埋点产品介绍给触脉确认",
+                "description": "补充新的会后上下文",
+                "due_at": "2026-04-14",
+                "customer": "联合利华（UFS）",
+                "priority": "高",
+            },
+            match_basis={"customer": "联合利华（UFS）", "time_window": "2026-04"},
+        )
+        result = writer.create(candidate)
+        self.assertTrue(result.attempted)
+        self.assertTrue(result.allowed)
+        self.assertEqual(result.executed_operation, "update")
+        self.assertEqual(result.dedupe_decision, "update_existing")
+        self.assertEqual(result.remote_object_id, "task_existing")
+        self.assertIn("patch", result.request_payload)
+        self.assertNotIn("member_add", result.request_payload)
+        self.assertNotIn("member_remove", result.request_payload)
+
+    def test_todo_writer_ignores_duplicate_without_guid(self) -> None:
+        class FakeClient:
+            def invoke_json(self, argv: list[str]) -> dict[str, object]:
+                if argv[:3] == ["task", "tasks", "create"]:
+                    return {
+                        "code": 0,
+                        "data": {
+                            "task": {
+                                "guid": "task_new",
+                                "url": "https://applink.feishu.cn/client/todo/detail?guid=task_new",
+                            }
+                        },
+                    }
+                raise AssertionError(f"unexpected command: {' '.join(argv)}")
+
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "owner": {
+                        "field_id": "members.assignee",
+                        "name": "负责人",
+                        "type": "user",
+                        "allowed_live_types": ["user"],
+                        "write_policy": "required_create",
+                        "valid_member_ids": ["ou_owner"],
+                    },
+                    "customer": {
+                        "field_id": "a7009aff-7d85-4378-82c9-1584873f469d",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                    "priority": {
+                        "field_id": "f7587037-8ad1-443c-b350-f6600e0ccadd",
+                        "name": "优先级",
+                        "type": "single_select",
+                        "options": ["高", "中", "低"],
+                        "allowed_live_types": ["single_select"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=FakeClient(),
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "summary": "跟进联合利华 Campaign 优化方案确认",
+                    "customer": "联合利华",
+                    "due_at": "2026-04-10",
+                }
+            ],
+        )
+
+        candidate = WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "owner", "customer", "priority"],
+            payload={
+                "summary": "跟进联合利华 Campaign 优化方案确认",
+                "owner": "ou_owner",
+                "customer": "联合利华",
+                "priority": "高",
+            },
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+        )
+
+        result = writer.create(candidate)
+        self.assertTrue(result.attempted)
+        self.assertEqual(result.executed_operation, "create")
+        self.assertEqual(result.dedupe_decision, "create_new")
+        self.assertEqual(result.remote_object_id, "task_new")
+
+    def test_todo_writer_requires_time_window_for_duplicate_matching(self) -> None:
+        class FakeClient:
+            def invoke_json(self, argv: list[str]) -> dict[str, object]:
+                if argv[:3] == ["task", "tasks", "create"]:
+                    return {
+                        "code": 0,
+                        "data": {
+                            "task": {
+                                "guid": "task_new_no_window",
+                                "url": "https://applink.feishu.cn/client/todo/detail?guid=task_new_no_window",
+                            }
+                        },
+                    }
+                raise AssertionError(f"unexpected command: {' '.join(argv)}")
+
+        class PassingTodoSchemaBackend:
+            def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
+                if object_name != "待办":
+                    return None
+                return {
+                    "summary": {
+                        "field_id": "summary",
+                        "name": "标题",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "required_create",
+                    },
+                    "owner": {
+                        "field_id": "members.assignee",
+                        "name": "负责人",
+                        "type": "user",
+                        "allowed_live_types": ["user"],
+                        "write_policy": "required_create",
+                        "valid_member_ids": ["ou_owner"],
+                    },
+                    "customer": {
+                        "field_id": "a7009aff-7d85-4378-82c9-1584873f469d",
+                        "name": "客户",
+                        "type": "text",
+                        "allowed_live_types": ["text"],
+                        "write_policy": "safe_update",
+                    },
+                }
+
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        writer = TodoWriter(
+            client=FakeClient(),
+            config=config,
+            schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
+            existing_tasks=[
+                {
+                    "guid": "task_existing",
+                    "summary": "跟进联合利华 Campaign 优化方案确认",
+                    "customer": "联合利华",
+                    "due_at": "2026-04-10",
+                }
+            ],
+        )
+
+        candidate = WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "owner", "customer"],
+            payload={
+                "summary": "跟进联合利华 Campaign 优化方案确认",
+                "owner": "ou_owner",
+                "customer": "联合利华",
+            },
+            match_basis={"customer": "联合利华"},
+        )
+
+        result = writer.create(candidate)
+        self.assertTrue(result.attempted)
+        self.assertEqual(result.executed_operation, "create")
+        self.assertEqual(result.dedupe_decision, "create_new")
+        self.assertEqual(result.remote_object_id, "task_new_no_window")
 
     def test_capability_report_degrades_when_required_table_missing(self) -> None:
         responses = {

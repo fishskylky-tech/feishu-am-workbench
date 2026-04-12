@@ -15,7 +15,7 @@
 
 ## 当前结论
 
-当前仓库已经进入“底座可执行、meeting 场景最小 `live-first` 闭环已验证完成、后续以 roadmap 增强为主”的阶段。
+当前仓库已经进入“底座可执行、meeting 场景最小 `live-first` 闭环已验证完成、Todo 已收口为第一批统一写回对象、后续继续按 roadmap 增强”的阶段。
 
 - Base: 已可 live 读取
 - Todo: 已可 live 读取
@@ -135,6 +135,39 @@
 - 更多 drift case 回归样本
 - Todo custom field 仍主要依赖当前已验证快照，不是从任务设置接口直接发现
 
+### 5.1 Unified Todo Write Surface
+
+状态：`已完成第一版收口`
+
+已完成：
+
+- `WriteCandidate` 已补最小公共写回字段：
+  - `operation`
+  - `match_basis`
+  - `source_context`
+  - `target_object`
+- `WriteExecutionResult` 已作为统一写回结果模型落地
+- `TodoWriteResult` 已对齐统一结果结构
+- `TodoWriter` 已统一返回：
+  - preflight 状态
+  - guard 状态
+  - dedupe 决策
+  - executed operation
+  - blocked reasons
+  - remote object id / url
+- Todo 已补最小 semantic dedupe 第一版
+- `evals/meeting_output_bridge.py` 已能：
+  - 生成最小 Todo candidate
+  - 在确认后调用统一 Todo writer
+  - 在输出中展示统一写回结果
+
+当前限制：
+
+- 当前 dedupe 仍是最小规则，只覆盖 customer + summary + time window 的近重复判断
+- duplicate 命中后默认走 `update_existing` 自动 patch
+- step-level duplicate 会优先返回 `create_subtask` 建议；仅当 `source_context.confirm_create_subtask=true` 时执行真实子任务创建
+- meeting 入口当前只接了最小 Todo candidate 生成，不代表所有场景都已迁移
+
 ### 6. Base Integration Model
 
 状态：`已落到 runtime 第一版`
@@ -201,10 +234,10 @@ python3 -m runtime .
 
 1. 收尾当前分支文档和状态口径，确认只剩 roadmap 级增强项
 2. 补更强的 meeting-note 命中和排序策略
-3. 继续收口 live schema 的 Todo / write guard 相关真实联调验证
+3. 继续收口 unified Todo writer 的真实联调验证和 dedupe 规则
 4. 把 Base 读取从“大批量读取后本地筛选”继续改成“精准查询优先”
 5. 把 archive doc 正文读取、历史 meeting-note docs 定向读取、ontology 建模留到 roadmap 后续阶段
 
 ## 更新时间
 
-- 2026-04-11
+- 2026-04-12

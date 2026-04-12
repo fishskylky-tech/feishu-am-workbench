@@ -22,7 +22,7 @@ from .semantic_registry import (
 )
 from .todo_writer import TodoWriter
 from .write_guard import WriteGuard
-from .models import WriteCandidate
+from .models import WriteCandidate, WriteExecutionResult
 
 __all__ = [
     "CustomerResolver",
@@ -41,6 +41,7 @@ __all__ = [
     "TABLE_PROFILES",
     "TodoWriter",
     "WriteCandidate",
+    "WriteExecutionResult",
     "WriteGuard",
     "build_live_diagnostic",
     "get_integrated_base_tables",

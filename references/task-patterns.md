@@ -83,7 +83,13 @@ Write candidate interface:
 
 - if the scenario proposes a Base update, it should produce an explicit target table and field payload before calling live preflight
 - if the scenario proposes a Todo create or update, it should produce an explicit Todo candidate with owner, summary, and any custom fields before calling the Todo writer
+- Todo candidate should also carry:
+  - `operation`
+  - `match_basis`
+  - `source_context`
+  - `target_object`
 - the scenario layer, not the foundation, is responsible for deciding which objects to touch
+- the scenario layer should not call Feishu mutation commands directly; confirmed writes must go through the unified writer
 
 For the final user-facing structure:
 
@@ -160,6 +166,15 @@ Process:
    - `优先级` custom field
 4. Search existing tasks for semantic near-duplicates, not just exact title matches
 5. If an existing task already covers the same core job:
-   - update the existing task when the new input mainly adds scope, timing, or clarity
-   - create a subtask when the new input is one execution step under an existing broader task
+  - update the existing task when the new input mainly adds scope, timing, or clarity
+  - create a subtask when the new input is one execution step under an existing broader task
 6. Only create a new top-level task when there is no strong semantic overlap
+
+Current runtime implementation note:
+
+- the unified Todo writer currently returns one of:
+  - `create_new`
+  - `update_existing`
+  - `create_subtask`
+  - `no_write`
+- current first-pass semantic dedupe is intentionally minimal and should be treated as a safe starting point, not the final recall strategy

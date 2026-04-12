@@ -1,14 +1,23 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 from pathlib import Path
+import re
 from typing import Protocol
 
 from runtime.gateway import FeishuWorkbenchGateway
 from runtime.lark_cli import LarkCliClient
 from runtime.live_adapter import LarkCliBaseQueryBackend, LiveWorkbenchConfig
 from runtime.runtime_sources import RuntimeSourceLoader
-from runtime.models import CustomerMatch, CustomerResolution, GatewayResult, ResourceResolution
+from runtime.models import (
+    CustomerMatch,
+    CustomerResolution,
+    GatewayResult,
+    ResourceResolution,
+    WriteCandidate,
+    WriteExecutionResult,
+)
 
 
 class GatewayRunner(Protocol):
@@ -23,6 +32,11 @@ class QueryBackend(Protocol):
         ...
 
 
+class TodoWriteExecutor(Protocol):
+    def create(self, candidate: WriteCandidate) -> WriteExecutionResult:
+        ...
+
+
 def build_meeting_output(
     *,
     eval_name: str,
@@ -33,6 +47,7 @@ def build_meeting_output(
     fallback_reason: str | None = None,
     key_context: list[str] | None = None,
     missing_sources: list[str] | None = None,
+    write_results: list[WriteExecutionResult] | None = None,
 ) -> str:
     transcript_title = transcript_path.name
     transcript_text, transcript_status = _read_transcript_text(transcript_path)
@@ -56,6 +71,9 @@ def build_meeting_output(
         lines.extend(f"- {item}" for item in key_context)
     if missing_sources:
         lines.append(f"未找到但应存在的资料: {'、'.join(missing_sources)}")
+    if write_results:
+        lines.append("统一写回结果:")
+        lines.extend(_render_write_results(write_results))
 
     lines.extend(_render_case_body(eval_name, transcript_text))
     return "\n".join(lines)
@@ -80,6 +98,7 @@ def run_gateway_and_build_meeting_output(
     context = recover_live_context(
         gateway_result=gateway_result,
         query_backend=query_backend,
+        topic_text=transcript_path.stem,
     )
     output_text = build_meeting_output(
         eval_name=eval_name,
@@ -92,6 +111,71 @@ def run_gateway_and_build_meeting_output(
         missing_sources=context["missing_sources"],
     )
     return output_text, gateway_result
+
+
+def build_meeting_todo_candidates(
+    *,
+    eval_name: str,
+    gateway_result: GatewayResult,
+) -> list[WriteCandidate]:
+    resolution = gateway_result.customer_resolution
+    if resolution is None or resolution.status != "resolved" or not resolution.candidates:
+        return []
+    customer = resolution.candidates[0]
+    if eval_name != "unilever-stage-review":
+        return []
+    summary = _build_recommended_todo_summary(eval_name, customer.short_name)
+    return [
+        WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "owner", "customer", "priority", "due_at"],
+            payload={
+                "summary": summary,
+                "customer": customer.short_name,
+                "priority": "高",
+                "description": "来自会议场景的建议态跟进动作；负责人待确认后才能真正写入。",
+            },
+            match_basis={
+                "customer": customer.short_name,
+                "time_window": "2026-04",
+            },
+            source_context={
+                "scenario": "post_meeting",
+                "meeting_eval": eval_name,
+                "customer_id": customer.customer_id,
+            },
+        )
+    ]
+
+
+def run_confirmed_todo_write(
+    *,
+    candidates: list[WriteCandidate],
+    todo_writer: TodoWriteExecutor,
+) -> list[WriteExecutionResult]:
+    results: list[WriteExecutionResult] = []
+    for candidate in candidates:
+        target_object = candidate.target_object or "todo"
+        if candidate.operation == "update":
+            results.append(
+                WriteExecutionResult(
+                    target_object=target_object,
+                    attempted=False,
+                    allowed=False,
+                    preflight_status="safe",
+                    guard_status="blocked",
+                    dedupe_decision="no_write",
+                    executed_operation="blocked",
+                    blocked_reasons=["update_operation_not_supported_in_confirmed_write"],
+                    source_context=dict(candidate.source_context),
+                )
+            )
+            continue
+        results.append(todo_writer.create(candidate))
+    return results
 
 
 def _render_customer_resolution(gateway_result: GatewayResult) -> str:
@@ -112,6 +196,7 @@ def recover_live_context(
     *,
     gateway_result: GatewayResult,
     query_backend: QueryBackend,
+    topic_text: str = "",
 ) -> dict[str, object]:
     resolution = gateway_result.customer_resolution
     if resolution is None:
@@ -151,6 +236,11 @@ def recover_live_context(
     else:
         missing_sources.append("行动计划")
 
+    meeting_notes = _rank_related_meeting_notes(contact_rows, topic_text=topic_text, limit=3)
+    if meeting_notes:
+        used_sources.append("相关会议纪要候选")
+        key_context.append(f"相关会议纪要候选: {'；'.join(meeting_notes)}")
+
     if best.archive_link:
         used_sources.append("客户档案链接")
         key_context.append(f"客户档案链接: {best.archive_link}")
@@ -186,6 +276,73 @@ def _render_latest_action(row: dict[str, object]) -> str:
     return f"当前行动计划: {action}｜{due_at}"
 
 
+def _rank_related_meeting_notes(
+    contact_rows: list[dict[str, object]],
+    *,
+    topic_text: str,
+    limit: int,
+) -> list[str]:
+    if not contact_rows:
+        return []
+    topic_terms = _topic_terms(topic_text)
+    candidates: list[tuple[int, datetime | None, str]] = []
+    seen_links: set[str] = set()
+    for row in contact_rows:
+        title = str(
+            row.get("会议纪要标题")
+            or row.get("记录标题")
+            or row.get("主题")
+            or ""
+        ).strip()
+        link = str(
+            row.get("会议纪要链接")
+            or row.get("会议记录链接")
+            or row.get("纪要链接")
+            or ""
+        ).strip()
+        date = str(row.get("联系日期") or row.get("记录时间") or "")
+        if not title or not link or link in seen_links:
+            continue
+        seen_links.add(link)
+        score = _meeting_note_score(title=title, date=date, topic_terms=topic_terms)
+        candidates.append((score, _parse_note_date(date), f"{title}｜{date or '日期未提供'}｜{link}"))
+
+    candidates.sort(
+        key=lambda item: (item[0], item[1] if item[1] is not None else datetime.min),
+        reverse=True,
+    )
+    return [item[2] for item in candidates[:limit]]
+
+
+def _topic_terms(text: str) -> set[str]:
+    normalized = text.lower()
+    normalized = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", " ", normalized)
+    parts = [part for part in normalized.split() if part]
+    stop_words = {"会议", "纪要", "记录", "阶段", "汇报"}
+    return {part for part in parts if part not in stop_words}
+
+
+def _meeting_note_score(*, title: str, date: str, topic_terms: set[str]) -> int:
+    title_terms = _topic_terms(title)
+    overlap = len(title_terms.intersection(topic_terms)) if topic_terms else 0
+    score = overlap * 10
+    if date:
+        score += 3
+    return score
+
+
+def _parse_note_date(date_str: str) -> datetime | None:
+    # Extract first YYYY-MM-DD-like token from mixed date strings.
+    match = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", date_str)
+    if not match:
+        return None
+    try:
+        year, month, day = (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+        return datetime(year, month, day)
+    except ValueError:
+        return None
+
+
 def _render_case_body(eval_name: str, transcript_text: str) -> list[str]:
     if eval_name == "unilever-stage-review":
         return _render_unilever_body(transcript_text)
@@ -194,6 +351,24 @@ def _render_case_body(eval_name: str, transcript_text: str) -> list[str]:
     if eval_name == "dominos-ad-tracking-qa":
         return _render_dominos_body(transcript_text)
     raise KeyError(f"unsupported eval case: {eval_name}")
+
+
+def _render_write_results(write_results: list[WriteExecutionResult]) -> list[str]:
+    lines: list[str] = []
+    for item in write_results:
+        blocked = ",".join(item.blocked_reasons) if item.blocked_reasons else "none"
+        lines.append(
+            f"- {item.target_object}: {item.executed_operation} "
+            f"(dedupe={item.dedupe_decision}; preflight={item.preflight_status}; "
+            f"guard={item.guard_status}; blocked={blocked})"
+        )
+    return lines
+
+
+def _build_recommended_todo_summary(eval_name: str, customer_name: str) -> str:
+    if eval_name == "unilever-stage-review":
+        return f"跟进{customer_name}下一轮 Campaign 优化方案确认"
+    return f"跟进{customer_name}会议后续动作确认"
 
 
 def _render_unilever_body(transcript_text: str) -> list[str]:
