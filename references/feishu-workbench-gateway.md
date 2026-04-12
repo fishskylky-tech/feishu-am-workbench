@@ -18,6 +18,7 @@ The gateway unifies these responsibilities:
 2. resolve the customer and `客户ID`
 3. run targeted live reads only when the scenario explicitly requests them
 4. run live safety checks before write planning
+5. hand confirmed write candidates to the unified writer surface
 
 Any scenario that needs Feishu context should go through this gateway rather than improvising its own read path.
 
@@ -109,6 +110,15 @@ Examples:
 
 This stage is still planning, not mutation.
 
+The scenario layer should also attach:
+
+- `operation`
+- `match_basis`
+- `source_context`
+- `target_object`
+
+These fields are part of the shared write-candidate contract, not Todo-only details.
+
 ### Stage 5: Live Schema Preflight
 
 Before any write suggestion becomes write-ready:
@@ -143,6 +153,23 @@ If anything remains unsafe:
 - keep recommendation mode
 - do not escalate to write mode
 
+### Stage 7: Unified Writer Execution
+
+After explicit user confirmation:
+
+- pass the confirmed write candidate to the object-specific writer
+- do not let the scenario call Feishu mutation commands directly
+
+Writer responsibilities:
+
+- execute create or update
+- apply object-level dedupe
+- return a normalized write result
+
+Current first-class writer:
+
+- Todo writer
+
 ## Which scenarios must call the gateway
 
 These scenarios should use the gateway by default:
@@ -171,6 +198,7 @@ When the gateway is used, the final scenario output should make these items visi
 - `上下文恢复状态`
 - `已使用飞书资料`
 - `写入候选对象`
+- `统一写回结果`
 - `schema preflight 结果`
 - `blocked / drift`
 
