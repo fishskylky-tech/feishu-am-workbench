@@ -1,131 +1,149 @@
 # feishu-am-workbench
 
-一个面向个人 AM 场景的 Codex Skill，用于围绕飞书“经营工作平台”完成客户分析、会议准备、会后沉淀、经营判断和确认后回写。
+Feishu AM Workbench 是一个面向客户经营（AM）工作的飞书技能。
 
-这个仓库用于版本化管理 `feishu-am-workbench`，让 skill 的规则、字段映射、路由逻辑、兼容性策略和模板演进都能通过 GitHub 持续治理。
+它不是单纯的“会议总结器”，而是一套帮助 AM 把日常工作做稳、做深、做成闭环的工作方法：
 
-当前阶段的主线不是“先做成通用产品”，而是优先把这套 skill 打磨成对你个人高频 AM 工作真正有用的能力层；配置抽离和通用化继续保留，但排在后面。
+- 先恢复上下文，再给判断
+- 先出建议，再确认写回
+- 先做校验，再触发变更
 
-## 这个 skill 做什么
+目标是把 AM 的日常动作从“零散信息处理”，升级成“可追踪、可复盘、可持续优化”的经营闭环。
 
-- 分析多种 AM 输入：
-  - 本地客户资料目录
-  - 会议纪要
-  - 你的自然语言补充
-  - 飞书 Base 中的经营工作台数据
-  - 客户档案文档
-  - 客户公开资讯
-- 产出：
-  - 客户经营分析和判断
-  - 对飞书经营工作台的更新建议
-  - 在你确认后的 Base / 文档 / Todo 回写
-- 严格执行经营规则：
-  - 每个客户只能有 1 份正式客户档案
-  - 日期必须使用绝对时间
-  - 客户主数据表是快照层，不是流水账
-  - 长会议纪要进入“冷记忆”文档，不直接塞进 Base
-  - Todo 必须有责任人，且要做语义去重
-  - 写回前先做 live schema 检查，避免字段或选项漂移导致误写
+## 产品定位
 
-## 仓库结构
+这个技能的核心价值，不是“多写一份总结”，而是帮助 AM 把每天最耗精力的工作变得更稳、更快、更可持续。
 
-- [SKILL.md](./SKILL.md)
-  - skill 主说明，定义工作流、写回边界和硬约束
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-  - 当前架构分层、gateway 位置和 runtime 边界
-- [agents/openai.yaml](./agents/openai.yaml)
-  - agent 展示信息和默认 prompt
-- [references/](./references)
-  - 规则说明、字段快照、路由规则、兼容性策略等参考文件
-- [CHANGELOG.md](./CHANGELOG.md)
-  - skill 的版本变更记录
-- [VERSION](./VERSION)
-  - 当前 skill 版本
-- [config/](./config)
-  - workspace config 模板和脱敏示例，用来承接 live schema 兼容落地
-- [ROADMAP.md](./ROADMAP.md)
-  - skill 的中长期演进路线图
-- [CONFIG-MODEL.md](./CONFIG-MODEL.md)
-  - 通用 skill 与个人私有飞书环境之间的配置分层设计
-- [SECURITY-MODEL.md](./SECURITY-MODEL.md)
-  - skill 公开或给其他人使用时的安全设计
-- [VALIDATION.md](./VALIDATION.md)
-  - 当前版本的真实场景回归检查清单
-- [STATUS.md](./STATUS.md)
-  - 当前实现进度、阻点和下一步，避免部分完成状态丢失
-- [WORKFLOW.md](./WORKFLOW.md)
-  - 开发分支迭代和合并节奏说明
-- [runtime/](./runtime)
-  - skill 内部底座执行层，包含 gateway、resolver、hydrator、preflight、write guard 的本地模块
-  - 当前已支持通过 `lark-cli` 产出 live capability report，并返回 resource catalog / query guide，告诉上层有哪些资源可查、优先用什么工具查
-- [references/meeting-context-recovery.md](./references/meeting-context-recovery.md)
-  - 会议纪要场景下的上下文恢复流程
-- [references/meeting-type-classification.md](./references/meeting-type-classification.md)
-  - 会议类型分类和不同类型对应的写回上限
-- [references/meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md)
-  - 结构化会议纪要文档标准、保真边界和 AI 提示语
-- [references/meeting-output-standard.md](./references/meeting-output-standard.md)
-  - 会议纪要最终输出结构、中文标题规范和动态建议态更新规则
-- [references/feishu-runtime-sources.md](./references/feishu-runtime-sources.md)
-  - 当前个人环境下飞书资源线索从哪里取
-- [references/live-resource-links.md](./references/live-resource-links.md)
-  - 当前个人环境的真实飞书入口 URL，供 runtime 直接解析 Base / folder / tasklist 入口
-- [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md)
-  - skill 内部统一的飞书工作台访问底座
-- [references/base-integration-model.md](./references/base-integration-model.md)
-  - 多维表格接入模型：只维护最小语义面，不做全字段镜像
-- [references/minimal-stable-core.md](./references/minimal-stable-core.md)
-  - 定义哪些是后续优化时不应轻易改动的最小稳定内核
-- [.github/](./.github)
-  - GitHub issue / PR 模板
+它重点辅助 AM 做好四类日常工作：
 
-## 当前设计原则
+1. 会前准备：快速恢复客户上下文，知道这次会要解决什么，不再临时拼信息。
+2. 会后沉淀：把会议结论、待确认问题、后续动作拆清楚，减少“开完会就断线”。
+3. 客户经营跟进：把分散在聊天、纪要、表格里的信号串成连续线程，避免遗漏关键动作。
+4. 团队协同执行：把待办责任人、优先级和重复任务管住，让推进动作真正落地。
 
-这套 skill 不假设飞书经营工作台的 schema 永远不变。
+对应的业务结果是：
 
-它采用的是：
+- 降低上下文切换成本，提升每次沟通的准备质量。
+- 减少遗漏、误写和重复任务，提升执行确定性。
+- 让客户经营从“靠记忆”变成“可追踪、可复盘、可优化”的工作流。
 
-- skill 内固化稳定的业务规则
-- config 内定义每个 workspace 的资源映射、语义字段位和枚举治理
-- reference 文件保存当前 schema 快照和字段意图
-- 真正写回前，实时读取 live schema 和 live options
-- 写回前按照 live schema preflight contract 输出可审计的 drift / block 结果
-- 字段改名时，优先 live 匹配，其次才是 alias fallback
-- 一旦无法安全匹配，就停留在建议态，不做盲写
-- 优先保持 minimal stable core 稳定，把 runtime 细节放在扩展层演进
-- 当前已补一层本地 `runtime/` 骨架，用来承接飞书工作台底座的执行层
-- 当前多维表格接入已引入 `table profile` 模型：
-  - profile 可以先纳入表级角色和约束
-  - semantic slots 只在场景真正需要时再补
+它背后的运行原则可以概括为三句：
 
-## 本地安装方式
+- 先恢复上下文，再做判断。
+- 先给执行建议，再确认落盘。
+- 先保证写入安全，再追求自动化。
 
-当前真源目录就是：
+## 核心能力
+
+### 1. 会前会后助手
+
+- 支持会议纪要、逐字稿、会后整理输入
+- 先恢复客户背景，不把单份纪要当成全部事实
+- 输出中明确区分：事实、判断、开放问题、写回边界
+
+### 2. 客户经营资产管理
+
+- 将客户概况与过程记录分层管理
+- 长文本沉淀在文档，表格保持结构化字段
+- 在需要时关联客户档案和历史线程，避免脱离背景的结论
+
+### 3. 统一 Todo 闭环
+
+- 支持创建、更新、暂不写入、建议拆分子任务等决策
+- 支持语义去重，减少重复任务与并行冲突
+
+## 运行原则
+
+### 上下文优先
+
+- 会议类任务先恢复最小必要背景，再做结论
+- 输出明确标注依据来源，方便复核和追踪
+
+### 写入前防护
+
+- 写入前先检查字段与选项是否匹配当前环境
+- 写入前检查负责人与关键约束是否满足
+- 不满足安全条件时保持建议模式
+
+### 漂移兼容
+
+- 优先使用当前环境中的真实字段与选项
+- 同义词只用于辅助匹配，不作为盲写依据
+- 兼容失败时宁可阻断写入，也不做不可解释变更
+
+## 快速开始
+
+### 前置条件
+
+1. 已安装并可用 lark-cli
+2. 已完成飞书认证并具备目标资源访问权限
+3. 本地 Python 3.10+
+
+### 1) 先跑环境诊断
 
 ```bash
-~/.codex/skills/feishu-am-workbench
+python3 -m runtime .
 ```
 
-## 迭代方式
+如果三个核心能力都显示为 `available`，就可以进入真实验证。
 
-建议所有有意义的 skill 变更都走 GitHub 管理，包括：
+### 2) 再跑会议场景验证
 
-- Base 字段映射调整
-- 经营规则变化
-- 客户档案模板规则变化
-- 写回路由和去重规则变化
-- Todo 结构和字段使用变化
-- schema 兼容策略变化
+```bash
+python3 -m evals.meeting_output_bridge \
+  --eval-name unilever-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --run-gateway \
+  --customer-query 联合利华
+```
 
-小范围字段快照刷新可以直接提交，但涉及经营逻辑和写回边界的变化，建议通过 PR 审核后再合并。
+重点观察：资源解析状态、客户解析结果、上下文恢复状态、已使用资料。
 
-## 建议的 issue 类型
+### 3) 运行验证集
 
-- `Skill change`
-  - 用于提行为、模板、路由、规则、写回策略调整
-- `Schema drift`
-  - 用于提飞书 Base 字段改名、增删字段、选项变化、任务清单自定义字段变化
+```bash
+python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_eval_runner tests.test_validation_assets
+```
 
-## 当前状态
+## 写回策略
 
-这个仓库已经是 `feishu-am-workbench` 的唯一真源，且本地 Codex 直接从这个目录加载。
+### 默认行为
+
+- 先建议，后确认
+- 未确认不写入
+- 责任人未解析时不创建待办
+
+### 去重行为
+
+- 同一核心任务优先“更新已有任务（update_existing）”
+- 若是更细执行步骤，优先“建议拆分子任务（create_subtask）”
+- 子任务默认是建议态，显式确认后才会执行创建
+
+## 路线图（抽象）
+
+### M1 稳态执行内核
+
+持续压实写回稳定性、回归样本和失败模式治理，降低误写/漏写/重复写风险。
+
+### M2 经营闭环增强
+
+从“完成落盘”升级到“主动提炼经营信号”，形成客户周报、风险提醒和动作缺口提示。
+
+### M3 复杂输入深度解读
+
+提升会议纪要与历史资料的分阶段解读能力，强化事实-判断-行动的专家级链路。
+
+### M4 兼容性与通用化
+
+增强跨工作区（workspace）的字段适配能力，降低硬编码依赖，沉淀可迁移的经营方法模型（operating model）。
+
+## 项目资源导航
+
+- 核心规则与入口: [SKILL.md](SKILL.md)
+- 架构边界: [ARCHITECTURE.md](ARCHITECTURE.md)
+- 当前状态: [STATUS.md](STATUS.md)
+- 验证协议: [VALIDATION.md](VALIDATION.md)
+- 变更记录: [CHANGELOG.md](CHANGELOG.md)
+- 演进路线: [ROADMAP.md](ROADMAP.md)
+- 运行时执行层: [runtime/](runtime)
+- 规则与策略文档: [references/](references)

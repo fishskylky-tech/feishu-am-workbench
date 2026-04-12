@@ -9,6 +9,10 @@
 
 当前协议不是重型 benchmark 框架，而是可重复执行的最小闭环。
 
+本轮新增一条验证主线：
+
+- 统一 Todo 写回通道是否已经形成最小闭环
+
 ## 验证目标
 
 本轮验证的目标不是证明“自动写回 ready”，而是证明：
@@ -18,6 +22,7 @@
 - recommendation mode / no-write 边界更稳
 - 关键 hard rules 对真实场景有实际约束力
 - 会议分析前会先尝试 live-first gateway，而不是默认单文件分析
+- meeting 场景产出的 Todo candidate 已可进入统一 writer，并返回标准化 write result
 
 ## 样本范围
 
@@ -120,6 +125,17 @@
 - 是否避免盲猜字段名
 - 是否把输出重心放在该场景真正需要的内容上
 
+如果场景涉及 Todo，还要额外检查：
+
+- 是否产出结构化 Todo candidate
+- candidate 是否带 `operation`、`match_basis`、`source_context`、`target_object`
+- 是否显示 dedupe 决策
+- 是否显示 preflight / guard / blocked 结果
+- recommendation mode 和 confirmed write mode 是否分离清楚
+- 若命中 `create_subtask`：
+   - 默认是否保持 recommendation-only
+   - 仅在显式确认（`source_context.confirm_create_subtask=true`）时才执行真实写入
+
 ## 当前执行方式
 
 本轮默认使用三层验证资产：
@@ -130,10 +146,11 @@
 2. 数据层
    - `evals/evals.json` 保存真实案例、预期行为和断言
 3. 执行层
-   - `evals/runner.py` 读取案例和 agent 输出，并逐条执行断言
-   - `evals/meeting_output_bridge.py` 把 transcript + gateway 结果拼成 runner 可复核的最小输出
-   - bridge 既支持手工注入 `GatewayResult`，也支持先执行 gateway 再生成输出
-   - bridge 现在可继续执行最小 Stage 3 context recovery：读取 `客户联系记录`、`行动计划` 和客户档案链接
+  - `evals/runner.py` 读取案例和 agent 输出，并逐条执行断言
+  - `evals/meeting_output_bridge.py` 把 transcript + gateway 结果拼成 runner 可复核的最小输出
+  - bridge 既支持手工注入 `GatewayResult`，也支持先执行 gateway 再生成输出
+  - bridge 现在可继续执行最小 Stage 3 context recovery：读取 `客户联系记录`、`行动计划` 和客户档案链接
+  - bridge 现在可生成最小 Todo candidate，并在确认后调用统一 Todo writer
 
 ## 当前验证报告
 
@@ -152,3 +169,4 @@
 - `CHANGELOG.md`、`VERSION`、`evals/evals.json` 版本一致
 - 统一验证报告已经产出
 - 可以给出按 P1 / P3 排序的修改建议
+- 至少 1 个 meeting 场景已验证统一 Todo writer 的 candidate -> result 闭环
