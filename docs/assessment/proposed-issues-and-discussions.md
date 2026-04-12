@@ -157,23 +157,25 @@ triggers:
 
 ---
 
-### Issue #4: [Architecture] 建立明确的 L1/L2/L3 渐进式披露边界
+### Issue #4: [Architecture] 明确文档层的 L1/L2/L3 渐进式披露边界
 
 **优先级**: P1
-**标签**: `architecture`, `progressive-disclosure`, `skill-compliance`
+**标签**: `architecture`, `progressive-disclosure`, `skill-compliance`, `docs`, `P1`
 
 #### 描述
-根据 Google ADK skills 标准，应实现三层渐进式披露（L1: metadata, L2: instructions, L3: resources）以最小化 agent 上下文窗口占用。当前虽有 21 个 reference 文档作为 L3 层，但缺少明确的加载层级和技术层面的按需加载机制。
+根据 Google ADK skills 标准，应明确三层渐进式披露的文档边界（L1: metadata, L2: instructions, L3: resources），以最小化 agent 上下文窗口占用。当前虽有 21 个 reference 文档作为 L3 层，但在 SKILL.md 中仍缺少清晰、可执行的分层定义与加载约定。
+
+> 说明：此处的 P1 仅指文档层/架构层的分层边界定义与约定澄清；“技术层按需加载机制”应作为后续独立的 P3 实现项跟踪，避免与本 Issue 混淆。
 
 #### 当前问题
-1. SKILL.md 中 "Read These References As Needed" 是文档约定，依赖 agent 自律
-2. 21 个 reference 文档未明确加载优先级
-3. 无技术手段保证不预加载所有文档
-4. 在不支持渐进式加载的平台上可能超出上下文窗口
+1. SKILL.md 中 "Read These References As Needed" 仍主要是文档约定，缺少显式的 L1/L2/L3 边界说明
+2. 21 个 reference 文档未明确加载优先级或适用场景
+3. 文档层规范与平台/运行时的技术加载能力尚未区分说明
+4. 读者容易将“分层边界定义”与“技术按需加载实现”理解为同一个优先级事项
 
 #### 建议方案
 
-**1. 在 SKILL.md 添加显式分层标注**
+**1. 在 SKILL.md 添加显式分层标注与范围说明**
 ```markdown
 ## Skill Loading Tiers
 
