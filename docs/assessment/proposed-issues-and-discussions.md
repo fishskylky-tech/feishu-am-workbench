@@ -43,8 +43,8 @@
 
 ### Issue #2: [Structure] 进一步精简 SKILL.md 以提升跨平台兼容性（目标 <2,000 tokens）
 
-**优先级**: P1
-**标签**: `documentation`, `structure`, `skill-compliance`
+**优先级**: P3
+**标签**: `documentation`, `structure`, `skill-compliance`, `P3`
 
 #### 描述
 根据 Google ADK 和 Anthropic skills 标准，L2 层指令应保持在 5,000 tokens 以内。当前 SKILL.md 主体约 2,063 词（估计 2,750+ tokens），已满足该限制；本 Issue 的目标是进一步精简至更易移植的规模（如 <2,000 tokens），以提升在不同 agent 平台上的兼容性。
