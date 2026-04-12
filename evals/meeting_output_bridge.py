@@ -158,10 +158,11 @@ def run_confirmed_todo_write(
 ) -> list[WriteExecutionResult]:
     results: list[WriteExecutionResult] = []
     for candidate in candidates:
+        target_object = candidate.target_object or "todo"
         if candidate.operation == "update":
             results.append(
                 WriteExecutionResult(
-                    target_object=candidate.target_object,
+                    target_object=target_object,
                     attempted=False,
                     allowed=False,
                     preflight_status="safe",
