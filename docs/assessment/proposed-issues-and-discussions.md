@@ -12,11 +12,11 @@
 **标签**: `security`, `P0`, `immediate`
 
 #### 描述
-当前 `references/live-resource-links.md` 包含个人飞书资源的真实 URL 和 tokens，存在安全风险。应将敏感配置移至环境变量或本地配置文件，并加入 `.gitignore`。
+当前 `references/live-resource-links.md` 包含个人飞书资源的真实 URL 和资源 ID（包括 Base token、文件夹 token 及任务列表 GUID），存在安全风险。应将敏感配置移至环境变量或本地配置文件，并加入 `.gitignore`。
 
 #### 当前问题
 - `references/live-resource-links.md` 包含真实资源链接
-- 个人 token 和 workspace 信息可能暴露
+- 资源 ID（Base token、文件夹 token 等）和 workspace 信息可能暴露
 - 缺少 pre-commit hook 检查 secrets
 
 #### 建议方案
@@ -41,13 +41,13 @@
 
 ---
 
-### Issue #2: [Structure] SKILL.md 精简以符合 L2 层 <5,000 tokens 标准
+### Issue #2: [Structure] 进一步精简 SKILL.md 以提升跨平台兼容性（目标 <2,000 tokens）
 
 **优先级**: P1
 **标签**: `documentation`, `structure`, `skill-compliance`
 
 #### 描述
-根据 Google ADK 和 Anthropic skills 标准，L2 层指令应保持在 5,000 tokens 以内。当前 SKILL.md 主体约 2,063 词（估计 2,750+ tokens），虽然未超出限制，但可以进一步优化以提升在不同 agent 平台的兼容性。
+根据 Google ADK 和 Anthropic skills 标准，L2 层指令应保持在 5,000 tokens 以内。当前 SKILL.md 主体约 2,063 词（估计 2,750+ tokens），已满足该限制；本 Issue 的目标是进一步精简至更易移植的规模（如 <2,000 tokens），以提升在不同 agent 平台上的兼容性。
 
 #### 当前状态
 - SKILL.md 主体: ~2,063 词
@@ -959,7 +959,7 @@ jobs:
 **类别**: Architecture & Standards
 
 #### 背景
-本技能在架构设计和运行时实现方面非常优秀，但在标准化结构和可移植性方面与 ADK/Anthropic skills 标准存在差距。根据评估报告（详见 `docs/assessment/skill-standards-evaluation.md`），总体得分 7.3/10，主要差距在于：
+本技能在架构设计和运行时实现方面非常优秀，但在标准化结构和可移植性方面与 ADK/Anthropic skills 标准存在差距。根据评估报告（详见 `docs/assessment/skill-standards-evaluation.md`），总体得分 8.13/10，主要差距在于：
 
 1. **结构标准化**: SKILL.md 需要精简，建立明确的 L1/L2/L3 边界
 2. **可移植性**: 当前高度个人化，限制了跨环境部署
