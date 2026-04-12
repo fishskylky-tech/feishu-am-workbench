@@ -12,11 +12,11 @@
 **标签**: `security`, `P0`, `immediate`
 
 #### 描述
-当前 `references/live-resource-links.md` 包含个人飞书资源的真实 URL 和资源 ID（包括 Base token、文件夹 token 及任务列表 GUID），存在安全风险。应将敏感配置移至环境变量或本地配置文件，并加入 `.gitignore`。
+当前 `references/live-resource-links.md` 包含个人飞书资源的真实 URL 和 tokens，存在安全风险。应将敏感配置移至环境变量或本地配置文件，并加入 `.gitignore`。
 
 #### 当前问题
 - `references/live-resource-links.md` 包含真实资源链接
-- 资源 ID（Base token、文件夹 token 等）和 workspace 信息可能暴露
+- 个人 token 和 workspace 信息可能暴露
 - 缺少 pre-commit hook 检查 secrets
 
 #### 建议方案
@@ -43,8 +43,8 @@
 
 ### Issue #2: [Structure] 进一步精简 SKILL.md 以提升跨平台兼容性（目标 <2,000 tokens）
 
-**优先级**: P3
-**标签**: `documentation`, `structure`, `skill-compliance`, `P3`
+**优先级**: P1
+**标签**: `documentation`, `structure`, `skill-compliance`
 
 #### 描述
 根据 Google ADK 和 Anthropic skills 标准，L2 层指令应保持在 5,000 tokens 以内。当前 SKILL.md 主体约 2,063 词（估计 2,750+ tokens），已满足该限制；本 Issue 的目标是进一步精简至更易移植的规模（如 <2,000 tokens），以提升在不同 agent 平台上的兼容性。
@@ -157,25 +157,23 @@ triggers:
 
 ---
 
-### Issue #4: [Architecture] 明确文档层的 L1/L2/L3 渐进式披露边界
+### Issue #4: [Architecture] 建立明确的 L1/L2/L3 渐进式披露边界
 
 **优先级**: P1
-**标签**: `architecture`, `progressive-disclosure`, `skill-compliance`, `docs`, `P1`
+**标签**: `architecture`, `progressive-disclosure`, `skill-compliance`
 
 #### 描述
-根据 Google ADK skills 标准，应明确三层渐进式披露的文档边界（L1: metadata, L2: instructions, L3: resources），以最小化 agent 上下文窗口占用。当前虽有 21 个 reference 文档作为 L3 层，但在 SKILL.md 中仍缺少清晰、可执行的分层定义与加载约定。
-
-> 说明：此处的 P1 仅指文档层/架构层的分层边界定义与约定澄清；“技术层按需加载机制”应作为后续独立的 P3 实现项跟踪，避免与本 Issue 混淆。
+根据 Google ADK skills 标准，应实现三层渐进式披露（L1: metadata, L2: instructions, L3: resources）以最小化 agent 上下文窗口占用。当前虽有 21 个 reference 文档作为 L3 层，但缺少明确的加载层级和技术层面的按需加载机制。
 
 #### 当前问题
-1. SKILL.md 中 "Read These References As Needed" 仍主要是文档约定，缺少显式的 L1/L2/L3 边界说明
-2. 21 个 reference 文档未明确加载优先级或适用场景
-3. 文档层规范与平台/运行时的技术加载能力尚未区分说明
-4. 读者容易将“分层边界定义”与“技术按需加载实现”理解为同一个优先级事项
+1. SKILL.md 中 "Read These References As Needed" 是文档约定，依赖 agent 自律
+2. 21 个 reference 文档未明确加载优先级
+3. 无技术手段保证不预加载所有文档
+4. 在不支持渐进式加载的平台上可能超出上下文窗口
 
 #### 建议方案
 
-**1. 在 SKILL.md 添加显式分层标注与范围说明**
+**1. 在 SKILL.md 添加显式分层标注**
 ```markdown
 ## Skill Loading Tiers
 
@@ -259,8 +257,8 @@ dependencies: [feishu-workbench-gateway, customer-archive-rules]
 
 ### Issue #5: [Portability] 实现 workspace 配置层抽象
 
-**优先级**: P2
-**标签**: `portability`, `configuration`, `architecture`, `P2`
+**优先级**: P1
+**标签**: `portability`, `configuration`, `architecture`
 
 #### 描述
 当前 skill 高度个人化（"only for you"），个人资源硬编码在文档中，限制了在不同飞书 workspace 或给其他 AM 使用的能力。根据 ROADMAP M4 规划，需要实现配置与代码分离，建立 workspace 配置层抽象。
@@ -961,7 +959,7 @@ jobs:
 **类别**: Architecture & Standards
 
 #### 背景
-本技能在架构设计和运行时实现方面非常优秀，但在标准化结构和可移植性方面与 ADK/Anthropic skills 标准存在差距。根据评估报告（详见 `docs/assessment/skill-standards-evaluation.md`），总体得分 8.13/10，主要差距在于：
+本技能在架构设计和运行时实现方面非常优秀，但在标准化结构和可移植性方面与 ADK/Anthropic skills 标准存在差距。根据评估报告（详见 `docs/assessment/skill-standards-evaluation.md`），总体得分 7.3/10，主要差距在于：
 
 1. **结构标准化**: SKILL.md 需要精简，建立明确的 L1/L2/L3 边界
 2. **可移植性**: 当前高度个人化，限制了跨环境部署
