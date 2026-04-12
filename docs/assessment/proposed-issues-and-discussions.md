@@ -259,8 +259,8 @@ dependencies: [feishu-workbench-gateway, customer-archive-rules]
 
 ### Issue #5: [Portability] 实现 workspace 配置层抽象
 
-**优先级**: P1
-**标签**: `portability`, `configuration`, `architecture`
+**优先级**: P2
+**标签**: `portability`, `configuration`, `architecture`, `P2`
 
 #### 描述
 当前 skill 高度个人化（"only for you"），个人资源硬编码在文档中，限制了在不同飞书 workspace 或给其他 AM 使用的能力。根据 ROADMAP M4 规划，需要实现配置与代码分离，建立 workspace 配置层抽象。
