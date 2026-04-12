@@ -221,7 +221,7 @@ repository: https://github.com/fishskylky-tech/feishu-am-workbench
 #### 改进建议
 
 **P2**: Context Hydrator 独立为 runtime/ 层组件
-- 当前在 meeting_output_bridge.py 中
+- 当前在 `evals/meeting_output_bridge.py` 中
 - 应抽象为通用组件
 
 ---
