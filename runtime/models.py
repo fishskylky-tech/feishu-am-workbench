@@ -10,6 +10,10 @@ Status = Literal["resolved", "partial", "unresolved"]
 PreflightStatus = Literal["safe", "safe_with_drift", "blocked"]
 CapabilityStatus = Literal["available", "degraded", "unavailable"]
 TableRole = Literal["snapshot", "detail", "dimension", "bridge"]
+WriteOperation = Literal["create", "update"]
+DedupeDecision = Literal["create_new", "update_existing", "create_subtask", "no_write"]
+GuardStatus = Literal["allowed", "blocked"]
+ExecutedOperation = Literal["create", "update", "blocked", "no_write"]
 
 
 @dataclass
@@ -87,6 +91,10 @@ class WriteCandidate:
     layer: Literal["snapshot", "detail", "archive", "reminder"]
     semantic_fields: list[str] = field(default_factory=list)
     payload: dict[str, Any] = field(default_factory=dict)
+    operation: WriteOperation = "create"
+    match_basis: dict[str, Any] = field(default_factory=dict)
+    source_context: dict[str, Any] = field(default_factory=dict)
+    target_object: str | None = None
 
 
 @dataclass
@@ -127,14 +135,33 @@ class GuardResult:
 
 
 @dataclass
-class TodoWriteResult:
+class WriteExecutionResult:
+    target_object: str
     attempted: bool
     allowed: bool
-    preflight_report: PreflightReport
-    guard_result: GuardResult
-    task_guid: str | None = None
-    task_url: str | None = None
+    preflight_status: PreflightStatus | None = None
+    guard_status: GuardStatus | None = None
+    dedupe_decision: DedupeDecision = "create_new"
+    executed_operation: ExecutedOperation = "no_write"
+    remote_object_id: str | None = None
+    remote_url: str | None = None
+    blocked_reasons: list[str] = field(default_factory=list)
+    drift_items: list[str] = field(default_factory=list)
+    source_context: dict[str, Any] = field(default_factory=dict)
+    preflight_report: PreflightReport | None = None
+    guard_result: GuardResult | None = None
     request_payload: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class TodoWriteResult(WriteExecutionResult):
+    @property
+    def task_guid(self) -> str | None:
+        return self.remote_object_id
+
+    @property
+    def task_url(self) -> str | None:
+        return self.remote_url
 
 
 @dataclass
@@ -158,3 +185,4 @@ class GatewayResult:
     write_candidates: list[WriteCandidate] = field(default_factory=list)
     preflight_reports: list[PreflightReport] = field(default_factory=list)
     guard_results: list[GuardResult] = field(default_factory=list)
+    write_results: list[WriteExecutionResult] = field(default_factory=list)

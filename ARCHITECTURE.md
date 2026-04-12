@@ -140,6 +140,19 @@ flowchart TD
 - 档案
 - Todo
 
+它可以决定：
+
+- 是否应该建议写回
+- 具体触达哪些对象
+- 为每个对象产出什么 `write candidate`
+
+但它不应直接负责：
+
+- live schema 校验
+- dedupe 执行
+- 真实写入调用
+- 写入结果结构化返回
+
 ## 4. 飞书工作台底座
 
 这是当前架构最关键的一层。
@@ -260,6 +273,13 @@ flowchart LR
 
 只在用户确认后执行。
 
+当前收口原则是：
+
+- 场景层负责产出 `change plan` 和 `write candidate`
+- 底座负责统一执行 writer
+- writer 统一返回 `write result`
+- 不允许每个场景各自拼写入细节
+
 写回顺序保持不变：
 
 1. Base tables
@@ -269,8 +289,28 @@ flowchart LR
 原则：
 
 - 写前必须经过 live schema preflight
+- 写前必须经过 write guard 与对象级 dedupe
 - 任何 unsafe 情况都停在 recommendation mode
 - 不为了“写成功”而发明 fallback 值
+
+当前第一批统一写回对象：
+
+1. Todo
+
+统一写回协议当前最小包含：
+
+- `WriteCandidate`
+  - `target_object`
+  - `operation`
+  - `match_basis`
+  - `source_context`
+- `WriteExecutionResult`
+  - `preflight_status`
+  - `guard_status`
+  - `dedupe_decision`
+  - `executed_operation`
+  - `blocked_reasons`
+  - `remote_object_id`
 
 ---
 
@@ -292,10 +332,11 @@ sequenceDiagram
     G-->>S: hydrated context
 
     S->>S: 做会议解读、提炼信号、形成建议
-    S->>G: 写前 preflight
-    G->>F: 检查 live schema / options
-    F-->>G: safe / drift / blocked
-    G-->>S: preflight report
+    S->>S: 产出 change plan + write candidate
+    S->>G: 确认后调用统一 writer
+    G->>F: 检查 live schema / options / dedupe / write
+    F-->>G: write result
+    G-->>S: preflight + guard + dedupe + write result
 
     S-->>U: 分析 + 建议更新 + blocked/drift
 ```
@@ -303,8 +344,8 @@ sequenceDiagram
 这条链路强调：
 
 - 会议场景不直接访问飞书细节
-- 飞书访问和写前校验由底座统一处理
-- 上层场景只处理经营解释和输出
+- 飞书访问、写前校验和真实写入由底座统一处理
+- 上层场景只处理经营解释、候选生成和输出
 
 ---
 

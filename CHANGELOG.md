@@ -11,6 +11,31 @@
 
 ## [Unreleased]
 
+### 新增
+
+- `runtime/models.py`
+  - 为统一落盘通道补充 `WriteCandidate` 公共字段：`operation`、`match_basis`、`source_context`、`target_object`
+  - 新增 `WriteExecutionResult` 统一写回结果模型
+- `evals/meeting_output_bridge.py`
+  - 新增最小 Todo candidate 生成与 confirmed write 调用入口
+  - 输出中可展示统一写回结果摘要
+
+### 变更
+
+- `runtime/todo_writer.py`
+  - 从 Todo 专用返回结构收口到统一写回结果语义
+  - 增加第一版 minimal semantic dedupe，支持 `create_new` / `update_existing` / `create_subtask` / `no_write` 决策
+  - duplicate 命中后默认走 `update_existing` 自动 patch
+  - `create_subtask` 默认 recommendation-only，显式确认（`confirm_create_subtask=true`）后执行真实子任务创建
+- `evals/meeting_output_bridge.py`
+  - 增加“相关会议纪要候选”命中与排序最小层（基于客户联系记录标题/日期/链接）
+- `tests/test_runtime_smoke.py`、`tests/test_meeting_output_bridge.py`
+  - 新增 dedupe 中文变体、create_subtask 可选执行、meeting-note 候选排序回归用例
+- `ARCHITECTURE.md`、`references/feishu-workbench-gateway.md`、`references/task-patterns.md`
+  - 明确“场景层产出 write candidate，底座统一执行 writer”的分层边界
+- `STATUS.md`、`VALIDATION.md`
+  - 新增 unified Todo writer 的状态和验证口径
+
 ## [0.2.11] - 2026-04-11
 
 ### 新增

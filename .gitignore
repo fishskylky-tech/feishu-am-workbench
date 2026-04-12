@@ -4,3 +4,11 @@
 *.tmp
 *.bak
 config/local.*.yaml
+
+# Local mirrors / external skill repos not part of this skill
+external-skills/
+
+# Session/process planning artifacts (not product assets)
+task_plan.md
+findings.md
+progress.md

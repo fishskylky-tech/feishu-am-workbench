@@ -24,15 +24,56 @@ from runtime.models import (  # noqa: E402
     GatewayResult,
     ResourceHint,
     ResourceResolution,
+    WriteExecutionResult,
 )
 
 from evals.meeting_output_bridge import build_meeting_output  # noqa: E402
 from evals.meeting_output_bridge import main as bridge_main  # noqa: E402
+from evals.meeting_output_bridge import build_meeting_todo_candidates  # noqa: E402
 from evals.meeting_output_bridge import recover_live_context  # noqa: E402
+from evals.meeting_output_bridge import run_confirmed_todo_write  # noqa: E402
 from evals.meeting_output_bridge import run_gateway_and_build_meeting_output  # noqa: E402
 
 
 class MeetingOutputBridgeTests(unittest.TestCase):
+    def test_build_meeting_output_includes_write_result_summary(self) -> None:
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        output_text = build_meeting_output(
+            eval_name="unilever-stage-review",
+            transcript_path=UNILEVER_TRANSCRIPT,
+            gateway_result=gateway_result,
+            context_status="partial",
+            used_sources=["客户主数据"],
+            write_results=[
+                WriteExecutionResult(
+                    target_object="todo",
+                    attempted=False,
+                    allowed=False,
+                    preflight_status="safe",
+                    guard_status="allowed",
+                    dedupe_decision="update_existing",
+                    executed_operation="blocked",
+                    remote_object_id="task_existing",
+                    blocked_reasons=["semantic_duplicate_detected"],
+                    source_context={"scenario": "post_meeting"},
+                )
+            ],
+        )
+
+        self.assertIn("统一写回结果:", output_text)
+        self.assertIn("- todo: blocked", output_text)
+        self.assertIn("dedupe=update_existing", output_text)
+        self.assertIn("blocked=semantic_duplicate_detected", output_text)
+
     def test_build_meeting_output_handles_missing_transcript_file(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(status="resolved"),
@@ -60,6 +101,98 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertIn("Transcript source: feishu-am-workbench-missing-transcript.txt", output_text)
         self.assertIn("Transcript status: missing", output_text)
         self.assertIn("fallback 原因: transcript file not available in current environment", output_text)
+
+    def test_build_meeting_todo_candidates_returns_recommendation_mode_candidate(self) -> None:
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        candidates = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=gateway_result,
+        )
+
+        self.assertEqual(len(candidates), 1)
+        candidate = candidates[0]
+        self.assertEqual(candidate.target_object, "todo")
+        self.assertEqual(candidate.operation, "create")
+        self.assertEqual(candidate.source_context["scenario"], "post_meeting")
+        self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.match_basis["time_window"], "2026-04")
+        self.assertNotIn("owner", candidate.payload)
+
+    def test_run_confirmed_todo_write_uses_unified_todo_writer(self) -> None:
+        class FakeTodoWriter:
+            def __init__(self) -> None:
+                self.calls = []
+
+            def create(self, candidate):
+                self.calls.append(candidate)
+                return WriteExecutionResult(
+                    target_object="todo",
+                    attempted=True,
+                    allowed=True,
+                    preflight_status="safe",
+                    guard_status="allowed",
+                    dedupe_decision="create_new",
+                    executed_operation="create",
+                    remote_object_id="task_guid_1",
+                    remote_url="https://applink.feishu.cn/client/todo/detail?guid=task_guid_1",
+                    source_context=dict(candidate.source_context),
+                )
+
+        candidate = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=GatewayResult(
+                resource_resolution=ResourceResolution(status="resolved"),
+                customer_resolution=CustomerResolution(
+                    status="resolved",
+                    query="联合利华",
+                    candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                ),
+            ),
+        )[0]
+
+        writer = FakeTodoWriter()
+        results = run_confirmed_todo_write(
+            candidates=[candidate],
+            todo_writer=writer,
+        )
+
+        self.assertEqual(len(writer.calls), 1)
+        self.assertEqual(writer.calls[0].target_object, "todo")
+        self.assertEqual(results[0].executed_operation, "create")
+        self.assertEqual(results[0].remote_object_id, "task_guid_1")
+
+    def test_run_confirmed_todo_write_blocks_update_candidates(self) -> None:
+        class FakeTodoWriter:
+            def create(self, candidate):
+                raise AssertionError("update candidate should not call create")
+
+        candidate = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=GatewayResult(
+                resource_resolution=ResourceResolution(status="resolved"),
+                customer_resolution=CustomerResolution(
+                    status="resolved",
+                    query="联合利华",
+                    candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                ),
+            ),
+        )[0]
+        candidate.operation = "update"
+
+        results = run_confirmed_todo_write(candidates=[candidate], todo_writer=FakeTodoWriter())
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].executed_operation, "blocked")
+        self.assertIn("update_operation_not_supported_in_confirmed_write", results[0].blocked_reasons)
 
     def test_recover_live_context_reads_minimum_base_sources(self) -> None:
         class FakeQueryBackend:
@@ -104,6 +237,98 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         self.assertIn("最近联系记录: 2026-04-09｜联合利华｜阶段汇报跟进", context["key_context"])
         self.assertIn("当前行动计划: 推进 Campaign 优化方案确认｜2026-04-20", context["key_context"])
+
+    def test_recover_live_context_includes_ranked_related_meeting_notes(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [
+                        {
+                            "客户ID": customer_id,
+                            "记录标题": "联合利华｜Campaign活动分析优化阶段汇报",
+                            "联系日期": "2026-04-10",
+                            "会议纪要链接": "https://doc.example/note-1",
+                        },
+                        {
+                            "客户ID": customer_id,
+                            "记录标题": "联合利华｜季度复盘沟通",
+                            "联系日期": "2026-04-05",
+                            "会议纪要链接": "https://doc.example/note-2",
+                        },
+                    ]
+                if table_name == "行动计划":
+                    return [
+                        {"客户ID": customer_id, "具体行动": "推进优化方案", "计划完成时间": "2026-04-20"},
+                    ]
+                return []
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[
+                    CustomerMatch(
+                        customer_id="C_002",
+                        short_name="联合利华",
+                        archive_link="https://doc.example/unilever",
+                    )
+                ],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=FakeQueryBackend(),
+            topic_text="20260410-联合利华 Campaign活动分析优化-阶段汇报",
+        )
+
+        self.assertIn("相关会议纪要候选", context["used_sources"])
+        note_lines = [line for line in context["key_context"] if line.startswith("相关会议纪要候选:")]
+        self.assertEqual(len(note_lines), 1)
+        self.assertIn("note-1", note_lines[0])
+
+    def test_recover_live_context_prefers_recent_note_when_titles_are_similar(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [
+                        {
+                            "客户ID": customer_id,
+                            "记录标题": "联合利华｜月度复盘汇报",
+                            "联系日期": "2024-04-10",
+                            "会议纪要链接": "https://doc.example/old-note",
+                        },
+                        {
+                            "客户ID": customer_id,
+                            "记录标题": "联合利华｜月度复盘汇报",
+                            "联系日期": "2026-04-10",
+                            "会议纪要链接": "https://doc.example/new-note",
+                        },
+                    ]
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "复盘沟通", "计划完成时间": "2026-04-20"}]
+                return []
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=FakeQueryBackend(),
+            topic_text="联合利华 月度复盘",
+        )
+        note_lines = [line for line in context["key_context"] if line.startswith("相关会议纪要候选:")]
+        self.assertEqual(len(note_lines), 1)
+        self.assertTrue(note_lines[0].index("new-note") < note_lines[0].index("old-note"))
 
     def test_gateway_execution_marks_unilever_context_as_partial_until_stage3_reads_exist(self) -> None:
         class FakeGateway:
