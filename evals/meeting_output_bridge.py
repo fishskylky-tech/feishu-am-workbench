@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 from pathlib import Path
 import re
 from typing import Protocol
@@ -309,7 +310,26 @@ def _meeting_note_score(*, title: str, date: str, topic_terms: set[str]) -> int:
     score = overlap * 10
     if date:
         score += 3
+        note_dt = _parse_note_date(date)
+        if note_dt is not None:
+            days = abs((datetime.utcnow() - note_dt).days)
+            if days <= 30:
+                score += 20
+            elif days <= 90:
+                score += 10
     return score
+
+
+def _parse_note_date(date_str: str) -> datetime | None:
+    # Extract first YYYY-MM-DD-like token from mixed date strings.
+    match = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", date_str)
+    if not match:
+        return None
+    try:
+        year, month, day = (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+        return datetime(year, month, day)
+    except ValueError:
+        return None
 
 
 def _render_case_body(eval_name: str, transcript_text: str) -> list[str]:

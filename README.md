@@ -117,7 +117,7 @@ python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge te
 
 - 同一核心任务优先“更新已有任务（update_existing）”
 - 若是更细执行步骤，优先“建议拆分子任务（create_subtask）”
-- 子任务默认是建议态，显式确认后才会执行创建
+- 子任务默认是建议态，显式确认（source_context.confirm_create_subtask=true）后才会执行创建
 
 ## 路线图（抽象）
 

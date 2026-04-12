@@ -264,6 +264,47 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(len(note_lines), 1)
         self.assertIn("note-1", note_lines[0])
 
+    def test_recover_live_context_prefers_recent_note_when_titles_are_similar(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [
+                        {
+                            "客户ID": customer_id,
+                            "记录标题": "联合利华｜月度复盘汇报",
+                            "联系日期": "2024-04-10",
+                            "会议纪要链接": "https://doc.example/old-note",
+                        },
+                        {
+                            "客户ID": customer_id,
+                            "记录标题": "联合利华｜月度复盘汇报",
+                            "联系日期": "2026-04-10",
+                            "会议纪要链接": "https://doc.example/new-note",
+                        },
+                    ]
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "复盘沟通", "计划完成时间": "2026-04-20"}]
+                return []
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=FakeQueryBackend(),
+            topic_text="联合利华 月度复盘",
+        )
+        note_lines = [line for line in context["key_context"] if line.startswith("相关会议纪要候选:")]
+        self.assertEqual(len(note_lines), 1)
+        self.assertTrue(note_lines[0].index("new-note") < note_lines[0].index("old-note"))
+
     def test_gateway_execution_marks_unilever_context_as_partial_until_stage3_reads_exist(self) -> None:
         class FakeGateway:
             def run(self, customer_query: str):
