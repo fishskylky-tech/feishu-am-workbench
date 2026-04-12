@@ -401,7 +401,7 @@ Phase 3 (Later): 跨平台、跨工具 🔮
 **优先级**: P0
 **标签**: `security`, `immediate`
 
-移除 `references/live-resource-links.md` 中的真实资源 URL，改为示例文件，真实配置通过环境变量提供。
+移除 `references/live-resource-links.md` 中的真实资源 URL 和资源 ID（如 Base token、文件夹 token、任务列表 GUID 等），改为示例文件，真实配置通过环境变量提供。
 
 ---
 
