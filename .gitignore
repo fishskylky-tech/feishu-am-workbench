@@ -3,6 +3,9 @@
 *.swo
 *.tmp
 *.bak
+__pycache__/
+*.pyc
+.pytest_cache/
 config/local.*.yaml
 
 # Local mirrors / external skill repos not part of this skill
