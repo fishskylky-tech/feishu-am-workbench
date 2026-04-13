@@ -370,6 +370,118 @@ sequenceDiagram
 
 ---
 
+## 渐进式披露设计 (Progressive Disclosure)
+
+本 skill 遵循 Google ADK 的三层渐进式披露模型，以最小化 agent 上下文窗口占用。
+
+### 设计原则
+
+- **L1 层（元数据）**：~150 tokens，由 agent 平台始终加载
+  - 包含：name, description, compatibility, tags, version
+
+- **L2 层（核心指令）**：~2,000 tokens，在 skill 激活时加载
+  - 包含：Runtime Prerequisites, Use This Skill When, Core Workflow, Hard Rules, Extraction First, Output Pattern, Write Order, Closed Loop, Scope
+
+- **L3 层（扩展引用）**：~17,327 tokens 总预算，按需加载
+  - 21 个 reference 文档分为 4 类加载策略
+
+### L3 加载策略
+
+#### 1. 始终优先加载（访问飞书时）
+
+- `feishu-workbench-gateway.md` (1004 tokens) - 飞书工作台统一网关
+
+#### 2. 按场景加载
+
+**会议场景** (~3,600 tokens):
+- meeting-context-recovery.md (855)
+- meeting-live-first-policy.md (619)
+- meeting-type-classification.md (591)
+- meeting-output-standard.md (517)
+- meeting-note-doc-standard.md (332)
+
+**写入操作** (~4,647 tokens):
+- live-schema-preflight.md (856)
+- update-routing.md (1510)
+- actual-field-mapping.md (1385)
+- schema-compatibility.md (896)
+
+**客户操作** (~1,307 tokens):
+- customer-archive-rules.md (601)
+- master-data-guardrails.md (706)
+
+**抽取任务** (~849 tokens):
+- entity-extraction-schema.md (615)
+- fact-grading.md (234)
+
+**通用模式** (~1,344 tokens):
+- task-patterns.md (1344)
+
+#### 3. 按需加载（满足特定条件时）
+
+**架构与集成** (~3,576 tokens):
+- workbench-information-architecture.md (770)
+- base-integration-model.md (820)
+- feishu-runtime-sources.md (571)
+- money-and-contract-rules.md (375)
+- minimal-stable-core.md (672)
+- live-resource-links.example.md (73)
+
+### 加载元数据
+
+每个 reference 文档现在包含 YAML frontmatter，定义：
+
+- `title`: 文档标题
+- `load_triggers`: 加载触发条件
+  - `user_input_contains`: 用户输入包含特定关键词
+  - `task_type`: 任务类型匹配
+  - `skill_stage`: 技能执行阶段
+  - `condition`: 其他触发条件
+- `load_priority`: 加载优先级 (critical / high / medium / low)
+- `estimated_tokens`: 预估 token 数
+- `dependencies`: 依赖的其他文档
+- `tier`: 所属加载层级
+
+示例：
+
+```yaml
+---
+title: Meeting Context Recovery
+load_triggers:
+  - user_input_contains: [会议, meeting, transcript, 纪要, 会前, 会后]
+  - task_type: [meeting-prep, post-meeting, meeting-analysis]
+  - skill_stage: [context-recovery]
+load_priority: high
+estimated_tokens: 855
+dependencies: [feishu-workbench-gateway]
+tier: L3-scenario-meeting
+---
+```
+
+### Token 预算验证
+
+- **L1 层**: ~150 tokens
+- **L2 层**: ~2,000 tokens
+- **L3 层（全加载）**: ~17,327 tokens
+- **总计**: ~19,477 tokens
+
+典型场景实际加载：
+
+- **会议场景**: L1 (150) + L2 (2,000) + Gateway (1,004) + Meeting refs (~3,600) = ~6,754 tokens
+- **写入场景**: L1 (150) + L2 (2,000) + Gateway (1,004) + Write refs (~4,647) = ~7,801 tokens
+- **客户更新**: L1 (150) + L2 (2,000) + Gateway (1,004) + Customer refs (~1,307) + Extraction refs (~849) = ~5,310 tokens
+
+这确保了在不支持渐进式加载的平台上，通过智能选择性加载，能够将上下文窗口占用控制在合理范围内。
+
+### 未来增强
+
+- 实现技术层加载器（读取 frontmatter，按需加载）
+- 支持 agent 平台的 progressive loading API
+- 添加 token 预算监控和运行时警告
+- 基于实际使用模式动态优化加载策略
+
+---
+
 ## 本轮审查结论
 
 ### CEO 视角

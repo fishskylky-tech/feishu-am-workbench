@@ -32,6 +32,75 @@ The workbench is layered:
 - `客户档案`: narrative archive and decision-support layer
 - Feishu Todo: reminder and execution layer
 
+## Skill Loading Tiers
+
+This skill follows a three-tier progressive disclosure model to minimize agent context window usage:
+
+### L1: Metadata (~150 tokens)
+
+Always loaded by the agent platform.
+
+- Frontmatter: name, description, compatibility, tags, version
+
+### L2: Core Instructions (~2,000 tokens)
+
+Loaded when skill is activated.
+
+- Runtime Prerequisites
+- Use This Skill When
+- Core Workflow (simplified)
+- Hard Rules (checklist only)
+- Extraction First
+- Output Pattern (template only)
+- Write Order
+- Closed Loop
+- Scope
+
+### L3: Extended References (~17,000 tokens total, loaded on-demand)
+
+Reference documents in `references/` should be loaded only when needed based on task context.
+
+#### Always Load First (if accessing Feishu)
+
+- [feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md) - Unified gateway for all Feishu workbench access (~1,000 tokens)
+
+#### Load by Scenario
+
+**Meeting tasks**:
+- [meeting-context-recovery.md](./references/meeting-context-recovery.md) - Context recovery process (~855 tokens)
+- [meeting-live-first-policy.md](./references/meeting-live-first-policy.md) - Live-first execution gate (~620 tokens)
+- [meeting-type-classification.md](./references/meeting-type-classification.md) - Meeting type taxonomy and write ceiling (~590 tokens)
+- [meeting-output-standard.md](./references/meeting-output-standard.md) - Final output structure (~520 tokens)
+- [meeting-note-doc-standard.md](./references/meeting-note-doc-standard.md) - Cold-memory doc structure (~330 tokens)
+
+**Write operations**:
+- [live-schema-preflight.md](./references/live-schema-preflight.md) - Schema validation before writes (~855 tokens)
+- [schema-compatibility.md](./references/schema-compatibility.md) - Handling schema drift (~895 tokens)
+- [update-routing.md](./references/update-routing.md) - Routing and idempotency rules (~1,510 tokens)
+- [actual-field-mapping.md](./references/actual-field-mapping.md) - Cached field snapshot (~1,385 tokens)
+
+**Customer operations**:
+- [customer-archive-rules.md](./references/customer-archive-rules.md) - Archive creation and linking (~600 tokens)
+- [master-data-guardrails.md](./references/master-data-guardrails.md) - Protected fields policy (~705 tokens)
+
+**Extraction tasks**:
+- [entity-extraction-schema.md](./references/entity-extraction-schema.md) - Full extraction bundle schema (~615 tokens)
+- [fact-grading.md](./references/fact-grading.md) - Facts vs judgment classification (~235 tokens)
+
+**Common patterns**:
+- [task-patterns.md](./references/task-patterns.md) - Playbooks for common workflows (~1,345 tokens)
+
+#### Load on Demand (when specific conditions met)
+
+- [workbench-information-architecture.md](./references/workbench-information-architecture.md) - Workbench layer relationships (~770 tokens)
+- [base-integration-model.md](./references/base-integration-model.md) - Table integration principles (~820 tokens)
+- [feishu-runtime-sources.md](./references/feishu-runtime-sources.md) - Runtime resource discovery (~570 tokens)
+- [money-and-contract-rules.md](./references/money-and-contract-rules.md) - Financial terms handling (~375 tokens)
+- [minimal-stable-core.md](./references/minimal-stable-core.md) - Invariant core definition (~670 tokens)
+- [live-resource-links.example.md](./references/live-resource-links.example.md) - Example runtime wiring (~75 tokens)
+
+For a complete index with loading guidance, see [references/INDEX.md](./references/INDEX.md).
+
 ## Use This Skill When
 
 - The user wants account analysis from local files, Feishu records, notes, or public information.

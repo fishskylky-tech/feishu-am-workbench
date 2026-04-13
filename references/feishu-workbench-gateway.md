@@ -1,3 +1,14 @@
+---
+title: Feishu Workbench Gateway
+load_triggers:
+  - task_type: [meeting-prep, post-meeting, account-analysis, archive-refresh, writeback-plan]
+  - condition: accessing any Feishu workbench resource
+load_priority: critical
+estimated_tokens: 1004
+dependencies: []
+tier: L3-always-load-first
+---
+
 # Feishu Workbench Gateway
 
 Use this file when a scenario needs to touch Feishu workbench resources.

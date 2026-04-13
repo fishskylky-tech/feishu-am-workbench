@@ -1,3 +1,14 @@
+---
+title: Schema Compatibility
+load_triggers:
+  - skill_stage: [preflight, schema-check]
+  - condition: schema drift detected or field mapping needed
+load_priority: medium
+estimated_tokens: 896
+dependencies: [live-schema-preflight, actual-field-mapping]
+tier: L3-scenario-write
+---
+
 # Schema Compatibility
 
 Use this file when the Feishu Base schema may have changed since the cached mapping was last reviewed.

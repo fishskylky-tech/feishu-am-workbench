@@ -1,3 +1,14 @@
+---
+title: Meeting Output Standard
+load_triggers:
+  - skill_stage: [output-formatting, meeting-output]
+  - task_type: [meeting-prep, post-meeting, meeting-analysis]
+load_priority: medium
+estimated_tokens: 517
+dependencies: []
+tier: L3-scenario-meeting
+---
+
 # Meeting Output Standard
 
 Use this file when producing the final user-facing result for a meeting note, transcript, or post-meeting update.

@@ -1,3 +1,14 @@
+---
+title: Task Patterns
+load_triggers:
+  - task_type: [meeting-prep, post-meeting, archive-refresh]
+  - condition: executing well-known task patterns
+load_priority: medium
+estimated_tokens: 1344
+dependencies: [meeting-context-recovery, customer-archive-rules]
+tier: L3-scenario-common
+---
+
 # Task Patterns
 
 Use these patterns as defaults.

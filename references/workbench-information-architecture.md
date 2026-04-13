@@ -1,3 +1,14 @@
+---
+title: Workbench Information Architecture
+load_triggers:
+  - condition: interpreting workbench layer relationships
+  - skill_stage: [architecture-planning, refactoring]
+load_priority: low
+estimated_tokens: 770
+dependencies: []
+tier: L3-on-demand
+---
+
 # Workbench Information Architecture
 
 This file defines how the Feishu account management workbench is meant to work.

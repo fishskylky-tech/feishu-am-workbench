@@ -1,3 +1,14 @@
+---
+title: Feishu Runtime Sources
+load_triggers:
+  - condition: runtime needs to discover resource hints
+  - skill_stage: [resource-resolution]
+load_priority: medium
+estimated_tokens: 571
+dependencies: [feishu-workbench-gateway]
+tier: L3-on-demand
+---
+
 # Feishu Runtime Sources
 
 Use this file when the skill needs to access the current live Feishu workbench environment.

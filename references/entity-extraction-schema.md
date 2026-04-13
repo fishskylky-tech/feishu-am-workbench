@@ -1,3 +1,14 @@
+---
+title: Entity Extraction Schema
+load_triggers:
+  - skill_stage: [extraction, parsing]
+  - task_type: [all-tasks]
+load_priority: high
+estimated_tokens: 615
+dependencies: []
+tier: L3-scenario-extraction
+---
+
 # Entity Extraction Schema
 
 Use this schema before any routing or write-back. One input can populate many slots.

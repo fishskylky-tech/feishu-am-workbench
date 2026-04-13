@@ -1,3 +1,15 @@
+---
+title: Meeting Context Recovery
+load_triggers:
+  - user_input_contains: [会议, meeting, transcript, 纪要, 会前, 会后]
+  - task_type: [meeting-prep, post-meeting, meeting-analysis]
+  - skill_stage: [context-recovery]
+load_priority: high
+estimated_tokens: 855
+dependencies: [feishu-workbench-gateway]
+tier: L3-scenario-meeting
+---
+
 # Meeting Context Recovery
 
 Use this file before interpreting a meeting note, transcript, or post-meeting summary.
