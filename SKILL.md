@@ -9,7 +9,6 @@ description: >
   Also trigger when the user pastes a meeting transcript, shares a customer file, or asks questions like
   "这个客户最近怎样", "帮我整理一下今天的会议", "更新一下飞书上的行动计划", "帮我准备一下明天的拜访". When in doubt, use this skill.
 tags: [feishu, account-management, am-workflow, chinese, crm, pipeline]
-license: MIT
 repository: https://github.com/fishskylky-tech/feishu-am-workbench
 compatibility: requires lark-cli in PATH; Python 3.10+ for runtime/ modules; personal Feishu token configured in environment
 load_strategy: progressive
