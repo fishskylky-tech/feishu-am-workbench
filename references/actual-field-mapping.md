@@ -70,6 +70,16 @@ Use `lark-cli` to fetch current schema:
 
 Note: `lark-cli base +field-list` may return empty options for select fields. Use `+field-get` for each field individually to get option values.
 
+### Validating Format
+
+After updating this file, validate the format by running:
+
+```bash
+python3 scripts/validate_field_mapping.py
+```
+
+This will check that all required fields can be parsed correctly by `runtime/runtime_sources.py`.
+
 ## How to use this file
 
 - Use this file to understand the current intent of each table and field.
