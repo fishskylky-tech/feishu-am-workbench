@@ -20,9 +20,6 @@ Always loaded by the agent platform.
 - `name`: feishu-am-workbench
 - `description`: Skill trigger conditions and use cases
 - `compatibility`: Runtime prerequisites
-- `tags`: Categorization and discovery
-- `version`: Skill version
-
 **Location**: Frontmatter in `SKILL.md`
 
 ## L2: Core Instructions (~2,000 tokens)
@@ -133,7 +130,7 @@ load_triggers:
 load_priority: critical | high | medium | low
 estimated_tokens: 500
 dependencies: [doc1, doc2]
-tier: L3-always | L3-scenario-* | L3-on-demand
+tier: L3-always | L3-scenario-meeting | L3-scenario-write | L3-scenario-extraction | L3-scenario-customer | L3-scenario-common | L3-on-demand
 ---
 ```
 

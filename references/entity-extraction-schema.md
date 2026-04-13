@@ -2,7 +2,6 @@
 title: Entity Extraction Schema
 load_triggers:
   - skill_stage: [extraction, parsing]
-  - task_type: [all-tasks]
 load_priority: high
 estimated_tokens: 615
 dependencies: []

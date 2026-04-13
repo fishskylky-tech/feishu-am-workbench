@@ -2,7 +2,6 @@
 title: Fact Grading
 load_triggers:
   - skill_stage: [extraction, analysis]
-  - task_type: [all-tasks]
 load_priority: high
 estimated_tokens: 234
 dependencies: [entity-extraction-schema]

@@ -6,7 +6,7 @@ load_triggers:
 load_priority: critical
 estimated_tokens: 1004
 dependencies: []
-tier: L3-always-load-first
+tier: L3-always
 ---
 
 # Feishu Workbench Gateway

@@ -40,7 +40,7 @@ This skill follows a three-tier progressive disclosure model to minimize agent c
 
 Always loaded by the agent platform.
 
-- Frontmatter: name, description, compatibility, tags, version
+- Frontmatter: name, description, compatibility
 
 ### L2: Core Instructions (~2,000 tokens)
 
@@ -56,7 +56,7 @@ Loaded when skill is activated.
 - Closed Loop
 - Scope
 
-### L3: Extended References (~17,000 tokens total, loaded on-demand)
+### L3: Extended References (~17,327 tokens total, loaded on-demand)
 
 Reference documents in `references/` should be loaded only when needed based on task context.
 

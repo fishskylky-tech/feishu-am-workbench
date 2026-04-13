@@ -6,8 +6,8 @@ Quick reference for all 21 documents in this directory. Read SKILL.md for the fu
 
 This skill follows a three-tier progressive disclosure model (L1: metadata, L2: instructions, L3: references) to minimize agent context window usage.
 
-| File | Summary | When to Load | Priority | Est. Tokens | Tier |
-|------|---------|-------------|----------|-------------|------|
+| File | Summary | When to Load | Priority | Est. Tokens | Tier Group |
+|------|---------|-------------|----------|-------------|------------|
 | [feishu-workbench-gateway.md](./feishu-workbench-gateway.md) | Unified gateway for all Feishu workbench access | Always (if Feishu) | Critical | 1004 | L3-always |
 | [entity-extraction-schema.md](./entity-extraction-schema.md) | Full extraction bundle schema | All tasks (extraction stage) | High | 615 | L3-extraction |
 | [meeting-context-recovery.md](./meeting-context-recovery.md) | Context recovery process | Meeting tasks | High | 855 | L3-meeting |
