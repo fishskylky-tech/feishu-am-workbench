@@ -49,7 +49,7 @@
 
 已完成：
 
-- 当前个人环境真实入口已记录在 [references/live-resource-links.md](./references/live-resource-links.md)
+- 当前个人环境入口示例已记录在 [references/live-resource-links.example.md](./references/live-resource-links.example.md)
 - runtime 已能从该文件解析：
   - Base token
   - `客户主数据` table id

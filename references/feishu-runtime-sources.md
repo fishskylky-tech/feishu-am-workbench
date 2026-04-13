@@ -28,18 +28,19 @@ the skill should first determine which resource source it is using.
 
 Use this order:
 
-1. Current live resource hints already present in the skill repository
-2. Cached mapping in `references/actual-field-mapping.md`
-3. Stable architecture rules in `references/workbench-information-architecture.md`
-4. No-write / context-limited fallback
+1. Environment variables (`FEISHU_AM_*`)
+2. Current example resource hints in the skill repository
+3. Cached mapping in `references/actual-field-mapping.md`
+4. Stable architecture rules in `references/workbench-information-architecture.md`
+5. No-write / context-limited fallback
 
 Do not assume a separate private config exists.
-Do not treat the absence of obvious environment variables as proof that live runtime sources are unavailable.
+Real tokens should be provided by environment variables, not committed files.
 
 Before declaring runtime sources unavailable, the skill must first read:
 
 - `references/feishu-runtime-sources.md`
-- `references/live-resource-links.md` when present
+- `references/live-resource-links.example.md` when present
 - `references/actual-field-mapping.md`
 - `references/workbench-information-architecture.md`
 
@@ -71,7 +72,7 @@ Current source:
 
 Current known folder:
 
-- `OYDDfQN0plqHkRdnpt8cfBWtnU9`
+- `fld_customer_archive_example`
 
 ### Meeting-note cold-memory folder
 
@@ -83,7 +84,7 @@ Current sources:
 
 Current known folder:
 
-- `OlBCfU7IKl2oSbd09lXckKJlnTc`
+- `fld_meeting_notes_example`
 
 ### Todo tasklist and custom fields
 
@@ -93,7 +94,7 @@ Current source:
 
 Current known resources:
 
-- `tasklist_guid`: `e50dda19-63e4-410a-a167-6813f3b3c86d`
+- `tasklist_guid`: `00000000-0000-4000-8000-000000000001`
 - `客户` custom field guid: `a7009aff-7d85-4378-82c9-1584873f469d`
 - `优先级` custom field guid: `f7587037-8ad1-443c-b350-f6600e0ccadd`
 

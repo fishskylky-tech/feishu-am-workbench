@@ -271,7 +271,7 @@ Actual fields:
 Tasklist:
 
 - Name: `神策`
-- `tasklist_guid`: `e50dda19-63e4-410a-a167-6813f3b3c86d`
+- `tasklist_guid`: `00000000-0000-4000-8000-000000000001`
 
 Custom fields currently validated from live tasks:
 

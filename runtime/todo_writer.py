@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timezone
 import re
 
+from .env_loader import load_dotenv
 from .lark_cli import LarkCliClient
 from .live_adapter import LarkCliSchemaBackend, LiveWorkbenchConfig
 from .models import TodoWriteResult, WriteCandidate
@@ -31,6 +32,7 @@ class TodoWriter:
 
     @classmethod
     def for_live_lark_cli(cls, repo_root: str) -> "TodoWriter":
+        load_dotenv(repo_root)
         sources = RuntimeSourceLoader(repo_root).load()
         config = LiveWorkbenchConfig.from_sources(sources)
         client = LarkCliClient()

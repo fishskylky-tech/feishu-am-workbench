@@ -54,7 +54,7 @@ These tables hang off `客户主数据.客户ID` as the foreign key for customer
 
 ## Layer 4: Customer archive
 
-- Location: Feishu docs folder `OYDDfQN0plqHkRdnpt8cfBWtnU9`
+- Location: Feishu docs folder `fld_customer_archive_example`
 - Purpose:
   - Explain the customer's full picture
   - Capture the key “前世今生”
@@ -71,7 +71,7 @@ These tables hang off `客户主数据.客户ID` as the foreign key for customer
 
 ## Layer 5: Meeting-note cold memory
 
-- Location: Feishu docs folder `OlBCfU7IKl2oSbd09lXckKJlnTc`
+- Location: Feishu docs folder `fld_meeting_notes_example`
 - Purpose:
   - Store long meeting records and transcripts
   - Keep those records lazy-loaded

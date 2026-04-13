@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .customer_resolver import CustomerResolver
+from .env_loader import load_dotenv
 from .live_adapter import (
     LarkCliCustomerBackend,
     LarkCliResourceProbe,
@@ -39,6 +40,7 @@ class FeishuWorkbenchGateway:
 
     @classmethod
     def for_live_lark_cli(cls, repo_root: str) -> "FeishuWorkbenchGateway":
+        load_dotenv(repo_root)
         source_loader = RuntimeSourceLoader(repo_root)
         sources = source_loader.load()
         config = LiveWorkbenchConfig.from_sources(sources)

@@ -6,7 +6,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-config/local.*.yaml
+config/local.yaml
+config/*.local.yaml
+.env
+.env.local
 
 # Local mirrors / external skill repos not part of this skill
 external-skills/

@@ -14,7 +14,10 @@ Current goal:
   - shared data models
 - `runtime_sources.py`
   - load current runtime hints from repository files
-  - includes parsing current live URLs from `references/live-resource-links.md`
+  - includes parsing current live URLs from `references/live-resource-links.example.md`
+- `env_loader.py`
+  - explicitly loads `.env` at runtime entrypoints (`python -m runtime`, gateway/todo live constructors)
+  - keeps existing shell environment variables unchanged by default
 - `resource_resolver.py`
   - resolve currently known resource hints
 - `lark_cli.py`
@@ -81,3 +84,5 @@ Use JSON output when another tool or scene needs to consume the report:
 ```bash
 python3 -m runtime . --json
 ```
+
+Runtime entrypoints now explicitly load `.env` from the repository root before reading `FEISHU_AM_*` variables. If the same key is already exported in your shell, the exported value wins.
