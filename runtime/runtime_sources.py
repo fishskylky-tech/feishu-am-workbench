@@ -44,7 +44,7 @@ class RuntimeSourceLoader:
         archive_env = self._env_value("customer_archive_folder")
         todo_tasklist_hint = self._extract_single(
             actual_mapping,
-            r"(?:`tasklist_guid`|tasklist_guid|Tasklist(?:\s+GUID)?)\s*[:：]\s*`?([a-f0-9\-]+)`?",
+            r"(?i:(?:\*\*|__|`)?(?:tasklist_guid|Tasklist(?:\s+GUID)?)(?:\*\*|__|`)?\s*[:：]\s*`?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})`?)",
             "references/actual-field-mapping.md",
             "todo_tasklist_guid",
         )
@@ -215,7 +215,7 @@ class RuntimeSourceLoader:
         return re.findall(r"[-*]\s*`([^`]+)`", section_match.group(1))
 
     def _extract_priority_option_guids(self, text: str) -> dict[str, str]:
-        # Support both -> and : as separators, but be specific about GUID format
+        # Support both -> and → as separators, but be specific about GUID format
         # Look for lines that have an option name mapped to a GUID (UUID format)
         matches = re.findall(
             r"[-*]\s*`([^`]+)`\s*(?:->|→)\s*`([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})`",

@@ -18,7 +18,7 @@ Use this exact format for tasklist configuration:
 
 Example:
 ```
-- `tasklist_guid`: `00000000-0000-4000-8000-000000000001`
+- `tasklist_guid`: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 ```
 
 ### Custom Field GUID Format
@@ -33,7 +33,7 @@ For task custom fields, use this format:
 Example:
 ```
 - `客户`
-  - `guid`: `a7009aff-7d85-4378-82c9-1584873f469d`
+  - `guid`: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
   - type: `text`
 ```
 
