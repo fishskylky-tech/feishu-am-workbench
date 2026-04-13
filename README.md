@@ -91,6 +91,16 @@ pip install pre-commit
 pre-commit install
 ```
 
+`.env` 内容是什么：
+
+- 这是本地运行时环境变量文件，保存你个人环境的 `FEISHU_AM_*` 配置。
+- 典型键包括：`FEISHU_AM_BASE_TOKEN`、`FEISHU_AM_CUSTOMER_MASTER_TABLE_ID`、`FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER`、`FEISHU_AM_MEETING_NOTES_FOLDER`、`FEISHU_AM_TODO_TASKLIST_GUID`。
+
+`.env` 作用是什么：
+
+- runtime 入口会显式读取仓库根目录 `.env`，把其中的 `FEISHU_AM_*` 注入进程环境，避免每次手动 export。
+- 加载策略是“显式环境变量优先，`.env` 补充”。如果你已在 shell 中 export 同名变量，runtime 不会覆盖它。
+
 ### 1) 先跑环境诊断
 
 ```bash
