@@ -1,8 +1,8 @@
 # Discussion 设计与对撞评审（2026-04-13）
 
 ## 范围
-- Discussion A: standards portability（标准对齐与可移植性）
-- Discussion B: pattern evolution（设计模式深度应用与扩展）
+- Discussion A: standards portability（标准对齐与可移植性，对应 Discussion #23: https://github.com/fishskylky-tech/feishu-am-workbench/discussions/23）
+- Discussion B: pattern evolution（设计模式深度应用与扩展，对应 Discussion #24: https://github.com/fishskylky-tech/feishu-am-workbench/discussions/24）
 
 ## Round 1（主方案）
 
@@ -52,11 +52,11 @@
 - 高优先级风险: 无阻断级风险。
 
 ## 衍生工作项（Derived Items）
-1. Issue: 定义 references 加载元数据与 token 预算清单（P1）
-2. Issue: 设计 workspace 配置层模板与迁移策略（P1）
-3. Issue: M3 三阶段专家解读最小契约与验收用例（P1）
-4. Issue: Generator 最小实现（会议摘要/客户经营卡）与测试（P2）
-5. Issue: Tool Wrapper 抽象接口草案（P2）
+1. Issue #11: 建立明确的 L1/L2/L3 渐进式披露边界（P1）
+2. Issue #12: 实现 workspace 配置层抽象（P1）
+3. Issue #20: M3 三阶段专家解读最小契约与验收用例（P1）
+4. Issue #21: Generator 最小实现（会议摘要/客户经营卡）与测试（P2）
+5. Issue #22: Tool Wrapper 抽象接口草案（P2）
 
 ## 依赖关系
 - 1,2 可并行。
