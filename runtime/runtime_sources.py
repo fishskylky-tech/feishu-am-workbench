@@ -44,19 +44,19 @@ class RuntimeSourceLoader:
         archive_env = self._env_value("customer_archive_folder")
         todo_tasklist_hint = self._extract_single(
             actual_mapping,
-            r"`tasklist_guid`: `([^`]+)`",
+            r"(?:`tasklist_guid`|tasklist_guid|Tasklist(?:\s+GUID)?)\s*[:：]\s*`?([a-f0-9\-]+)`?",
             "references/actual-field-mapping.md",
             "todo_tasklist_guid",
         )
         todo_customer_field_hint = self._extract_single(
             actual_mapping,
-            r"`客户`.*?`guid`: `([^`]+)`",
+            r"-\s*`客户`[^`]*?(?:`guid`|guid)\s*[:：]\s*`([a-f0-9\-]+)`",
             "references/actual-field-mapping.md",
             "todo_customer_field_guid",
         )
         todo_priority_field_hint = self._extract_single(
             actual_mapping,
-            r"`优先级`.*?`guid`: `([^`]+)`",
+            r"-\s*`优先级`[^`]*?(?:`guid`|guid)\s*[:：]\s*`([a-f0-9\-]+)`",
             "references/actual-field-mapping.md",
             "todo_priority_field_guid",
         )
@@ -202,18 +202,26 @@ class RuntimeSourceLoader:
         return ResourceHint(key=key, source_file=source_file, value=value)
 
     def _extract_priority_options(self, text: str) -> list[str]:
+        # Support multiple anchor patterns for priority options section
+        # The section starts with `优先级` and ends with anchor text like "Treat these" or "Current validated"
         section_match = re.search(
-            r"- `优先级`.*?current known options:(.*?)(?:Treat these task custom fields|Current validated custom fields:)",
+            r"`优先级`[^#]*?(?:current known options|已知选项)[:：]?\s*(.*?)(?:Treat these task custom fields|Current validated custom fields|^#|\Z)",
             text,
-            flags=re.S,
+            flags=re.S | re.M,
         )
         if not section_match:
             return []
-        return re.findall(r"- `([^`]+)`", section_match.group(1))
+        # Extract all items in backticks after list markers
+        return re.findall(r"[-*]\s*`([^`]+)`", section_match.group(1))
 
     def _extract_priority_option_guids(self, text: str) -> dict[str, str]:
-        matches = re.findall(r"- `([^`]+)` -> `([^`]+)`", text)
-        return {name: guid for name, guid in matches}
+        # Support both -> and : as separators, but be specific about GUID format
+        # Look for lines that have an option name mapped to a GUID (UUID format)
+        matches = re.findall(
+            r"[-*]\s*`([^`]+)`\s*(?:->|→)\s*`([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})`",
+            text
+        )
+        return {name.strip(): guid.strip() for name, guid in matches}
 
     def _parse_base_link(self, url: str | None) -> dict[str, str]:
         if not url:

@@ -25,6 +25,23 @@ This skill has an optional local runtime layer (`runtime/`) for live Feishu acce
 
 Run `python3 -m runtime <skill-path>` before first use. If the runtime is unavailable, stay in recommendation mode.
 
+### Generating actual-field-mapping.md
+
+The `references/actual-field-mapping.md` file contains a cached snapshot of the live Feishu schema. It must follow specific format requirements for `runtime/runtime_sources.py` to parse it correctly. See the "Format Requirements" section in that file for details.
+
+To generate or update this file:
+
+1. **List tasklists**: `lark-cli task tasklists list`
+2. **Get tasklist details**: `lark-cli task tasklists get --params '{"tasklist_guid": "<guid>"}'`
+3. **Get sample tasks**: `lark-cli task tasks list --params '{"tasklist_guid": "<guid>", "limit": 5}'`
+4. **List Base tables**: `lark-cli base +table-list --base-token <token>`
+5. **Get field schema**: `lark-cli base +field-list --base-token <token> --table-id <table>`
+6. **Get field details** (for select options): `lark-cli base +field-get --base-token <token> --table-id <table> --field-id <field>`
+
+**Important**: `lark-cli base +field-list` may return empty `options` arrays for `select` and `multi_select` fields. Use `+field-get` for each field individually to retrieve option values and GUIDs.
+
+Follow the format requirements documented in `actual-field-mapping.md` when updating the file to ensure the runtime can parse it correctly.
+
 The workbench is layered:
 
 - `客户主数据`: index and snapshot layer

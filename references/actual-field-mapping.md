@@ -5,6 +5,71 @@ This file is a cached snapshot of the live Feishu account-management schema as o
 Use it as a fast reference, not as the sole source of truth.
 Before any write, confirm the target schema live and treat this file as a compatibility cache.
 
+## Format Requirements
+
+**IMPORTANT**: This file is parsed by `runtime/runtime_sources.py` to extract resource hints. Follow these format rules:
+
+### Tasklist GUID Format
+
+Use this exact format for tasklist configuration:
+```
+- `tasklist_guid`: `<guid-value>`
+```
+
+Example:
+```
+- `tasklist_guid`: `00000000-0000-4000-8000-000000000001`
+```
+
+### Custom Field GUID Format
+
+For task custom fields, use this format:
+```
+- `<field-display-name>`
+  - `guid`: `<guid-value>`
+  - type: `<field-type>`
+```
+
+Example:
+```
+- `客户`
+  - `guid`: `a7009aff-7d85-4378-82c9-1584873f469d`
+  - type: `text`
+```
+
+### Priority Options Format
+
+Priority options must be listed under a "current known options:" section, followed by option-to-guid mappings:
+
+```
+- `优先级`
+  - `guid`: `<field-guid>`
+  - type: `single_select`
+  - current known options:
+    - `高`
+    - `中`
+    - `低`
+
+Current validated custom fields:
+
+- `优先级`
+  - Option mapping:
+    - `高` -> `<option-guid>`
+    - `中` -> `<option-guid>`
+    - `低` -> `<option-guid>`
+```
+
+### How to Generate This File
+
+Use `lark-cli` to fetch current schema:
+
+1. List tasklists: `lark-cli task tasklists list`
+2. Get tasklist details: `lark-cli task tasklists get --params '{"tasklist_guid": "<guid>"}'`
+3. Get a sample task to discover custom fields: `lark-cli task tasks list --params '{"tasklist_guid": "<guid>", "limit": 1}'`
+4. Get field options: `lark-cli base +field-get --base-token <token> --table-id <table> --field-id <field>`
+
+Note: `lark-cli base +field-list` may return empty options for select fields. Use `+field-get` for each field individually to get option values.
+
 ## How to use this file
 
 - Use this file to understand the current intent of each table and field.
