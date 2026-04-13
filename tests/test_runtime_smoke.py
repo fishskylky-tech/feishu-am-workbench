@@ -502,7 +502,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks create --data '
                 '{"summary": "整理联合利华活动优化方案并发送会前资料", '
-                '"tasklists": [{"tasklist_guid": "e50dda19-63e4-410a-a167-6813f3b3c86d"}], '
+                '"tasklists": [{"tasklist_guid": "00000000-0000-4000-8000-000000000001"}], '
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}], '
                 '"parent_task_guid": "task_parent"}'
@@ -573,7 +573,7 @@ class RuntimeSmokeTests(unittest.TestCase):
     def test_live_config_builds_table_targets_for_all_integrated_tables(self) -> None:
         sources = RuntimeSourceLoader(REPO_ROOT).load()
         config = LiveWorkbenchConfig.from_sources(sources)
-        self.assertEqual(config.table_target("客户主数据"), "tblSdsvXWfJtdLZO")
+        self.assertEqual(config.table_target("客户主数据"), "tbl_customer_master_example")
         self.assertEqual(config.table_target("客户联系记录"), "客户联系记录")
         self.assertEqual(config.table_target("行动计划"), "行动计划")
         self.assertEqual(config.table_target("客户关键人地图"), "客户关键人地图")
@@ -583,11 +583,11 @@ class RuntimeSmokeTests(unittest.TestCase):
 
     def test_runtime_source_loader_reads_known_hints(self) -> None:
         sources = RuntimeSourceLoader(REPO_ROOT).load()
-        self.assertEqual(sources.base_token.value, "MKECbZiC4arRrbs6QlZcFj2Rn7b")
-        self.assertEqual(sources.customer_master_table_id.value, "tblSdsvXWfJtdLZO")
-        self.assertEqual(sources.meeting_notes_folder.value, "OlBCfU7IKl2oSbd09lXckKJlnTc")
-        self.assertEqual(sources.todo_tasklist_guid.value, "e50dda19-63e4-410a-a167-6813f3b3c86d")
-        self.assertEqual(sources.customer_archive_folder.value, "OYDDfQN0plqHkRdnpt8cfBWtnU9")
+        self.assertEqual(sources.base_token.value, "app_example_base_token")
+        self.assertEqual(sources.customer_master_table_id.value, "tbl_customer_master_example")
+        self.assertEqual(sources.meeting_notes_folder.value, "fld_meeting_notes_example")
+        self.assertEqual(sources.todo_tasklist_guid.value, "00000000-0000-4000-8000-000000000001")
+        self.assertEqual(sources.customer_archive_folder.value, "fld_customer_archive_example")
         self.assertEqual(sources.todo_priority_options, ["高", "中", "低"])
 
     def test_customer_resolver_preserves_raw_row(self) -> None:
@@ -774,23 +774,23 @@ class RuntimeSmokeTests(unittest.TestCase):
 
     def test_resource_resolver_marks_unconfirmed_live_resources(self) -> None:
         responses = {
-            "base +table-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --limit 1": subprocess.CompletedProcess(
+            "base +table-list --base-token app_example_base_token --limit 1": subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
-                stdout='{"ok":true,"data":{"items":[{"table_id":"tblSdsvXWfJtdLZO"}]}}',
+                stdout='{"ok":true,"data":{"items":[{"table_id":"tbl_customer_master_example"}]}}',
                 stderr="",
             ),
             "task tasklists list": subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
                 stdout=(
-                    '{"code":0,"data":{"items":[{"guid":"e50dda19-63e4-410a-a167-6813f3b3c86d"}]}}'
+                    '{"code":0,"data":{"items":[{"guid":"00000000-0000-4000-8000-000000000001"}]}}'
                 ),
                 stderr="",
             ),
             (
                 'drive files list --params '
-                '{"folder_token":"OYDDfQN0plqHkRdnpt8cfBWtnU9"}'
+                '{"folder_token":"fld_customer_archive_example"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=1,
@@ -802,7 +802,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             ),
             (
                 'drive files list --params '
-                '{"folder_token":"OlBCfU7IKl2oSbd09lXckKJlnTc"}'
+                '{"folder_token":"fld_meeting_notes_example"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=1,
@@ -896,13 +896,13 @@ class RuntimeSmokeTests(unittest.TestCase):
         responses = {
             (
                 'task tasklists get --params '
-                '{"tasklist_guid": "e50dda19-63e4-410a-a167-6813f3b3c86d"}'
+                '{"tasklist_guid": "00000000-0000-4000-8000-000000000001"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
                 stdout=(
                     '{"code":0,"data":{"tasklist":{'
-                    '"guid":"e50dda19-63e4-410a-a167-6813f3b3c86d",'
+                    '"guid":"00000000-0000-4000-8000-000000000001",'
                     '"owner":{"id":"ou_owner","role":"owner","type":"user"},'
                     '"members":[{"id":"ou_editor","role":"editor","type":"user"}]'
                     '}}}'
@@ -924,12 +924,12 @@ class RuntimeSmokeTests(unittest.TestCase):
 
     def test_capability_report_surfaces_base_and_docs_gaps(self) -> None:
         responses = {
-            "base +table-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --limit 200": subprocess.CompletedProcess(
+            "base +table-list --base-token app_example_base_token --limit 200": subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
                 stdout=(
                     '{"ok":true,"data":{"items":['
-                    '{"table_id":"tblSdsvXWfJtdLZO","table_name":"客户主数据"},'
+                    '{"table_id":"tbl_customer_master_example","table_name":"客户主数据"},'
                     '{"table_id":"tbla91dGjJsb0axd","table_name":"客户联系记录"},'
                     '{"table_id":"tblqbbS46bWilKd7","table_name":"行动计划"}'
                     ']}}'
@@ -940,13 +940,13 @@ class RuntimeSmokeTests(unittest.TestCase):
                 args=[],
                 returncode=0,
                 stdout=(
-                    '{"code":0,"data":{"items":[{"guid":"e50dda19-63e4-410a-a167-6813f3b3c86d"}]}}'
+                    '{"code":0,"data":{"items":[{"guid":"00000000-0000-4000-8000-000000000001"}]}}'
                 ),
                 stderr="",
             ),
             (
                 'drive files list --params '
-                '{"folder_token":"OYDDfQN0plqHkRdnpt8cfBWtnU9"}'
+                '{"folder_token":"fld_customer_archive_example"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=1,
@@ -955,7 +955,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             ),
             (
                 'drive files list --params '
-                '{"folder_token":"OlBCfU7IKl2oSbd09lXckKJlnTc"}'
+                '{"folder_token":"fld_meeting_notes_example"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=1,
@@ -966,8 +966,8 @@ class RuntimeSmokeTests(unittest.TestCase):
         client = LarkCliClient(runner=FakeRunner(responses))
         sources = RuntimeSourceLoader(REPO_ROOT).load()
         config = LiveWorkbenchConfig.from_sources(sources)
-        self.assertEqual(config.base_token, "MKECbZiC4arRrbs6QlZcFj2Rn7b")
-        self.assertEqual(config.customer_master_table, "tblSdsvXWfJtdLZO")
+        self.assertEqual(config.base_token, "app_example_base_token")
+        self.assertEqual(config.customer_master_table, "tbl_customer_master_example")
         reporter = LiveCapabilityReporter(
             client,
             config,
@@ -980,7 +980,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(
             checks["base_access"].details["required_tables"],
             {
-                "客户主数据": "tblSdsvXWfJtdLZO",
+                "客户主数据": "tbl_customer_master_example",
                 "行动计划": "行动计划",
                 "客户联系记录": "客户联系记录",
             },
@@ -1022,7 +1022,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         responses = {
             (
                 'task tasks create --data '
-                '{"summary": "跟进联合利华续费", "tasklists": [{"tasklist_guid": "e50dda19-63e4-410a-a167-6813f3b3c86d"}], '
+                '{"summary": "跟进联合利华续费", "tasklists": [{"tasklist_guid": "00000000-0000-4000-8000-000000000001"}], '
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"description": "带客户档案链接", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
@@ -1524,12 +1524,12 @@ class RuntimeSmokeTests(unittest.TestCase):
 
     def test_capability_report_degrades_when_required_table_missing(self) -> None:
         responses = {
-            "base +table-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --limit 200": subprocess.CompletedProcess(
+            "base +table-list --base-token app_example_base_token --limit 200": subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
                 stdout=(
                     '{"ok":true,"data":{"items":['
-                    '{"table_id":"tblSdsvXWfJtdLZO","table_name":"客户主数据"},'
+                    '{"table_id":"tbl_customer_master_example","table_name":"客户主数据"},'
                     '{"table_id":"tbla91dGjJsb0axd","table_name":"客户联系记录"}'
                     ']}}'
                 ),
@@ -1538,12 +1538,12 @@ class RuntimeSmokeTests(unittest.TestCase):
             "task tasklists list": subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
-                stdout='{"code":0,"data":{"items":[{"guid":"e50dda19-63e4-410a-a167-6813f3b3c86d"}]}}',
+                stdout='{"code":0,"data":{"items":[{"guid":"00000000-0000-4000-8000-000000000001"}]}}',
                 stderr="",
             ),
             (
                 'drive files list --params '
-                '{"folder_token":"OYDDfQN0plqHkRdnpt8cfBWtnU9"}'
+                '{"folder_token":"fld_customer_archive_example"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1552,7 +1552,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             ),
             (
                 'drive files list --params '
-                '{"folder_token":"OlBCfU7IKl2oSbd09lXckKJlnTc"}'
+                '{"folder_token":"fld_meeting_notes_example"}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1576,8 +1576,8 @@ class RuntimeSmokeTests(unittest.TestCase):
     def test_customer_backend_supports_matrix_record_list_shape(self) -> None:
         responses = {
             (
-                "base +field-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b "
-                "--table-id tblSdsvXWfJtdLZO --limit 200"
+                "base +field-list --base-token app_example_base_token "
+                "--table-id tbl_customer_master_example --limit 200"
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1591,8 +1591,8 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                'base +data-query --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --dsl '
-                '{"datasource": {"type": "table", "table": {"tableId": "tblSdsvXWfJtdLZO"}}, '
+                'base +data-query --base-token app_example_base_token --dsl '
+                '{"datasource": {"type": "table", "table": {"tableId": "tbl_customer_master_example"}}, '
                 '"dimensions": [{"field_name": "客户 ID", "alias": "dim_customer_id_alt"}, '
                 '{"field_name": "简称", "alias": "dim_short_name"}, '
                 '{"field_name": "公司名称", "alias": "dim_company_name"}], '
@@ -1610,8 +1610,8 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                "base +record-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b "
-                "--table-id tblSdsvXWfJtdLZO --limit 200"
+                "base +record-list --base-token app_example_base_token "
+                "--table-id tbl_customer_master_example --limit 200"
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1636,8 +1636,8 @@ class RuntimeSmokeTests(unittest.TestCase):
     def test_customer_backend_prefers_data_query_for_precise_lookup(self) -> None:
         responses = {
             (
-                "base +field-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b "
-                "--table-id tblSdsvXWfJtdLZO --limit 200"
+                "base +field-list --base-token app_example_base_token "
+                "--table-id tbl_customer_master_example --limit 200"
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1653,8 +1653,8 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                'base +data-query --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --dsl '
-                '{"datasource": {"type": "table", "table": {"tableId": "tblSdsvXWfJtdLZO"}}, '
+                'base +data-query --base-token app_example_base_token --dsl '
+                '{"datasource": {"type": "table", "table": {"tableId": "tbl_customer_master_example"}}, '
                 '"dimensions": [{"field_name": "客户ID", "alias": "dim_customer_id"}, '
                 '{"field_name": "简称", "alias": "dim_short_name"}, '
                 '{"field_name": "客户名称", "alias": "dim_customer_name"}, '
@@ -1696,7 +1696,7 @@ class RuntimeSmokeTests(unittest.TestCase):
     def test_base_query_backend_prefers_data_query_for_customer_id_reads(self) -> None:
         responses = {
             (
-                "base +field-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b "
+                "base +field-list --base-token app_example_base_token "
                 "--table-id 客户联系记录 --limit 200"
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1711,7 +1711,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                'base +data-query --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --dsl '
+                'base +data-query --base-token app_example_base_token --dsl '
                 '{"datasource": {"type": "table", "table": {"tableId": "客户联系记录"}}, '
                 '"dimensions": [{"field_name": "客户ID", "alias": "dim_field_0"}, '
                 '{"field_name": "联系日期", "alias": "dim_field_1"}, '
@@ -1732,7 +1732,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                "base +field-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b "
+                "base +field-list --base-token app_example_base_token "
                 "--table-id 行动计划 --limit 200"
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1747,7 +1747,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                'base +data-query --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --dsl '
+                'base +data-query --base-token app_example_base_token --dsl '
                 '{"datasource": {"type": "table", "table": {"tableId": "行动计划"}}, '
                 '"dimensions": [{"field_name": "具体行动", "alias": "dim_field_0"}, '
                 '{"field_name": "客户ID", "alias": "dim_field_1"}, '
@@ -1768,7 +1768,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                "base +field-list --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b "
+                "base +field-list --base-token app_example_base_token "
                 "--table-id 合同清单 --limit 200"
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1784,7 +1784,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stderr="",
             ),
             (
-                'base +data-query --base-token MKECbZiC4arRrbs6QlZcFj2Rn7b --dsl '
+                'base +data-query --base-token app_example_base_token --dsl '
                 '{"datasource": {"type": "table", "table": {"tableId": "合同清单"}}, '
                 '"dimensions": [{"field_name": "合同到期日期", "alias": "dim_field_0"}, '
                 '{"field_name": "合同状态", "alias": "dim_field_1"}, '

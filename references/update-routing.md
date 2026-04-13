@@ -40,7 +40,7 @@ Route each extracted item to the correct object. Avoid duplicate rows and contra
 - Full meeting transcripts or long meeting notes should live in Feishu docs, not inside Base long-text fields.
 - `客户联系记录` should store only the meeting-note document link plus the concise structured summary needed for day-to-day use.
 - Load the meeting-note doc only when deeper backtracking is needed.
-- Default meeting-note folder: `OlBCfU7IKl2oSbd09lXckKJlnTc`
+- Default meeting-note folder: `fld_meeting_notes_example`
 - The formal meeting-note doc should be a structured synthesized note, not the raw transcript by default.
 - The formal meeting-note doc should include a short AI-generated disclosure and a source-record section.
 

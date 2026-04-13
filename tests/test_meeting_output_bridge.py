@@ -338,7 +338,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                     resource_resolution=ResourceResolution(
                         status="resolved",
                         hints_used=[
-                            ResourceHint("base_token", "references/live-resource-links.md", "app_live", True),
+                            ResourceHint("base_token", "references/live-resource-links.example.md", "app_live", True),
                         ],
                     ),
                     capability_report=CapabilityReport(),
@@ -383,7 +383,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                     resource_resolution=ResourceResolution(
                         status="partial",
                         hints_used=[
-                            ResourceHint("base_token", "references/live-resource-links.md", "app_live", True),
+                            ResourceHint("base_token", "references/live-resource-links.example.md", "app_live", True),
                         ],
                         unconfirmed_keys=["customer_archive_folder"],
                     ),
@@ -417,8 +417,8 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             resource_resolution=ResourceResolution(
                 status="resolved",
                 hints_used=[
-                    ResourceHint("base_token", "references/live-resource-links.md", "app_live", True),
-                    ResourceHint("customer_archive_folder", "references/live-resource-links.md", "folder_archive", True),
+                    ResourceHint("base_token", "references/live-resource-links.example.md", "app_live", True),
+                    ResourceHint("customer_archive_folder", "references/live-resource-links.example.md", "folder_archive", True),
                 ],
             ),
             capability_report=CapabilityReport(),
@@ -448,7 +448,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="partial",
-                hints_used=[ResourceHint("base_token", "references/live-resource-links.md", "app_live", True)],
+                hints_used=[ResourceHint("base_token", "references/live-resource-links.example.md", "app_live", True)],
                 unconfirmed_keys=["customer_archive_folder"],
             ),
             capability_report=CapabilityReport(),
@@ -471,7 +471,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="partial",
-                hints_used=[ResourceHint("todo_tasklist_guid", "references/live-resource-links.md", "tasklist_1", True)],
+                hints_used=[ResourceHint("todo_tasklist_guid", "references/live-resource-links.example.md", "tasklist_1", True)],
                 missing_keys=["base_token"],
             ),
             capability_report=CapabilityReport(),
@@ -531,25 +531,33 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                     ),
                 )
 
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                return []
+
         stdout = StringIO()
         with patch(
             "evals.meeting_output_bridge.FeishuWorkbenchGateway.for_live_lark_cli",
             return_value=FakeGateway(),
         ):
-            with redirect_stdout(stdout):
-                exit_code = bridge_main(
-                    [
-                        "--run-gateway",
-                        "--eval-name",
-                        "unilever-stage-review",
-                        "--transcript-file",
-                        str(UNILEVER_TRANSCRIPT),
-                        "--customer-query",
-                        "联合利华",
-                        "--repo-root",
-                        str(REPO_ROOT),
-                    ]
-                )
+            with patch(
+                "evals.meeting_output_bridge.LarkCliBaseQueryBackend",
+                return_value=FakeQueryBackend(),
+            ):
+                with redirect_stdout(stdout):
+                    exit_code = bridge_main(
+                        [
+                            "--run-gateway",
+                            "--eval-name",
+                            "unilever-stage-review",
+                            "--transcript-file",
+                            str(UNILEVER_TRANSCRIPT),
+                            "--customer-query",
+                            "联合利华",
+                            "--repo-root",
+                            str(REPO_ROOT),
+                        ]
+                    )
         self.assertEqual(exit_code, 0)
         output_text = stdout.getvalue()
         self.assertIn("上下文恢复状态: partial", output_text)
