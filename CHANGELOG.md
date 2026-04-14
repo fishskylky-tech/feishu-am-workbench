@@ -13,6 +13,15 @@
 
 ### 新增
 
+- `SKILL.md` — frontmatter 元数据补全
+  - 新增 `version: 0.2.11`（与 VERSION 文件同步）
+  - 新增 `author: fishskylky-tech`
+  - 新增 `tags: [feishu, account-management, am-workflow, chinese, crm, pipeline]`
+  - 新增 `license: MIT`
+  - 新增 `repository: https://github.com/fishskylky-tech/feishu-am-workbench`
+  - 新增 `load_strategy: progressive`
+  - 新增 `tier` 说明 L1/L2/L3 边界
+  - 新增 `triggers`：关键词、模式和文件类型
 - `runtime/models.py`
   - 为统一落盘通道补充 `WriteCandidate` 公共字段：`operation`、`match_basis`、`source_context`、`target_object`
   - 新增 `WriteExecutionResult` 统一写回结果模型

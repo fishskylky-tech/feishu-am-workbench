@@ -1,12 +1,25 @@
 ---
 name: feishu-am-workbench
+version: 0.2.11
+author: fishskylky-tech
 description: >
   Personal AM workflow skill for Feishu-based account management. Use this skill whenever the user
   mentions: 飞书工作台, 客户档案, 会议纪要, 行动计划, 客户主数据, 合同, 联系记录, 竞品, Todo, 客户更新, 会前准备, 会后总结,
   account analysis, meeting prep, post-meeting synthesis, or wants to write back to Feishu Base, Docs, or Todo.
   Also trigger when the user pastes a meeting transcript, shares a customer file, or asks questions like
   "这个客户最近怎样", "帮我整理一下今天的会议", "更新一下飞书上的行动计划", "帮我准备一下明天的拜访". When in doubt, use this skill.
+tags: [feishu, account-management, am-workflow, chinese, crm, pipeline]
+repository: https://github.com/fishskylky-tech/feishu-am-workbench
 compatibility: requires lark-cli in PATH; Python 3.10+ for runtime/ modules; personal Feishu token configured in environment
+load_strategy: progressive
+tier:
+  L1: frontmatter + core_workflow
+  L2: main body
+  L3: references/*.md (on-demand)
+triggers:
+  keywords: [飞书工作台, 客户档案, 会议纪要, 行动计划, Todo, 客户更新]
+  patterns: [meeting prep, post-meeting, account analysis, customer update]
+  file_types: [transcript, meeting notes, customer materials]
 ---
 
 # Feishu AM Workbench
