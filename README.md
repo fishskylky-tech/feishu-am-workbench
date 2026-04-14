@@ -163,6 +163,7 @@ python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge te
 
 - 核心规则与入口: [SKILL.md](SKILL.md)
 - 架构边界: [ARCHITECTURE.md](ARCHITECTURE.md)
+- 加载策略（L1/L2/L3）: [docs/loading-strategy.md](docs/loading-strategy.md)
 - 当前状态: [STATUS.md](STATUS.md)
 - 验证协议: [VALIDATION.md](VALIDATION.md)
 - 变更记录: [CHANGELOG.md](CHANGELOG.md)
