@@ -9,7 +9,7 @@
 - `修复`：问题修正
 - `移除`：废弃能力
 
-## [Unreleased]
+## [0.2.12] - 2026-04-14
 
 ### 新增
 
@@ -30,7 +30,7 @@
 - `docs/assessment/discussion-design-2026-04-13.md` — 新增 M1 讨论设计评估
 - `docs/assessment/m2-m3-open-assessment-2026-04-13.md` — 新增 M2/M3 开放评估
 - `SKILL.md` — frontmatter 元数据补全
-  - 新增 `version: 0.2.11`（与 VERSION 文件同步）
+  - 新增 `version: 0.2.12`（与 VERSION 文件同步）
   - 新增 `author: fishskylky-tech`
   - 新增 `tags: [feishu, account-management, am-workflow, chinese, crm, pipeline]`
   - 新增 `license: MIT`
