@@ -31,6 +31,12 @@ See: .planning/PROJECT.md (updated 2026-04-14)
 - Future GSD work should treat this as a brownfield repository, not a greenfield concept
 - Writes remain guarded and confirmation-based unless the user explicitly changes that policy
 
+## Session Continuity
+
+- Last session: None
+- Stopped At: None
+- Resume File: None
+
 ## Next Command
 
 - `/gsd-discuss-phase 1`
