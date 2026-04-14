@@ -1,3 +1,14 @@
+---
+title: Base Integration Model
+load_triggers:
+  - condition: extending or modifying Base table access
+  - skill_stage: [integration-planning]
+load_priority: low
+estimated_tokens: 820
+dependencies: []
+tier: L3-on-demand
+---
+
 # Base Integration Model
 
 This file defines how `feishu-am-workbench` should integrate Feishu Base tables going forward.

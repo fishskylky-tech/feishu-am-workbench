@@ -1,3 +1,14 @@
+---
+title: Live Schema Preflight
+load_triggers:
+  - skill_stage: [write-planning, preflight]
+  - task_type: [base-write, todo-write]
+load_priority: high
+estimated_tokens: 856
+dependencies: [feishu-workbench-gateway]
+tier: L3-scenario-write
+---
+
 # Live Schema Preflight
 
 Use this file when the skill or a future runtime is preparing an actual write into Feishu Base or Feishu Todo.
