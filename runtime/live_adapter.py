@@ -1009,14 +1009,14 @@ class LiveCapabilityReporter:
             )
         items = _extract_base_tables(payload)
         available_table_ids = {
-            str(item.get("table_id"))
+            str(item.get("table_id") or item.get("id"))
             for item in items
-            if isinstance(item, dict) and item.get("table_id") is not None
+            if isinstance(item, dict) and (item.get("table_id") is not None or item.get("id") is not None)
         }
         available_table_names = {
-            str(item.get("table_name"))
+            str(item.get("table_name") or item.get("name"))
             for item in items
-            if isinstance(item, dict) and item.get("table_name") is not None
+            if isinstance(item, dict) and (item.get("table_name") is not None or item.get("name") is not None)
         }
         required_table_names = set(get_required_base_tables())
         required_tables = {
