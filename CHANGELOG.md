@@ -13,6 +13,22 @@
 
 ### 新增
 
+- `runtime/env_loader.py` — 新增 `.env` 显式加载模块
+  - runtime 入口（`__main__.py`、`gateway.py`、`todo_writer.py`）现在启动时自动读取根目录 `.env`
+  - 加载策略：显式环境变量优先，`.env` 作为补充，不覆盖已有进程级变量
+- `.env.example` — 新增环境变量配置模板
+  - 包含 `FEISHU_AM_BASE_TOKEN`、`FEISHU_AM_CUSTOMER_MASTER_TABLE_ID`、`FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER` 等完整键列表
+- `.pre-commit-config.yaml` — 新增 `detect-secrets` pre-commit hook
+- `scripts/validate_field_mapping.py` — 新增字段映射格式验证脚本
+  - 通过正则校验 `actual-field-mapping.md` 中各字段的格式规范性
+- `references/live-resource-links.example.md` — 新增占位符示例文件
+  - 使用 `app_example_base_token` 等安全占位值代替真实 token
+- `ARCHITECTURE.md` — 新增 L1/L2/L3 渐进式加载架构说明
+  - 定义三层加载对应的 token 预算（L1: ~150、L2: ~2000、L3: ~17327）
+  - 新增各场景组合预算估算
+- `docs/loading-strategy.md` — 新增 L1/L2/L3 完整加载策略文档
+- `docs/assessment/discussion-design-2026-04-13.md` — 新增 M1 讨论设计评估
+- `docs/assessment/m2-m3-open-assessment-2026-04-13.md` — 新增 M2/M3 开放评估
 - `SKILL.md` — frontmatter 元数据补全
   - 新增 `version: 0.2.11`（与 VERSION 文件同步）
   - 新增 `author: fishskylky-tech`
@@ -31,19 +47,39 @@
 
 ### 变更
 
+- `runtime/runtime_sources.py` — regex 正则增强（PR #29）
+  - `tasklist_guid` 提取正则改为完整 UUID 格式匹配，支持大小写宽容和多种前缀写法
+  - 客户自定义字段 `guid` 提取正则改为精准匹配列表条目格式
+  - `_extract_priority_options` 支持多种锚定文本，并使用 `re.M` 标志
+  - `_extract_priority_option_guids` 同时支持 `->` 和 `→` 分隔符，并限制为 UUID 格式
+- `runtime/runtime_sources.py` — 新增 `ENV_VARS` 字典和 `_env_value()` 方法（PR #33）
+  - `FEISHU_AM_*` 环境变量优先于文件解析，支持在 CI/CD 和容器化场景下运行
+- `references/actual-field-mapping.md` — 补充 tasklist_guid / guid 字段格式说明
+- `references/*.md`（全部 21 个）— 新增 YAML frontmatter
+  - 每个文件增加 `load_triggers`、`load_priority`、`estimated_tokens`、`dependencies` 头
 - `runtime/todo_writer.py`
   - 从 Todo 专用返回结构收口到统一写回结果语义
   - 增加第一版 minimal semantic dedupe，支持 `create_new` / `update_existing` / `create_subtask` / `no_write` 决策
   - duplicate 命中后默认走 `update_existing` 自动 patch
   - `create_subtask` 默认 recommendation-only，显式确认（`confirm_create_subtask=true`）后执行真实子任务创建
 - `evals/meeting_output_bridge.py`
-  - 增加“相关会议纪要候选”命中与排序最小层（基于客户联系记录标题/日期/链接）
+  - 增加"相关会议纪要候选"命中与排序最小层（基于客户联系记录标题/日期/链接）
 - `tests/test_runtime_smoke.py`、`tests/test_meeting_output_bridge.py`
   - 新增 dedupe 中文变体、create_subtask 可选执行、meeting-note 候选排序回归用例
 - `ARCHITECTURE.md`、`references/feishu-workbench-gateway.md`、`references/task-patterns.md`
-  - 明确“场景层产出 write candidate，底座统一执行 writer”的分层边界
+  - 明确"场景层产出 write candidate，底座统一执行 writer"的分层边界
 - `STATUS.md`、`VALIDATION.md`
   - 新增 unified Todo writer 的状态和验证口径
+- `.gitignore` — 扩展排除规则，新增 `.env`、`.env.local`
+
+### 修复
+
+- `runtime/runtime_sources.py` — 修复 `_extract_priority_options` section 匹配在多行文本中失效的问题（缺少 `re.M`）
+- `runtime/runtime_sources.py` — 修复 `priority option guid` 匹配不限制格式导致误匹配问题
+
+### 移除
+
+- `references/live-resource-links.md` — 删除包含真实 token 的文件（替换为 `live-resource-links.example.md`）
 
 ## [0.2.11] - 2026-04-11
 

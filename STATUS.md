@@ -45,12 +45,15 @@
 
 ### 2. Live Resource 接入
 
-状态：`已完成当前个人环境接入`
+状态：`已完成当前个人环境接入，敏感值已外迁至环境变量`
 
 已完成：
 
-- 当前个人环境入口示例已记录在 [references/live-resource-links.example.md](./references/live-resource-links.example.md)
-- runtime 已能从该文件解析：
+- 示例入口格式记录在 [references/live-resource-links.example.md](./references/live-resource-links.example.md)（使用占位值，不含真实 token）
+- 真实资源配置通过 `FEISHU_AM_*` 环境变量注入，或本地 `.env` 文件（已加入 `.gitignore`）
+- `runtime/env_loader.py` 在 runtime 入口启动时自动加载 `.env`，无需手动 export
+- 加载优先级：进程级显式 env > `.env` 文件 > 文件解析 fallback
+- runtime 已能从环境变量或文件解析：
   - Base token
   - `客户主数据` table id
   - customer archive folder
@@ -232,12 +235,11 @@ python3 -m runtime .
 
 当前最自然的下一步是：
 
-1. 收尾当前分支文档和状态口径，确认只剩 roadmap 级增强项
-2. 补更强的 meeting-note 命中和排序策略
-3. 继续收口 unified Todo writer 的真实联调验证和 dedupe 规则
-4. 把 Base 读取从“大批量读取后本地筛选”继续改成“精准查询优先”
-5. 把 archive doc 正文读取、历史 meeting-note docs 定向读取、ontology 建模留到 roadmap 后续阶段
+1. 补更强的 meeting-note 命中和排序策略
+2. 继续收口 unified Todo writer 的真实联调验证和 dedupe 规则
+3. 把 Base 读取从"大批量读取后本地筛选"继续改成"精准查询优先"
+4. 把 archive doc 正文读取、历史 meeting-note docs 定向读取、ontology 建模留到 roadmap 后续阶段
 
 ## 更新时间
 
-- 2026-04-12
+- 2026-04-14
