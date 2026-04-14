@@ -1,3 +1,14 @@
+---
+title: Meeting Note Doc Standard
+load_triggers:
+  - skill_stage: [doc-write, meeting-doc-creation]
+  - task_type: [post-meeting]
+load_priority: medium
+estimated_tokens: 332
+dependencies: [meeting-output-standard]
+tier: L3-scenario-meeting
+---
+
 # Meeting Note Doc Standard
 
 Use this file when the skill proposes or creates a meeting-note cold-memory doc.

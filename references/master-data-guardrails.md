@@ -1,3 +1,14 @@
+---
+title: Master Data Guardrails
+load_triggers:
+  - skill_stage: [master-data-write, customer-update]
+  - task_type: [customer-update, master-data-change]
+load_priority: high
+estimated_tokens: 706
+dependencies: []
+tier: L3-scenario-customer
+---
+
 # Master Data Guardrails
 
 The customer master table is the primary anchor for the workbench.

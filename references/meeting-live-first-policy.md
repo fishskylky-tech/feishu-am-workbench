@@ -1,3 +1,14 @@
+---
+title: Meeting Live-First Policy
+load_triggers:
+  - user_input_contains: [会议, meeting, transcript, 纪要]
+  - task_type: [meeting-prep, post-meeting, meeting-analysis]
+load_priority: high
+estimated_tokens: 619
+dependencies: [feishu-workbench-gateway, meeting-context-recovery]
+tier: L3-scenario-meeting
+---
+
 # Meeting Live-First Policy
 
 Use this file whenever the input is a meeting note, transcript, post-meeting summary, or meeting review.

@@ -1,3 +1,14 @@
+---
+title: Actual Field Mapping
+load_triggers:
+  - skill_stage: [base-write, field-resolution]
+  - task_type: [base-write]
+load_priority: high
+estimated_tokens: 1385
+dependencies: []
+tier: L3-scenario-write
+---
+
 # Actual Field Mapping
 
 This file is a cached snapshot of the live Feishu account-management schema as of `2026-04-10`.

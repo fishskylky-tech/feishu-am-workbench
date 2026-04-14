@@ -1,3 +1,14 @@
+---
+title: Update Routing And Idempotency
+load_triggers:
+  - skill_stage: [write-planning, routing]
+  - task_type: [base-write, doc-write, todo-write]
+load_priority: high
+estimated_tokens: 1510
+dependencies: [entity-extraction-schema]
+tier: L3-scenario-write
+---
+
 # Update Routing And Idempotency
 
 Route each extracted item to the correct object. Avoid duplicate rows and contradictory updates.

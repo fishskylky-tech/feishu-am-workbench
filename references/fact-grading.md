@@ -1,3 +1,13 @@
+---
+title: Fact Grading
+load_triggers:
+  - skill_stage: [extraction, analysis]
+load_priority: high
+estimated_tokens: 234
+dependencies: [entity-extraction-schema]
+tier: L3-scenario-extraction
+---
+
 # Fact Grading
 
 Use these grades to separate reliable account facts from judgment.

@@ -1,3 +1,14 @@
+---
+title: Minimal Stable Core
+load_triggers:
+  - condition: evaluating backward compatibility impact
+  - skill_stage: [refactoring, architecture-change]
+load_priority: low
+estimated_tokens: 672
+dependencies: []
+tier: L3-on-demand
+---
+
 # Minimal Stable Core
 
 Use this file when changing the skill, config shape, or runtime integration.

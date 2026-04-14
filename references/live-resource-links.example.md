@@ -1,3 +1,14 @@
+---
+title: Live Resource Links Example
+load_triggers:
+  - condition: need concrete runtime wiring examples
+  - skill_stage: [runtime-setup]
+load_priority: low
+estimated_tokens: 73
+dependencies: [feishu-runtime-sources]
+tier: L3-on-demand
+---
+
 # Live Resource Links
 
 This file stores example live entry links used by `feishu-am-workbench`.

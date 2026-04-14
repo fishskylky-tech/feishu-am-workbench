@@ -1,3 +1,15 @@
+---
+title: Customer Archive Rules
+load_triggers:
+  - user_input_contains: [档案, archive, 客户档案]
+  - task_type: [archive-refresh, customer-update]
+  - skill_stage: [archive-write]
+load_priority: high
+estimated_tokens: 601
+dependencies: [master-data-guardrails]
+tier: L3-scenario-customer
+---
+
 # Customer Archive Rules
 
 The archive doc is a decision aid, not a raw dump, not a table export, and not a running log.

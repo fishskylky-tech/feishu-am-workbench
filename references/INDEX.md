@@ -2,6 +2,38 @@
 
 Quick reference for all 21 documents in this directory. Read SKILL.md for the full "when to read" guidance per file.
 
+## Loading Strategy Summary
+
+This skill follows a three-tier progressive disclosure model (L1: metadata, L2: instructions, L3: references) to minimize agent context window usage.
+
+| File | Summary | When to Load | Priority | Est. Tokens | Tier Group |
+|------|---------|-------------|----------|-------------|------------|
+| [feishu-workbench-gateway.md](./feishu-workbench-gateway.md) | Unified gateway for all Feishu workbench access | Always (if Feishu) | Critical | 1004 | L3-always |
+| [entity-extraction-schema.md](./entity-extraction-schema.md) | Full extraction bundle schema | All tasks (extraction stage) | High | 615 | L3-extraction |
+| [meeting-context-recovery.md](./meeting-context-recovery.md) | Context recovery process | Meeting tasks | High | 855 | L3-meeting |
+| [meeting-live-first-policy.md](./meeting-live-first-policy.md) | Live-first execution gate | Meeting tasks | High | 619 | L3-meeting |
+| [meeting-type-classification.md](./meeting-type-classification.md) | Meeting type taxonomy and write ceiling | Meeting tasks | High | 591 | L3-meeting |
+| [live-schema-preflight.md](./live-schema-preflight.md) | Schema validation before writes | Write operations | High | 856 | L3-write |
+| [update-routing.md](./update-routing.md) | Routing and idempotency rules | Write operations | High | 1510 | L3-write |
+| [actual-field-mapping.md](./actual-field-mapping.md) | Cached field snapshot | Write operations | High | 1385 | L3-write |
+| [customer-archive-rules.md](./customer-archive-rules.md) | Archive creation and linking | Customer operations | High | 601 | L3-customer |
+| [master-data-guardrails.md](./master-data-guardrails.md) | Protected fields policy | Customer operations | High | 706 | L3-customer |
+| [fact-grading.md](./fact-grading.md) | Facts vs judgment classification | All tasks (analysis stage) | High | 234 | L3-extraction |
+| [task-patterns.md](./task-patterns.md) | Playbooks for common workflows | Known task types | Medium | 1344 | L3-common |
+| [meeting-output-standard.md](./meeting-output-standard.md) | Final output structure | Meeting tasks | Medium | 517 | L3-meeting |
+| [schema-compatibility.md](./schema-compatibility.md) | Handling schema drift | Write operations (drift) | Medium | 896 | L3-write |
+| [meeting-note-doc-standard.md](./meeting-note-doc-standard.md) | Cold-memory doc structure | Meeting doc creation | Medium | 332 | L3-meeting |
+| [feishu-runtime-sources.md](./feishu-runtime-sources.md) | Runtime resource discovery | Runtime setup | Medium | 571 | L3-on-demand |
+| [money-and-contract-rules.md](./money-and-contract-rules.md) | Financial terms handling | Contract/money inputs | Medium | 375 | L3-on-demand |
+| [workbench-information-architecture.md](./workbench-information-architecture.md) | Workbench layer relationships | Architecture planning | Low | 770 | L3-on-demand |
+| [base-integration-model.md](./base-integration-model.md) | Table integration principles | Integration planning | Low | 820 | L3-on-demand |
+| [minimal-stable-core.md](./minimal-stable-core.md) | Invariant core definition | Backward compat checks | Low | 672 | L3-on-demand |
+| [live-resource-links.example.md](./live-resource-links.example.md) | Example runtime wiring | Runtime setup examples | Low | 73 | L3-on-demand |
+
+**Total L3 Token Budget**: ~17,327 tokens (if all references loaded)
+
+## Detailed File Descriptions
+
 | File | One-line summary | When to load |
 |------|-----------------|--------------|
 | [actual-field-mapping.md](./actual-field-mapping.md) | Cached snapshot of live Base field names, types, and table IDs | Before any Base write that touches specific field names |

@@ -1,3 +1,14 @@
+---
+title: Meeting Type Classification
+load_triggers:
+  - skill_stage: [meeting-analysis, write-ceiling]
+  - task_type: [meeting-prep, post-meeting]
+load_priority: high
+estimated_tokens: 591
+dependencies: [meeting-context-recovery]
+tier: L3-scenario-meeting
+---
+
 # Meeting Type Classification
 
 Use this file after context recovery and before routing updates from a meeting input.

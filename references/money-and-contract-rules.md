@@ -1,3 +1,14 @@
+---
+title: Money And Contract Rules
+load_triggers:
+  - user_input_contains: [合同, contract, 金额, amount, 收款, 续约, renewal, 价格]
+  - skill_stage: [extraction, contract-handling]
+load_priority: medium
+estimated_tokens: 375
+dependencies: [entity-extraction-schema]
+tier: L3-on-demand
+---
+
 # Money And Contract Rules
 
 Money fields are high risk. Treat them with stricter source rules.
