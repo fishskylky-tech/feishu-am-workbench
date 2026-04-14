@@ -159,14 +159,7 @@ python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge te
 
 增强跨工作区（workspace）的字段适配能力，降低硬编码依赖，沉淀可迁移的经营方法模型（operating model）。
 
-## 项目资源导航
+## 当前版本
 
-- 核心规则与入口: [SKILL.md](SKILL.md)
-- 架构边界: [ARCHITECTURE.md](ARCHITECTURE.md)
-- 加载策略（L1/L2/L3）: [docs/loading-strategy.md](docs/loading-strategy.md)
-- 当前状态: [STATUS.md](STATUS.md)
-- 验证协议: [VALIDATION.md](VALIDATION.md)
-- 变更记录: [CHANGELOG.md](CHANGELOG.md)
-- 演进路线: [ROADMAP.md](ROADMAP.md)
-- 运行时执行层: [runtime/](runtime)
-- 规则与策略文档: [references/](references)
+- 版本号：Unreleased（即将发布，详见 CHANGELOG.md [Unreleased]）
+- 上一正式版本：0.2.11（2026-04-11）
