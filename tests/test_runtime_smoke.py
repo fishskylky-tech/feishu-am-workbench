@@ -1097,7 +1097,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             "base +table-list --base-token app_example_base_token --limit 1": subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
-                stdout='{"ok":true,"data":{"items":[{"table_id":"tbl_customer_master_example"}]}}',
+                stdout='{"ok":true,"data":{"tables":[{"id":"tbl_customer_master_example","name":"客户主数据"}]}}',
                 stderr="",
             ),
             "task tasklists list": subprocess.CompletedProcess(
@@ -1248,10 +1248,10 @@ class RuntimeSmokeTests(unittest.TestCase):
                 args=[],
                 returncode=0,
                 stdout=(
-                    '{"ok":true,"data":{"items":['
-                    '{"table_id":"tbl_customer_master_example","table_name":"客户主数据"},'
-                    '{"table_id":"tbla91dGjJsb0axd","table_name":"客户联系记录"},'
-                    '{"table_id":"tblqbbS46bWilKd7","table_name":"行动计划"}'
+                    '{"ok":true,"data":{"tables":['
+                    '{"id":"tbl_customer_master_example","name":"客户主数据"},'
+                    '{"id":"tbla91dGjJsb0axd","name":"客户联系记录"},'
+                    '{"id":"tblqbbS46bWilKd7","name":"行动计划"}'
                     ']}}'
                 ),
                 stderr="",
@@ -1319,6 +1319,60 @@ class RuntimeSmokeTests(unittest.TestCase):
                     '{"id":"tbl_customer_master_example","name":"客户主数据"},'
                     '{"id":"tbla91dGjJsb0axd","name":"客户联系记录"},'
                     '{"id":"tblqbbS46bWilKd7","name":"行动计划"}'
+                    ']}}'
+                ),
+                stderr="",
+            ),
+            "task tasklists list": subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"items":[{"guid":"00000000-0000-4000-8000-000000000001"}]}}'
+                ),
+                stderr="",
+            ),
+            (
+                'drive files list --params '
+                '{"folder_token":"fld_customer_archive_example"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"files":[]}}',
+                stderr="",
+            ),
+            (
+                'drive files list --params '
+                '{"folder_token":"fld_meeting_notes_example"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"files":[]}}',
+                stderr="",
+            ),
+        }
+        client = LarkCliClient(runner=FakeRunner(responses))
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        reporter = LiveCapabilityReporter(
+            client,
+            config,
+            LarkCliResourceProbe(client, config),
+        )
+        report = reporter.build(sources)
+        checks = {item.name: item for item in report.checks}
+        self.assertEqual(checks["base_access"].status, "available")
+        self.assertTrue(checks["base_access"].details["required_tables_verified"])
+
+    def test_capability_report_accepts_legacy_table_list_response_shape(self) -> None:
+        responses = {
+            "base +table-list --base-token app_example_base_token --limit 200": subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"ok":true,"data":{"items":['
+                    '{"table_id":"tbl_customer_master_example","table_name":"客户主数据"},'
+                    '{"table_id":"tbla91dGjJsb0axd","table_name":"客户联系记录"},'
+                    '{"table_id":"tblqbbS46bWilKd7","table_name":"行动计划"}'
                     ']}}'
                 ),
                 stderr="",
@@ -1899,9 +1953,9 @@ class RuntimeSmokeTests(unittest.TestCase):
                 args=[],
                 returncode=0,
                 stdout=(
-                    '{"ok":true,"data":{"items":['
-                    '{"table_id":"tbl_customer_master_example","table_name":"客户主数据"},'
-                    '{"table_id":"tbla91dGjJsb0axd","table_name":"客户联系记录"}'
+                    '{"ok":true,"data":{"tables":['
+                    '{"id":"tbl_customer_master_example","name":"客户主数据"},'
+                    '{"id":"tbla91dGjJsb0axd","name":"客户联系记录"}'
                     ']}}'
                 ),
                 stderr="",
