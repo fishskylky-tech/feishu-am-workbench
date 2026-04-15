@@ -682,6 +682,182 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertIn("会议纪要链接", contact_log["meeting_note_doc"]["aliases"])
         self.assertIn("会议记录链接", contact_log["meeting_note_doc"]["aliases"])
 
+    def test_recover_live_context_prefers_explicit_archive_link_without_fallback_lookup(self) -> None:
+        class FakeQueryBackend:
+            def __init__(self) -> None:
+                self.archive_calls = 0
+
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
+                return []
+
+            def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
+                self.archive_calls += 1
+                return [{"title": "联合利华客户档案", "url": "https://doc.example/archive"}]
+
+        backend = FakeQueryBackend()
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华", archive_link="https://doc.example/unilever")],
+            ),
+        )
+
+        context = recover_live_context(gateway_result=gateway_result, query_backend=backend)
+
+        self.assertEqual(backend.archive_calls, 0)
+        self.assertIn("客户档案链接: https://doc.example/unilever", context.key_context)
+
+    def test_recover_live_context_uses_unique_archive_candidate_when_link_missing(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
+                return []
+
+            def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
+                return [{
+                    "title": "联合利华客户档案",
+                    "url": "https://doc.example/archive",
+                    "customer_id": customer_id,
+                    "short_name": short_name,
+                }]
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        context = recover_live_context(gateway_result=gateway_result, query_backend=FakeQueryBackend())
+
+        self.assertIn("客户档案候选", context.used_sources)
+        self.assertEqual(context.write_ceiling, "normal")
+        self.assertIn("联合利华客户档案", "\n".join(context.key_context))
+
+    def test_recover_live_context_downgrades_fuzzy_archive_candidate_without_explicit_evidence(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
+                return []
+
+            def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
+                return [{
+                    "title": "联合利华客户档案",
+                    "url": "https://doc.example/archive",
+                }]
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        context = recover_live_context(gateway_result=gateway_result, query_backend=FakeQueryBackend())
+
+        self.assertIn("客户档案候选", context.used_sources)
+        self.assertEqual(context.write_ceiling, "recommendation-only")
+        self.assertTrue(any("缺少显式客户证据" in item for item in context.candidate_conflicts))
+
+    def test_recover_live_context_downgrades_conflicting_meeting_note_candidates(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return []
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
+                return []
+
+            def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
+                return [{
+                    "title": "联合利华客户档案",
+                    "url": "https://doc.example/archive",
+                    "customer_id": customer_id,
+                    "short_name": short_name,
+                }]
+
+            def discover_meeting_note_candidates(
+                self,
+                customer_id: str,
+                short_name: str,
+                topic_text: str,
+                limit: int = 10,
+            ):
+                return [
+                    {"title": "联合利华 Campaign活动分析优化 会议纪要 A", "url": "https://doc.example/note-a"},
+                    {"title": "联合利华 Campaign活动分析优化 会议纪要 B", "url": "https://doc.example/note-b"},
+                ]
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=FakeQueryBackend(),
+            topic_text="联合利华 Campaign活动分析优化 阶段汇报",
+        )
+
+        self.assertIn("会议纪要候选", context.used_sources)
+        self.assertEqual(context.write_ceiling, "recommendation-only")
+        self.assertTrue(any("会议纪要候选冲突" in item for item in context.candidate_conflicts))
+
+    def test_build_meeting_output_surfaces_write_ceiling_and_open_questions(self) -> None:
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        output_text = build_meeting_output(
+            eval_name="unilever-stage-review",
+            transcript_path=UNILEVER_TRANSCRIPT,
+            gateway_result=gateway_result,
+            recovery=ContextRecoveryResult(
+                status="partial",
+                used_sources=["客户主数据", "客户档案候选"],
+                key_context=["客户档案候选: 联合利华客户档案｜https://doc.example/archive"],
+                missing_sources=["客户联系记录"],
+                open_questions=["档案候选与会议线程仍需人工确认"],
+                write_ceiling="recommendation-only",
+                candidate_conflicts=["会议纪要候选存在重名冲突"],
+            ),
+        )
+
+        self.assertIn("写回上限: recommendation-only", output_text)
+        self.assertIn("开放问题:", output_text)
+        self.assertIn("档案候选与会议线程仍需人工确认", output_text)
+        self.assertIn("会议纪要候选存在重名冲突", output_text)
+
 
 if __name__ == "__main__":
     unittest.main()
