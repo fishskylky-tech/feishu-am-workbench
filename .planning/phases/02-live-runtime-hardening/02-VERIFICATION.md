@@ -1,8 +1,8 @@
 ---
 phase: 02-live-runtime-hardening
 verified: 2026-04-15T03:27:06Z
-status: human_needed
-score: 5/5 must-haves verified
+status: passed
+score: 5/5 must-haves verified + 2/2 human checks passed
 overrides_applied: 0
 human_verification:
   - test: 在已配置真实 FEISHU_AM_* 私有环境变量和有效 lark-cli 授权的 shell 中运行 python -m runtime . --json
@@ -17,8 +17,8 @@ human_verification:
 
 **Phase Goal:** 稳定私有配置加载、能力诊断、资源来源解析与客户解析，让 live 操作从可靠 ground truth 起步。目标定义见 [.planning/ROADMAP.md](.planning/ROADMAP.md#L55)。
 **Verified:** 2026-04-15T03:27:06Z
-**Status:** human_needed
-**Re-verification:** 否，首次验证
+**Status:** passed
+**Re-verification:** 是，已补完人工验证
 
 ## Goal Achievement
 
@@ -99,11 +99,15 @@ human_verification:
 **Expected:** 精确客户返回 resolved，歧义前缀返回 ambiguous，不存在客户返回 missing。  
 **Why human:** 需要当前个人 workspace 中真实 Base 数据、权限与表字段状态；自动化回归只验证了 integration shape 与确定性分支。
 
+### Human Validation Update
+
+2026-04-15 的人工复核已完成，并确认可以继续走 live 流程：Base / Docs / Task 全部为 available，客户识别返回 resolved，客户为 联合利华（UFS），客户 ID 为 C_002，且没有运行时或识别层阻断。
+
 ### Gaps Summary
 
-本次验证未发现代码级 must-have 缺口，也没有发现未连线或明显 stub 的关键实现。Phase 2 的核心硬化目标已经在代码、测试和文档层面落地：runtime source 不再信任 checked-in repo 文档，缺失私有输入时会 fail closed，capability diagnostics 使用三态并提供 next action，customer resolution 保持确定性。
+本次验证未发现代码级 must-have 缺口，也没有发现未连线或明显 stub 的关键实现。Phase 2 的核心硬化目标已经在代码、测试、文档和人工 live 复核层面全部落地：runtime source 不再信任 checked-in repo 文档，缺失私有输入时会 fail closed，capability diagnostics 使用三态并提供 next action，customer resolution 保持确定性，并已在真实 workspace 中完成人工确认。
 
-当前没有需要进入 gap closure 的实现缺陷。之所以不是 passed，而是 human_needed，只是因为 Phase 2 触及真实飞书资源与私有环境变量，这两条 live 集成复核仍需要操作者在自己的真实环境中完成最后确认。
+当前没有需要进入 gap closure 的实现缺陷；Phase 2 可以视为已通过验证。
 
 ---
 
