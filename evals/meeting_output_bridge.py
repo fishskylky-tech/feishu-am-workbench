@@ -9,6 +9,7 @@ from typing import Protocol
 from runtime.gateway import FeishuWorkbenchGateway
 from runtime.lark_cli import LarkCliClient
 from runtime.live_adapter import LarkCliBaseQueryBackend, LiveWorkbenchConfig
+from runtime.semantic_registry import SEMANTIC_FIELD_REGISTRY
 from runtime.runtime_sources import RuntimeSourceLoader
 from runtime.models import (
     CustomerMatch,
@@ -221,6 +222,7 @@ def recover_live_context(
     customer_id = best.customer_id
     used_sources = ["客户主数据"]
     key_context = [_render_customer_snapshot(best)]
+    key_context.extend(_render_customer_master_details(best))
     missing_sources: list[str] = []
     open_questions: list[str] = []
 
@@ -270,6 +272,33 @@ def _render_customer_snapshot(best: CustomerMatch) -> str:
     customer_id = best.customer_id or "missing"
     short_name = best.short_name or "unknown"
     return f"客户主数据快照: {short_name}｜客户ID {customer_id}"
+
+
+def _render_customer_master_details(best: CustomerMatch) -> list[str]:
+    raw_record = best.raw_record if isinstance(best.raw_record, dict) else {}
+    details: list[str] = []
+    strategy_summary = _semantic_value("客户主数据", "strategy_summary", raw_record)
+    last_contact_at = _semantic_value("客户主数据", "last_contact_at", raw_record)
+    next_action_summary = _semantic_value("客户主数据", "next_action_summary", raw_record)
+    if strategy_summary:
+        details.append(f"客户主数据策略摘要: {strategy_summary}")
+    if last_contact_at:
+        details.append(f"客户主数据上次接触: {last_contact_at}")
+    if next_action_summary:
+        details.append(f"客户主数据下次行动: {next_action_summary}")
+    return details
+
+
+def _semantic_value(table_name: str, semantic_field: str, raw_record: dict[str, object]) -> str:
+    slot = SEMANTIC_FIELD_REGISTRY.get(table_name, {}).get(semantic_field, {})
+    candidate_keys = [slot.get("canonical_name"), *slot.get("aliases", [])]
+    for key in candidate_keys:
+        if not key:
+            continue
+        value = raw_record.get(str(key))
+        if value not in (None, ""):
+            return str(value)
+    return ""
 
 
 def _render_latest_contact(row: dict[str, object]) -> str:
