@@ -79,6 +79,53 @@ flowchart TD
     D --> G
 ```
 
+## 当前 runtime 主路径
+
+当前实现最稳定的主路径是会议相关场景：
+
+1. 场景入口收到 transcript、会议纪要或会后请求
+2. 先进入 `gateway` 做资源状态检查和客户解析
+3. 在场景层调用 `evals/meeting_output_bridge.py` 做 typed context recovery
+4. 从 `客户主数据`、`客户联系记录`、`行动计划` 和 archive link 恢复最小必要上下文
+5. 当显式 link 缺失时，允许走受限 fallback candidate discovery
+6. 输出固定审计框架，包括 `资源状态`、`客户结果`、`上下文恢复状态`、`已使用资料`、`写回上限`、`开放问题`
+7. 若需要写回，再进入 `schema_preflight`、`write_guard` 和统一 writer
+
+这一条主路径有两个重要边界：
+
+- foundation 层不替场景默认组装完整业务上下文
+- fallback 证据不足或候选冲突时，必须下调到 recommendation-only
+
+## 当前关键模块
+
+- `runtime/gateway.py`
+  - live-first 入口，先做资源/客户解析，再交给场景层继续恢复上下文
+- `runtime/live_adapter.py`
+  - 负责薄适配：资源探测、schema 读取、客户解析、按客户 ID 的目标查询、archive / meeting-note candidate discovery
+- `runtime/schema_preflight.py`
+  - 负责 live schema、字段类型、选项与 drift 检查
+- `runtime/write_guard.py`
+  - 负责最终写前风险阻断
+- `runtime/todo_writer.py`
+  - 当前最成熟的统一写回出口，负责 preflight、guard、dedupe 和执行结果标准化
+- `evals/meeting_output_bridge.py`
+  - 当前会议场景最关键的 scene integration surface
+
+## 与文档的关系
+
+当前仓库里不同文档承担的职责应该保持分离：
+
+- [README.md](README.md)
+  - 让新使用者知道它是什么、怎么跑第一条链路
+- [CONFIGURATION.md](CONFIGURATION.md)
+  - 说明本地运行时输入、模板配置和私有边界
+- [TESTING.md](TESTING.md)
+  - 说明自动化和人工验证如何证明这条架构主路径仍然可信
+- [STATUS.md](STATUS.md)
+  - 描述当前做到哪、卡在哪、下一步是什么
+- [VALIDATION.md](VALIDATION.md)
+  - 定义验证协议，而不是重复架构说明
+
 ---
 
 ## 各层职责
@@ -168,7 +215,7 @@ flowchart TD
 
 - [runtime/](./runtime)
 
-但当前只完成了本地执行骨架和统一数据模型，live Feishu adapter 仍然是下一步。
+当前已经落地了第一版 live Feishu adapter，并且会议场景主路径已在测试和验证资产中使用；后续要继续扩的是覆盖面和稳定性，不是从零开始接入 live adapter。
 
 建议拆成 4 个内部能力：
 

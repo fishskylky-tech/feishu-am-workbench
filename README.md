@@ -127,6 +127,21 @@ python3 -m evals.meeting_output_bridge \
 python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_eval_runner tests.test_validation_assets
 ```
 
+## 文档导航
+
+如果你要继续在这个仓库里开发，而不是只做一次性试跑，建议配合以下文档一起看：
+
+- [GETTING-STARTED.md](GETTING-STARTED.md)
+  - 新环境首次上手、诊断和第一条会议验证路径
+- [DEVELOPMENT.md](DEVELOPMENT.md)
+  - 日常开发节奏、分支策略、改动边界和文档同步方式
+- [TESTING.md](TESTING.md)
+  - 自动化测试切片、人工验证项和发 PR 前检查清单
+- [CONFIGURATION.md](CONFIGURATION.md)
+  - `.env`、`FEISHU_AM_*`、模板配置和私有运行时边界
+- [ARCHITECTURE.md](ARCHITECTURE.md)
+  - 当前 runtime、场景层和写回层的分层边界
+
 ## 写回策略
 
 ### 默认行为
@@ -161,5 +176,5 @@ python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge te
 
 ## 当前版本
 
-- 版本号：0.2.12（2026-04-14）
-- 上一正式版本：0.2.11（2026-04-11）
+- 版本号：0.2.13（2026-04-15）
+- 上一正式版本：0.2.12（2026-04-14）

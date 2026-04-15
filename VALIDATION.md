@@ -9,8 +9,16 @@
 
 当前协议不是重型 benchmark 框架，而是可重复执行的最小闭环。
 
-本轮新增一条验证主线：
+当前核心上下文恢复阶段的自动化与人工收尾结论是：
 
+- 当前核心上下文恢复切片已通过：`tests.test_env_loader`、`tests.test_runtime_smoke`、`tests.test_meeting_output_bridge`
+- 当前核心上下文恢复阶段 code review clean，security audit `threats_open: 0`
+- human UAT 4/4 passed
+- 仍保留一类人工项：真实飞书工作区中的 archive / meeting-note fallback 证据质量复核
+
+本轮新增两条验证主线：
+
+- 核心上下文恢复是否已经形成 gateway-first、confidence-aware 的稳定审计闭环
 - 统一 Todo 写回通道是否已经形成最小闭环
 
 ## 验证目标
@@ -22,6 +30,7 @@
 - recommendation mode / no-write 边界更稳
 - 关键 hard rules 对真实场景有实际约束力
 - 会议分析前会先尝试 live-first gateway，而不是默认单文件分析
+- meeting 场景的上下文恢复会把 fallback 证据、冲突候选和 write ceiling 显式暴露出来
 - meeting 场景产出的 Todo candidate 已可进入统一 writer，并返回标准化 write result
 
 ## 样本范围
@@ -71,6 +80,7 @@
 - 是否先尝试 gateway Stage 1 / 2 / 3
 - 是否能显式记录 resource resolution、customer resolution、context status 和 used Feishu sources / fallback reason
 - 是否能给出 context status 和 write ceiling
+- fallback 候选冲突或弱证据是否会显式降级，而不是被隐藏
 - 是否能保持 recommendation mode，而不是越权写回
 - 是否把该类会议归到正确输出重心
 
@@ -150,13 +160,14 @@
   - `evals/meeting_output_bridge.py` 把 transcript + gateway 结果拼成 runner 可复核的最小输出
   - bridge 既支持手工注入 `GatewayResult`，也支持先执行 gateway 再生成输出
   - bridge 现在可继续执行最小 Stage 3 context recovery：读取 `客户联系记录`、`行动计划` 和客户档案链接
+   - bridge 现在会在显式链接缺失时进行受限 fallback 搜索，并把冲突候选与 `写回上限` 降级显式写入输出
   - bridge 现在可生成最小 Todo candidate，并在确认后调用统一 Todo writer
 
 ## 当前验证报告
 
-- [2026-04-10-unilever-campaign-phase-report.md](./validation-reports/2026-04-10-unilever-campaign-phase-report.md)
+- [2026-04-10-unilever-campaign-phase-report.md](./archive/validation-reports/2026-04-10-unilever-campaign-phase-report.md)
   - 单案例探索型阶段汇报验证
-- [2026-04-11-multi-case-skill-validation.md](./validation-reports/2026-04-11-multi-case-skill-validation.md)
+- [2026-04-11-multi-case-skill-validation.md](./archive/validation-reports/2026-04-11-multi-case-skill-validation.md)
   - 本轮 3 案例 baseline / current-branch / regression 统一结论
 
 ## 验证完成标准
