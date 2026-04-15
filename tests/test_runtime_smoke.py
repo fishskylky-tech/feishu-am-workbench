@@ -151,6 +151,29 @@ class FakeRunner:
 
 
 class RuntimeSmokeTests(unittest.TestCase):
+    TEST_RUNTIME_ENV = {
+        "FEISHU_AM_WORKBENCH_BASE_URL": "https://example.com/base/app_example_base_token?table=tbl_customer_master_example",
+        "FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER": "fld_customer_archive_example",
+        "FEISHU_AM_MEETING_NOTES_FOLDER": "fld_meeting_notes_example",
+        "FEISHU_AM_TODO_TASKLIST_GUID": "00000000-0000-4000-8000-000000000001",
+        "FEISHU_AM_TODO_CUSTOMER_FIELD_GUID": "a7009aff-7d85-4378-82c9-1584873f469d",
+        "FEISHU_AM_TODO_PRIORITY_FIELD_GUID": "f7587037-8ad1-443c-b350-f6600e0ccadd",
+    }
+
+    def setUp(self) -> None:
+        self._env_backup = {
+            key: os.environ.get(key) for key in self.TEST_RUNTIME_ENV
+        }
+        for key, value in self.TEST_RUNTIME_ENV.items():
+            os.environ[key] = value
+
+    def tearDown(self) -> None:
+        for key, value in self._env_backup.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
     def test_runtime_source_loader_requires_env_for_live_resource_hints(self) -> None:
         env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
         try:
@@ -323,8 +346,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华续费方案", '
                 '"due": {"timestamp": "1776643200000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
                 '"update_fields": ["summary", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -425,8 +447,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
                 '"update_fields": ["summary", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -659,7 +680,15 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(sources.meeting_notes_folder.value, "fld_meeting_notes_example")
         self.assertEqual(sources.todo_tasklist_guid.value, "00000000-0000-4000-8000-000000000001")
         self.assertEqual(sources.customer_archive_folder.value, "fld_customer_archive_example")
-        self.assertEqual(sources.todo_priority_options, ["高", "中", "低"])
+        self.assertEqual(
+            sources.todo_customer_field_guid.value,
+            "a7009aff-7d85-4378-82c9-1584873f469d",
+        )
+        self.assertEqual(
+            sources.todo_priority_field_guid.value,
+            "f7587037-8ad1-443c-b350-f6600e0ccadd",
+        )
+        self.assertEqual(sources.todo_priority_options, [])
 
     def test_customer_resolver_preserves_raw_row(self) -> None:
         backend = FakeCustomerBackend(
@@ -987,7 +1016,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         backend = LarkCliSchemaBackend(client, config)
         schema = backend.get_table_schema("待办")
         self.assertEqual(schema["customer"]["field_id"], "a7009aff-7d85-4378-82c9-1584873f469d")
-        self.assertEqual(schema["priority"]["options"], ["高", "中", "低"])
+        self.assertEqual(schema["priority"]["options"], [])
         self.assertEqual(
             schema["owner"]["valid_member_ids"],
             ["ou_owner", "ou_editor"],
@@ -1097,8 +1126,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"description": "带客户档案链接", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}'
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1204,8 +1232,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_guid_1"} --data '
                 '{"task": {"summary": "更新后的标题", "description": "更新后的描述", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "6238286f-b2e2-5ab8-e902-a3bb9dc242b0"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1330,8 +1357,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", "description": "补充新的会后上下文", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1901,7 +1927,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             "capability_report": [
                 {
                     "name": "base_access",
-                    "status": "unavailable",
+                    "status": "blocked",
                     "reasons": ["missing_base_token"],
                     "details": {"env_var": "FEISHU_AM_BASE_TOKEN"},
                 },
@@ -1915,9 +1941,35 @@ class RuntimeSmokeTests(unittest.TestCase):
             "customer_resolution": None,
         }
         rendered = render_live_diagnostic(report)
+        self.assertIn("conclusion: blocked", rendered)
+        self.assertIn("reason: some configured resources are not yet confirmed live: meeting_notes_folder", rendered)
         self.assertIn("resource status: partial", rendered)
         self.assertIn("next action: export FEISHU_AM_BASE_TOKEN", rendered)
         self.assertIn("next action: run lark-cli auth login", rendered)
+
+    def test_capability_report_uses_blocked_for_missing_required_inputs(self) -> None:
+        env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
+        try:
+            for key in RuntimeSourceLoader.ENV_VARS.values():
+                os.environ.pop(key, None)
+
+            client = LarkCliClient(runner=FakeRunner({}))
+            sources = RuntimeSourceLoader(Path("/tmp/empty-runtime-sources")).load()
+            config = LiveWorkbenchConfig.from_sources(sources)
+            reporter = LiveCapabilityReporter(client, config, LarkCliResourceProbe(client, config))
+
+            report = reporter.build(sources)
+            checks = {item.name: item for item in report.checks}
+
+            self.assertEqual(checks["base_access"].status, "blocked")
+            self.assertEqual(checks["docs_access"].status, "blocked")
+            self.assertEqual(checks["task_access"].status, "blocked")
+        finally:
+            for key, value in env_backup.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     def test_suggest_next_actions_for_available_task_access(self) -> None:
         actions = suggest_next_actions(

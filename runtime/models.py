@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 Status = Literal["resolved", "partial", "unresolved"]
 PreflightStatus = Literal["safe", "safe_with_drift", "blocked"]
-CapabilityStatus = Literal["available", "degraded", "unavailable"]
+CapabilityStatus = Literal["available", "degraded", "blocked"]
 TableRole = Literal["snapshot", "detail", "dimension", "bridge"]
 WriteOperation = Literal["create", "update"]
 DedupeDecision = Literal["create_new", "update_existing", "create_subtask", "no_write"]
