@@ -1,6 +1,6 @@
 ---
 name: feishu-am-workbench
-version: 0.2.11
+version: 0.2.13
 author: fishskylky-tech
 description: >
   Personal AM workflow skill for Feishu-based account management. Use this skill whenever the user

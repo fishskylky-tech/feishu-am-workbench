@@ -15,12 +15,13 @@
 
 ## 当前结论
 
-当前仓库已经进入“底座可执行、meeting 场景最小 `live-first` 闭环已验证完成、Todo 已收口为第一批统一写回对象、后续继续按 roadmap 增强”的阶段。
+当前仓库已经进入“Phase 3 已关闭、meeting 场景核心上下文恢复闭环已收口、Todo 仍是第一批统一写回对象、下一步进入 Phase 4 强化安全写回”的阶段。
 
 - Base: 已可 live 读取
 - Todo: 已可 live 读取
 - Docs / Drive folder: 已可 live 读取
-- Meeting 场景: 已完成真实 `gateway -> Stage 3 最小 context recovery -> bridge -> runner` 验证
+- Meeting 场景: 已完成真实 `gateway -> typed context recovery -> constrained fallback -> audit output` 验证
+- Phase 3 状态: code review clean、`threats_open: 0`、validation verified、human UAT 4/4 passed
 
 ## 模块状态
 
@@ -83,25 +84,26 @@
 
 ### 4. Context Hydration
 
-状态：`已改为上层显式 Stage 3 恢复，并完成最小闭环验证`
+状态：`Phase 3 已关闭，meeting 场景核心恢复链路已稳定`
 
 已完成：
 
 - 底座默认 gateway 已不再自动执行“客户背景恢复”
 - `live_adapter.py` 中的默认业务查询实现已删除
-- `evals/meeting_output_bridge.py` 已可在 gateway 之后继续执行最小 Stage 3 恢复
+- `evals/meeting_output_bridge.py` 已在 gateway 之后执行 typed context recovery，并输出固定审计框架
 - 当前最小恢复范围包括：
   - `客户主数据`
   - 最近 `客户联系记录`
   - 最近 `行动计划`
   - 客户档案链接
-- 3 个真实 meeting 案例已完成 `resolved -> completed` 验证
+- 当显式链接缺失时，已支持受限 archive / meeting-note fallback 搜索，并把冲突或弱证据显式降级处理
+- Phase 3 已完成 review、security、validation 与 human UAT 闭环
 
 当前限制：
 
-- 当前 `completed` 仅代表“最小 live context recovered”，不是“已读取档案正文和历史 meeting thread”
-- 当前 meeting notes 仍主要按文件名中的 `客户ID` 做匹配
-- 还没补更强的文档筛选和相关性排序
+- 当前 `completed` 仍代表“最小必要上下文 + 受控 fallback 证据已恢复”，不是“已读取档案正文和完整历史线程”
+- meeting-note fallback 仍是轻量候选发现，不是全文级相关性理解
+- archive doc 正文读取和历史 meeting thread 深度关联仍后置到后续 phase
 
 ### 5. Live Schema
 
@@ -226,13 +228,13 @@ python3 -m runtime .
 
 ## 当前阻点
 
-当前没有新的运行前权限阻点，也没有阻断当前分支收尾的 P1 实现缺口。
+当前没有新的运行前权限阻点，Phase 3 也没有阻断收尾的 P1 缺口。
 
 当前更偏实现层的待补项是：
 
-- 会议纪要目录命中策略仍偏简单
+- unified Todo writer 的真实联调与 guard/preflight 仍需继续压实
 - live schema 还没完全覆盖 Todo / write guard 的真实写回联调验证
-- Stage 3 目前只恢复 Base 上下文和 archive link，尚未定向读取 archive doc 正文和相关历史 meeting-note docs
+- 当前上下文恢复仍未定向读取 archive doc 正文和相关历史 meeting-note docs
 - 多维表格扩表还没按统一接入模型推进到查询优化和写面，目前写面仍只覆盖 3 张核心表
 - 新增表目前只完成 profile 层，尚未进入真实读写链路
 - Base 查询目前仍有“先拉再本地筛”的实现，需要继续收口到精准查询优先
@@ -242,11 +244,11 @@ python3 -m runtime .
 
 当前最自然的下一步是：
 
-1. 补更强的 meeting-note 命中和排序策略
-2. 继续收口 unified Todo writer 的真实联调验证和 dedupe 规则
+1. 进入 Phase 4，统一 Todo candidate、schema preflight、write guard 和 writer result 的安全写回闭环
+2. 继续补真实写回链路的联调验证与 dedupe/blocked reason 回归
 3. 把 Base 读取从"大批量读取后本地筛选"继续改成"精准查询优先"
 4. 把 archive doc 正文读取、历史 meeting-note docs 定向读取、ontology 建模留到 roadmap 后续阶段
 
 ## 更新时间
 
-- 2026-04-14
+- 2026-04-15
