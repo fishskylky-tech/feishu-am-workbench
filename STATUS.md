@@ -50,10 +50,10 @@
 已完成：
 
 - 示例入口格式记录在 [references/live-resource-links.example.md](./references/live-resource-links.example.md)（使用占位值，不含真实 token）
-- 真实资源配置通过 `FEISHU_AM_*` 环境变量注入，或本地 `.env` 文件（已加入 `.gitignore`）
+- 真实资源配置通过 `FEISHU_AM_*` 环境变量注入；本地 `.env` 仅作为把这些值加载进进程环境的便利层（已加入 `.gitignore`）
 - `runtime/env_loader.py` 在 runtime 入口启动时自动加载 `.env`，无需手动 export
-- 加载优先级：进程级显式 env > `.env` 文件 > 文件解析 fallback
-- runtime 已能从环境变量或文件解析：
+- 加载优先级：进程级显式 env > `.env` 注入后的进程环境
+- runtime 已能从私有环境变量解析：
   - Base token
   - `客户主数据` table id
   - customer archive folder
@@ -64,6 +64,7 @@
 
 - 目前只覆盖你当前个人环境
 - 还没设计成更广义的资源发现层
+- checked-in repo 文档已不再参与 live 资源 truth 判定；它们只保留说明和示例作用
 
 ### 3. Customer Resolution
 
@@ -216,6 +217,12 @@ python3 -m runtime .
 - `base_access`: `available`
 - `docs_access`: `available`
 - `task_access`: `available`
+
+当前口径：
+
+- 诊断默认使用三档：`available / degraded / blocked`
+- 输出会明确给出：结论、原因、下一步建议
+- 当必需私有输入缺失时，应直接表现为 `blocked`，而不是回退到 repo 文档猜测资源
 
 ## 当前阻点
 
