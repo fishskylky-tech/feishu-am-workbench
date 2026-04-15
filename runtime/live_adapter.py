@@ -118,7 +118,7 @@ class LarkCliResourceProbe:
             return ResourceProbeOutcome(
                 key=hint.key,
                 confirmed=False,
-                status="unavailable",
+                status="blocked",
                 reason="resource_missing",
             )
         if hint.key == "todo_tasklist_guid":
@@ -130,7 +130,7 @@ class LarkCliResourceProbe:
         return ResourceProbeOutcome(
             key=hint.key,
             confirmed=False,
-            status="unavailable",
+            status="blocked",
             reason="unsupported_probe",
         )
 
@@ -141,7 +141,7 @@ class LarkCliResourceProbe:
             return ResourceProbeOutcome(
                 key="todo_tasklist_guid",
                 confirmed=False,
-                status="unavailable",
+                status="blocked",
                 reason=exc.error_type,
                 hint=exc.hint,
                 details={"message": exc.message},
@@ -172,7 +172,7 @@ class LarkCliResourceProbe:
                 ]
             )
         except LarkCliCommandError as exc:
-            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "unavailable"
+            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "blocked"
             return ResourceProbeOutcome(
                 key="drive_folder",
                 confirmed=False,
@@ -200,7 +200,7 @@ class LarkCliResourceProbe:
                 ]
             )
         except LarkCliCommandError as exc:
-            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "unavailable"
+            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "blocked"
             return ResourceProbeOutcome(
                 key="base_token",
                 confirmed=False,
@@ -864,7 +864,7 @@ class LiveCapabilityReporter:
         if not self.config.base_token:
             return CapabilityCheck(
                 name="base_access",
-                status="unavailable",
+                status="blocked",
                 reasons=["missing_base_token"],
                 details={"env_var": "FEISHU_AM_BASE_TOKEN"},
             )
@@ -880,7 +880,7 @@ class LiveCapabilityReporter:
                 ]
             )
         except LarkCliCommandError as exc:
-            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "unavailable"
+            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "blocked"
             return CapabilityCheck(
                 name="base_access",
                 status=status,
@@ -940,7 +940,7 @@ class LiveCapabilityReporter:
         if not checks:
             return CapabilityCheck(
                 name="docs_access",
-                status="unavailable",
+                status="blocked",
                 reasons=["docs_resource_missing"],
             )
         if all(item.confirmed for item in checks):
@@ -950,7 +950,7 @@ class LiveCapabilityReporter:
                 details={"folders": [item.key for item in checks]},
             )
         statuses = {item.status for item in checks}
-        status = "degraded" if "degraded" in statuses else "unavailable"
+        status = "degraded" if "degraded" in statuses else "blocked"
         reasons = [item.reason or "docs_unconfirmed" for item in checks if not item.confirmed]
         details = {
             "outcomes": [
@@ -974,7 +974,7 @@ class LiveCapabilityReporter:
         if not hint:
             return CapabilityCheck(
                 name="task_access",
-                status="unavailable",
+                status="blocked",
                 reasons=["tasklist_missing"],
             )
         outcome = self.resource_probe.inspect(hint)
