@@ -34,6 +34,7 @@ from evals.meeting_output_bridge import build_meeting_todo_candidates  # noqa: E
 from evals.meeting_output_bridge import recover_live_context  # noqa: E402
 from evals.meeting_output_bridge import run_confirmed_todo_write  # noqa: E402
 from evals.meeting_output_bridge import run_gateway_and_build_meeting_output  # noqa: E402
+from runtime.semantic_registry import SEMANTIC_FIELD_REGISTRY  # noqa: E402
 
 
 class MeetingOutputBridgeTests(unittest.TestCase):
@@ -632,6 +633,54 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(context.status, "context-limited")
         self.assertEqual(context.write_ceiling, "recommendation-only")
         self.assertIn("ambiguous", context.fallback_reason)
+
+    def test_recover_live_context_enriches_customer_snapshot_from_master_fields(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                if table_name == "行动计划":
+                    return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
+                return []
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[
+                    CustomerMatch(
+                        customer_id="C_002",
+                        short_name="联合利华",
+                        archive_link="https://doc.example/unilever",
+                        raw_record={
+                            "客户ID": "C_002",
+                            "简称": "联合利华",
+                            "策略摘要": "重点推进 Campaign 优化",
+                            "上次接触日期": "2026-04-08",
+                            "下次行动计划": "确认下一轮投放方案",
+                        },
+                    )
+                ],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=FakeQueryBackend(),
+        )
+
+        self.assertIn("客户主数据策略摘要: 重点推进 Campaign 优化", context.key_context)
+        self.assertIn("客户主数据下次行动: 确认下一轮投放方案", context.key_context)
+
+    def test_semantic_registry_exposes_narrow_archive_and_meeting_aliases(self) -> None:
+        customer_master = SEMANTIC_FIELD_REGISTRY["客户主数据"]
+        contact_log = SEMANTIC_FIELD_REGISTRY["客户联系记录"]
+
+        self.assertIn("客户档案链接", customer_master["archive_link"]["aliases"])
+        self.assertIn("会议纪要链接", contact_log["meeting_note_doc"]["aliases"])
+        self.assertIn("会议记录链接", contact_log["meeting_note_doc"]["aliases"])
 
 
 if __name__ == "__main__":
