@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import os
+import tempfile
 import unittest
 from pathlib import Path
 import subprocess
@@ -149,6 +151,75 @@ class FakeRunner:
 
 
 class RuntimeSmokeTests(unittest.TestCase):
+    def test_runtime_source_loader_requires_env_for_live_resource_hints(self) -> None:
+        env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
+        try:
+            for key in RuntimeSourceLoader.ENV_VARS.values():
+                os.environ.pop(key, None)
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                (root / "references").mkdir()
+                (root / "references" / "actual-field-mapping.md").write_text(
+                    "tasklist_guid: 11111111-1111-1111-1111-111111111111\n",
+                    encoding="utf-8",
+                )
+                (root / "references" / "workbench-information-architecture.md").write_text(
+                    "Layer 4: Customer archive Location: Feishu docs folder `archive_from_repo`\n",
+                    encoding="utf-8",
+                )
+                (root / "references" / "update-routing.md").write_text(
+                    "Default meeting-note folder: `meeting_notes_from_repo`\n",
+                    encoding="utf-8",
+                )
+                (root / "references" / "live-resource-links.example.md").write_text(
+                    "Workbench Base: `https://example.com/base/app_token?table=tbl123`\n",
+                    encoding="utf-8",
+                )
+                (root / "SKILL.md").write_text(
+                    "dedicated Feishu folder `skill_meeting_notes`\n",
+                    encoding="utf-8",
+                )
+
+                sources = RuntimeSourceLoader(root).load()
+
+            self.assertIsNone(sources.base_token)
+            self.assertIsNone(sources.customer_archive_folder)
+            self.assertIsNone(sources.meeting_notes_folder)
+            self.assertIsNone(sources.todo_tasklist_guid)
+            self.assertEqual(sources.source_files, [])
+        finally:
+            for key, value in env_backup.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
+    def test_runtime_source_loader_uses_env_backed_values_only(self) -> None:
+        env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
+        try:
+            os.environ["FEISHU_AM_WORKBENCH_BASE_URL"] = "https://example.com/base/app_token?table=tbl123"
+            os.environ["FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER"] = "archive_folder"
+            os.environ["FEISHU_AM_MEETING_NOTES_FOLDER"] = "meeting_folder"
+            os.environ["FEISHU_AM_TODO_TASKLIST_GUID"] = "22222222-2222-2222-2222-222222222222"
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                sources = RuntimeSourceLoader(Path(temp_dir)).load()
+
+            self.assertEqual(sources.base_token.value, "app_token")
+            self.assertEqual(sources.base_token.source_file, "env:FEISHU_AM_WORKBENCH_BASE_URL")
+            self.assertEqual(sources.customer_master_table_id.value, "tbl123")
+            self.assertEqual(sources.customer_archive_folder.source_file, "env:FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER")
+            self.assertEqual(sources.meeting_notes_folder.source_file, "env:FEISHU_AM_MEETING_NOTES_FOLDER")
+            self.assertEqual(sources.todo_tasklist_guid.source_file, "env:FEISHU_AM_TODO_TASKLIST_GUID")
+            self.assertIn("env:FEISHU_AM_WORKBENCH_BASE_URL", sources.source_files)
+        finally:
+            for key, value in env_backup.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
     def test_write_candidate_supports_shared_write_metadata(self) -> None:
         candidate = WriteCandidate(
             object_name="待办",
