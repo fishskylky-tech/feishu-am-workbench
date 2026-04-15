@@ -25,6 +25,7 @@ from runtime.models import (  # noqa: E402
     ResourceHint,
     ResourceResolution,
     WriteExecutionResult,
+    ContextRecoveryResult,
 )
 
 from evals.meeting_output_bridge import build_meeting_output  # noqa: E402
@@ -563,6 +564,74 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertIn("上下文恢复状态: partial", output_text)
         result = evaluate_case(eval_name="unilever-stage-review", output_text=output_text)
         self.assertTrue(result["passed"], result)
+
+    def test_recover_live_context_returns_typed_contract(self) -> None:
+        class FakeQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                if table_name == "客户联系记录":
+                    return [
+                        {"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"},
+                    ]
+                if table_name == "行动计划":
+                    return [
+                        {"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"},
+                    ]
+                return []
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[
+                    CustomerMatch(
+                        customer_id="C_002",
+                        short_name="联合利华",
+                        archive_link="https://doc.example/unilever",
+                    )
+                ],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=FakeQueryBackend(),
+        )
+
+        self.assertIsInstance(context, ContextRecoveryResult)
+        self.assertEqual(context.status, "completed")
+        self.assertEqual(context.write_ceiling, "normal")
+        self.assertEqual(context["status"], "completed")
+        self.assertIn("客户主数据", context.used_sources)
+
+    def test_recover_live_context_marks_ambiguous_customer_as_recommendation_only(self) -> None:
+        class EmptyQueryBackend:
+            def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
+                return []
+
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="ambiguous",
+                query="联合",
+                candidates=[
+                    CustomerMatch(customer_id="C_002", short_name="联合利华"),
+                    CustomerMatch(customer_id="C_099", short_name="联合健康"),
+                ],
+            ),
+        )
+
+        context = recover_live_context(
+            gateway_result=gateway_result,
+            query_backend=EmptyQueryBackend(),
+        )
+
+        self.assertIsInstance(context, ContextRecoveryResult)
+        self.assertEqual(context.status, "context-limited")
+        self.assertEqual(context.write_ceiling, "recommendation-only")
+        self.assertIn("ambiguous", context.fallback_reason)
 
 
 if __name__ == "__main__":

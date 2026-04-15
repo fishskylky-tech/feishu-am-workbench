@@ -13,6 +13,7 @@ from runtime.runtime_sources import RuntimeSourceLoader
 from runtime.models import (
     CustomerMatch,
     CustomerResolution,
+    ContextRecoveryResult,
     GatewayResult,
     ResourceResolution,
     WriteCandidate,
@@ -197,30 +198,31 @@ def recover_live_context(
     gateway_result: GatewayResult,
     query_backend: QueryBackend,
     topic_text: str = "",
-) -> dict[str, object]:
+) -> ContextRecoveryResult:
     resolution = gateway_result.customer_resolution
     if resolution is None:
-        return {
-            "status": "context-limited",
-            "used_sources": [],
-            "fallback_reason": "gateway did not return customer resolution",
-            "key_context": [],
-            "missing_sources": ["客户主数据"],
-        }
+        return ContextRecoveryResult(
+            status="context-limited",
+            fallback_reason="gateway did not return customer resolution",
+            missing_sources=["客户主数据"],
+            write_ceiling="recommendation-only",
+            open_questions=["客户解析未返回结果，当前上下文不能视为 grounded context"],
+        )
     if resolution.status in {"missing", "ambiguous"}:
-        return {
-            "status": "context-limited",
-            "used_sources": [],
-            "fallback_reason": f"customer cannot be resolved ({resolution.status}) from current live customer master",
-            "key_context": [],
-            "missing_sources": ["客户主数据"],
-        }
+        return ContextRecoveryResult(
+            status="context-limited",
+            fallback_reason=f"customer cannot be resolved ({resolution.status}) from current live customer master",
+            missing_sources=["客户主数据"],
+            write_ceiling="recommendation-only",
+            open_questions=["客户解析未达唯一命中，当前只能保持建议态"],
+        )
 
     best = resolution.candidates[0]
     customer_id = best.customer_id
     used_sources = ["客户主数据"]
     key_context = [_render_customer_snapshot(best)]
     missing_sources: list[str] = []
+    open_questions: list[str] = []
 
     contact_rows = query_backend.query_rows_by_customer_id("客户联系记录", customer_id, limit=5)
     if contact_rows:
@@ -228,6 +230,7 @@ def recover_live_context(
         key_context.append(_render_latest_contact(contact_rows[0]))
     else:
         missing_sources.append("客户联系记录")
+        open_questions.append("缺少最近客户联系记录，需人工确认最近一次有效沟通")
 
     action_rows = query_backend.query_rows_by_customer_id("行动计划", customer_id, limit=5)
     if action_rows:
@@ -235,6 +238,7 @@ def recover_live_context(
         key_context.append(_render_latest_action(action_rows[0]))
     else:
         missing_sources.append("行动计划")
+        open_questions.append("缺少当前行动计划，需确认是否存在未沉淀的推进事项")
 
     meeting_notes = _rank_related_meeting_notes(contact_rows, topic_text=topic_text, limit=3)
     if meeting_notes:
@@ -246,16 +250,20 @@ def recover_live_context(
         key_context.append(f"客户档案链接: {best.archive_link}")
     else:
         missing_sources.append("客户档案")
+        open_questions.append("客户档案链接缺失，暂时无法补充 archive 视角")
 
     status = "completed" if not missing_sources else "partial"
     fallback_reason = None if status == "completed" else "some targeted live reads are still missing"
-    return {
-        "status": status,
-        "used_sources": used_sources,
-        "fallback_reason": fallback_reason,
-        "key_context": key_context,
-        "missing_sources": missing_sources,
-    }
+    write_ceiling = "normal" if status == "completed" else "recommendation-only"
+    return ContextRecoveryResult(
+        status=status,
+        used_sources=used_sources,
+        fallback_reason=fallback_reason,
+        key_context=key_context,
+        missing_sources=missing_sources,
+        open_questions=open_questions,
+        write_ceiling=write_ceiling,
+    )
 
 
 def _render_customer_snapshot(best: CustomerMatch) -> str:
