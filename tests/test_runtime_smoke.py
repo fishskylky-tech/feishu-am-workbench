@@ -705,6 +705,89 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(resolution.status, "resolved")
         self.assertEqual(resolution.candidates[0].raw_record["客户名称"], "联合利华中国")
 
+    def test_customer_resolver_matches_customer_id_exactly(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华",
+                    "客户名称": "联合利华中国",
+                }
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("C_002")
+
+        self.assertEqual(resolution.status, "resolved")
+        self.assertEqual(resolution.candidates[0].customer_id, "C_002")
+
+    def test_customer_resolver_resolves_single_remaining_candidate(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华华东",
+                    "客户名称": "联合利华华东",
+                }
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("联合利华")
+
+        self.assertEqual(resolution.status, "resolved")
+        self.assertEqual(resolution.candidates[0].short_name, "联合利华华东")
+
+    def test_customer_resolver_returns_missing_when_no_candidate_exists(self) -> None:
+        backend = FakeCustomerBackend([])
+
+        resolution = CustomerResolver(backend).resolve("不存在客户")
+
+        self.assertEqual(resolution.status, "missing")
+        self.assertEqual(resolution.query, "不存在客户")
+        self.assertEqual(resolution.candidates, [])
+
+    def test_customer_resolver_returns_ambiguous_for_multiple_candidates(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华华东",
+                    "客户名称": "联合利华华东",
+                },
+                {
+                    "客户ID": "C_003",
+                    "简称": "联合利华华北",
+                    "客户名称": "联合利华华北",
+                },
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("联合利华")
+
+        self.assertEqual(resolution.status, "ambiguous")
+        self.assertEqual(len(resolution.candidates), 2)
+
+    def test_customer_resolver_returns_ambiguous_for_multiple_exact_matches(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华",
+                    "客户名称": "联合利华中国",
+                },
+                {
+                    "客户ID": "C_003",
+                    "简称": "联合利华",
+                    "客户名称": "联合利华餐饮",
+                },
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("联合利华")
+
+        self.assertEqual(resolution.status, "ambiguous")
+        self.assertEqual(len(resolution.candidates), 2)
+
     def test_gateway_runs_full_smoke_flow(self) -> None:
         customer_backend = FakeCustomerBackend(
             [
