@@ -49,6 +49,12 @@ Create the durable project operating baseline: codebase map, brownfield project 
 
 **UI hint**: no
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Lock the typed recovery contract and gateway-first three-core-table context path
+- [ ] 03-02-PLAN.md — Add constrained archive/meeting-note routing and confidence-aware audit output
+
 ### Phase 2: Live Runtime Hardening
 
 **Goal**
