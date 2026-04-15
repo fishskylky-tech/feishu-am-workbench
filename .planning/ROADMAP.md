@@ -109,6 +109,12 @@ Make core customer context recovery dependable across meeting-related scenes by 
 
 **UI hint**: no
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md - Lock the typed recovery contract and gateway-first three-core-table context path
+- [ ] 03-02-PLAN.md - Add constrained archive/meeting-note routing and confidence-aware audit output
+
 ### Phase 4: Unified Safe Writes
 
 **Goal**
