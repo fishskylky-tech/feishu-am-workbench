@@ -194,16 +194,16 @@ This approach works on all agent platforms immediately, though it depends on age
 
 ### Future Enhancements
 
-#### Phase 1: Technical Loader (Optional)
+#### Step 1: Technical Loader (Optional)
 - Read frontmatter metadata
 - Programmatically determine which references to load
 - Provide loading recommendations to agent
 
-#### Phase 2: Platform Integration (Optional)
+#### Step 2: Platform Integration (Optional)
 - Support native progressive loading APIs when available
 - Integrate with platform-specific resource loading mechanisms
 
-#### Phase 3: Monitoring & Optimization (Optional)
+#### Step 3: Monitoring & Optimization (Optional)
 - Track actual token usage by scenario
 - Monitor context window utilization
 - Warn when approaching limits

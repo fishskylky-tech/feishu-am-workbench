@@ -9,31 +9,61 @@
 - `修复`：问题修正
 - `移除`：废弃能力
 
+## [0.2.13] - 2026-04-15
+
+### 新增
+
+- `runtime/models.py`
+  - 新增 typed `ContextRecoveryResult`、`ContextStatus` 和 `WriteCeiling`，把当前核心上下文恢复阶段的结果从松散字典收口为显式契约
+- `runtime/live_adapter.py`
+  - 新增 folder-scoped archive / meeting-note candidate discovery，支持受限 fallback 证据发现而不把候选误当已确认事实
+- `tests/test_runtime_smoke.py`
+  - 新增当前 `lark-cli` Base table-list 返回 `data.tables / id / name` 形态的兼容回归
+
+### 变更
+
+- `evals/meeting_output_bridge.py`
+  - meeting 场景的上下文恢复改为 gateway-first typed recovery path
+  - 显式链接优先，缺失时才进入受限 fallback 搜索，并把冲突候选与证据不足暴露为审计字段
+  - 最终输出固定展示 `资源状态`、`客户结果`、`上下文恢复状态`、`已使用资料`、`写回上限`、`开放问题`
+- `runtime/semantic_registry.py`
+  - 继续保持 3 张核心表的最小语义面，并补齐 archive / meeting-note 相关窄别名，避免当前核心上下文恢复阶段的扩展漂移成全量 schema mirror
+- `tests/test_meeting_output_bridge.py`
+  - 扩充 gateway-first、archive fallback、meeting-note candidate conflict、审计字段渲染等回归覆盖
+- `STATUS.md`、`VALIDATION.md`、`README.md`、`SKILL.md`、`evals/evals.json`
+  - 同步当前核心上下文恢复阶段已关闭后的仓库级状态、版本与验证口径
+
+### 修复
+
+- `runtime/live_adapter.py`
+  - 修复对当前 `lark-cli` Base capability payload 形态的兼容问题，避免 capability diagnostics 因 `data.tables` 返回结构而误判
+- `evals/meeting_output_bridge.py`
+  - 修复 fallback 路径可能过度自信的问题，在冲突或弱证据场景下明确下调到 `recommendation-only`
+
 ## [0.2.12] - 2026-04-14
 
 ### 新增
 
 - `runtime/env_loader.py` — 新增 `.env` 显式加载模块
-  - runtime 入口（`__main__.py`、`gateway.py`、`todo_writer.py`）现在启动时自动读取根目录 `.env`
+  - runtime 入口（`runtime/__main__.py`、`runtime/gateway.py`、`runtime/todo_writer.py`）现在启动时自动读取根目录 `.env`
   - 加载策略：显式环境变量优先，`.env` 作为补充，不覆盖已有进程级变量
 - `.env.example` — 新增环境变量配置模板
   - 包含 `FEISHU_AM_BASE_TOKEN`、`FEISHU_AM_CUSTOMER_MASTER_TABLE_ID`、`FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER` 等完整键列表
 - `.pre-commit-config.yaml` — 新增 `detect-secrets` pre-commit hook
 - `scripts/validate_field_mapping.py` — 新增字段映射格式验证脚本
-  - 通过正则校验 `actual-field-mapping.md` 中各字段的格式规范性
+  - 通过正则校验 `references/actual-field-mapping.md` 中各字段的格式规范性
 - `references/live-resource-links.example.md` — 新增占位符示例文件
   - 使用 `app_example_base_token` 等安全占位值代替真实 token
 - `ARCHITECTURE.md` — 新增 L1/L2/L3 渐进式加载架构说明
   - 定义三层加载对应的 token 预算（L1: ~150、L2: ~2000、L3: ~17327）
   - 新增各场景组合预算估算
 - `docs/loading-strategy.md` — 新增 L1/L2/L3 完整加载策略文档
-- `docs/assessment/discussion-design-2026-04-13.md` — 新增 M1 讨论设计评估
-- `docs/assessment/m2-m3-open-assessment-2026-04-13.md` — 新增 M2/M3 开放评估
+- `archive/assessment/discussion-design-2026-04-13.md` — 新增 M1 讨论设计评估
+- `archive/assessment/m2-m3-open-assessment-2026-04-13.md` — 新增 M2/M3 开放评估
 - `SKILL.md` — frontmatter 元数据补全
   - 新增 `version: 0.2.12`（与 VERSION 文件同步）
   - 新增 `author: fishskylky-tech`
   - 新增 `tags: [feishu, account-management, am-workflow, chinese, crm, pipeline]`
-  - 新增 `license: MIT`
   - 新增 `repository: https://github.com/fishskylky-tech/feishu-am-workbench`
   - 新增 `load_strategy: progressive`
   - 新增 `tier` 说明 L1/L2/L3 边界
@@ -79,7 +109,7 @@
 
 ### 移除
 
-- `references/live-resource-links.md` — 删除包含真实 token 的文件（替换为 `live-resource-links.example.md`）
+- 删除旧的 live resource links 文件（替换为 `references/live-resource-links.example.md`）
 
 ## [0.2.11] - 2026-04-11
 
@@ -91,7 +121,7 @@
   - 新增 meeting output bridge，支持 gateway 结果承接、最小 Stage 3 context recovery 和 CLI 生成待检输出
 - `tests/test_eval_runner.py`、`tests/test_meeting_output_bridge.py`、`tests/test_validation_assets.py`
   - 补齐 runner、bridge 和验证资产的回归测试
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 统一沉淀 3 个真实案例的 baseline / green / regression 结论
 
 ### 变更
@@ -126,7 +156,7 @@
 - `tests/test_meeting_output_bridge.py`
   - 增加 Stage 3 context recovery 回归测试
   - 校验最小 Base 上下文恢复可将 meeting 场景从 `partial` 推进到 `completed`
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 更新为真实 live-first Stage 1/2/3 最小闭环已验证通过
 - `VALIDATION.md`
   - 执行层说明更新为：bridge 已可读取最小 live context，而不只是承接 gateway 结果
@@ -146,7 +176,7 @@
   - 覆盖 resolved customer -> `partial`、missing customer -> `context-limited`、以及 `--run-gateway` CLI 路径
 - `VALIDATION.md`
   - 执行层说明从“静态 bridge”升级为“可调用 gateway 的 bridge”
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 补充当前 bridge 已能接收真实 gateway 结果，但 live gateway 全链路仍待实测
 
 ## [0.2.8] - 2026-04-11
@@ -193,7 +223,7 @@
   - 明确当前验证资产由文档层、数据层和最小 runner 三层组成
 - `SKILL.md`
   - 做一轮高频加载成本压缩，减少重复说明，不改变核心规则语义
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 更新为 P1 / P3 方向的统一结论
   - 区分“runner 已落地”和“真实 live-first 全链路仍待业务场景实测”
 
@@ -208,7 +238,7 @@
 - `references/INDEX.md`
   - 21 个 reference 文件的一句话说明 + "何时加载"快速索引
   - 解决 reference 文件多但无导航入口的问题
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 统一记录 3 个真实案例的 baseline / current-branch / regression 结论
   - 给出按 P1 / P2 / P3 排序的修改建议
 
@@ -255,11 +285,11 @@
   - Base 表入口已从 3 张表专有 hardcode 收口为统一 `table_targets`
   - gateway 默认主路径已移除上下文自动组装，不再替上层场景决定读哪些表
   - 已移除 `resource_catalog`、`query_guide` 和 `context_hydrator`，底座继续收缩到基础能力
-  - 已移除 `live_adapter.py` 中默认业务查询策略、默认读面拼装和场景摘要逻辑
+  - 已移除 `runtime/live_adapter.py` 中默认业务查询策略、默认读面拼装和场景摘要逻辑
   - 为 `客户联系记录`、`行动计划`、`合同清单` 增加按 `客户ID` 的薄查询能力，优先走 `data-query`
 - 新增 `references/base-integration-model.md`
   - 固定多维表格接入原则：live discover + minimal semantic contract + scenario routing
-- `SKILL.md`、`meeting-context-recovery.md`、`task-patterns.md`、`feishu-workbench-gateway.md`
+- `SKILL.md`、`references/meeting-context-recovery.md`、`references/task-patterns.md`、`references/feishu-workbench-gateway.md`
   - 会议场景默认改为先尝试 gateway Stage 1-3，再允许正式分析和 fallback
 
 ## [0.2.4] - 2026-04-10
@@ -292,7 +322,7 @@
   - `meeting-context-recovery`
   - `meeting-type-classification`
   - `meeting-note-doc-standard`
-- `SKILL.md`、`task-patterns.md`、`update-routing.md`、`VALIDATION.md` 接入会议背景恢复、会议类型判定和写回上限
+- `SKILL.md`、`references/task-patterns.md`、`references/update-routing.md`、`VALIDATION.md` 接入会议背景恢复、会议类型判定和写回上限
 - 新增 `meeting-output-standard`
   - 统一会议场景最终输出结构
   - 要求上下文恢复来源可审计

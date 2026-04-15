@@ -1,7 +1,8 @@
 ---
 name: feishu-am-workbench
-version: 0.2.11
+version: 0.2.13
 author: fishskylky-tech
+license: MIT
 description: >
   Personal AM workflow skill for Feishu-based account management. Use this skill whenever the user
   mentions: 飞书工作台, 客户档案, 会议纪要, 行动计划, 客户主数据, 合同, 联系记录, 竞品, Todo, 客户更新, 会前准备, 会后总结,
@@ -38,7 +39,7 @@ This skill has an optional local runtime layer (`runtime/`) for live Feishu acce
 
 Run `python3 -m runtime <skill-path>` before first use. If the runtime is unavailable, stay in recommendation mode.
 
-### Generating actual-field-mapping.md
+### Generating references/actual-field-mapping.md
 
 The `references/actual-field-mapping.md` file contains a cached snapshot of the live Feishu schema. It must follow specific format requirements for `runtime/runtime_sources.py` to parse it correctly. See the "Format Requirements" section in that file for details.
 
@@ -53,7 +54,7 @@ To generate or update this file:
 
 **Important**: `lark-cli base +field-list` may return empty `options` arrays for `select` and `multi_select` fields. Use `+field-get` for each field individually to retrieve option values and GUIDs.
 
-Follow the format requirements documented in `actual-field-mapping.md` when updating the file to ensure the runtime can parse it correctly.
+Follow the format requirements documented in `references/actual-field-mapping.md` when updating the file to ensure the runtime can parse it correctly.
 
 The workbench is layered:
 
@@ -107,7 +108,7 @@ Reference documents in `references/` should be loaded only when needed based on 
 - [live-schema-preflight.md](./references/live-schema-preflight.md) - Schema validation before writes (~855 tokens)
 - [schema-compatibility.md](./references/schema-compatibility.md) - Handling schema drift (~895 tokens)
 - [update-routing.md](./references/update-routing.md) - Routing and idempotency rules (~1,510 tokens)
-- [actual-field-mapping.md](./references/actual-field-mapping.md) - Cached field snapshot (~1,385 tokens)
+- [references/actual-field-mapping.md](./references/actual-field-mapping.md) - Cached field snapshot (~1,385 tokens)
 
 **Customer operations**:
 - [customer-archive-rules.md](./references/customer-archive-rules.md) - Archive creation and linking (~600 tokens)
