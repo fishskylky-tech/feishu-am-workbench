@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .models import GuardResult, PreflightReport, WriteCandidate
+from .semantic_registry import get_customer_master_direct_write_allowlist
 
 
 class WriteGuard:
@@ -27,6 +28,19 @@ class WriteGuard:
 
         if owner_required and not candidate.payload.get("owner"):
             reasons.append("owner_unresolved")
+
+        if candidate.object_name == "客户主数据":
+            allowlist = get_customer_master_direct_write_allowlist()
+            touched_fields = {
+                field
+                for field in candidate.semantic_fields
+                if field in candidate.payload and field not in {"customer_id", "short_name"}
+            }
+            non_allowlisted = sorted(touched_fields - allowlist)
+            if non_allowlisted:
+                reasons.append(
+                    f"customer_master_recommendation_only:{','.join(non_allowlisted)}"
+                )
 
         return GuardResult(
             object_name=candidate.object_name,
