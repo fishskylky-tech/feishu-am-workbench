@@ -161,5 +161,5 @@ python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge te
 
 ## 当前版本
 
-- 版本号：0.2.12（2026-04-14）
-- 上一正式版本：0.2.11（2026-04-11）
+- 版本号：0.2.13（2026-04-15）
+- 上一正式版本：0.2.12（2026-04-14）

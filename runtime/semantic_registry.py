@@ -151,7 +151,7 @@ SEMANTIC_FIELD_REGISTRY: dict[str, dict[str, dict[str, object]]] = {
         },
         "archive_link": {
             "canonical_name": "客户档案",
-            "aliases": [],
+            "aliases": ["客户档案链接"],
             "allowed_live_types": ["text", "url"],
             "write_policy": "safe_update",
         },
@@ -163,13 +163,13 @@ SEMANTIC_FIELD_REGISTRY: dict[str, dict[str, dict[str, object]]] = {
         },
         "last_contact_at": {
             "canonical_name": "上次接触日期",
-            "aliases": [],
+            "aliases": ["最近接触时间", "上次沟通"],
             "allowed_live_types": ["datetime", "text"],
             "write_policy": "safe_update",
         },
         "next_action_summary": {
             "canonical_name": "下次行动计划",
-            "aliases": [],
+            "aliases": ["下次联系计划", "下一步行动"],
             "allowed_live_types": ["text"],
             "write_policy": "safe_update",
         },
@@ -279,7 +279,7 @@ SEMANTIC_FIELD_REGISTRY: dict[str, dict[str, dict[str, object]]] = {
         },
         "meeting_note_doc": {
             "canonical_name": "会议纪要文档",
-            "aliases": [],
+            "aliases": ["会议纪要链接", "会议记录链接", "纪要链接"],
             "allowed_live_types": ["text", "url"],
             "write_policy": "safe_update",
         },
