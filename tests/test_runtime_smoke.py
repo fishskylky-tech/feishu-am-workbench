@@ -34,7 +34,7 @@ from runtime import (  # noqa: E402
     get_required_base_tables,
 )
 from runtime.diagnostics import suggest_next_actions  # noqa: E402
-from runtime.models import WriteCandidate  # noqa: E402
+from runtime.models import TodoWriteResult, WriteCandidate, WriteExecutionResult  # noqa: E402
 
 
 class FakeCustomerBackend:
@@ -258,6 +258,58 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(candidate.target_object, "todo")
         self.assertEqual(candidate.match_basis["customer"], "联合利华")
         self.assertEqual(candidate.source_context["scenario"], "post_meeting")
+
+    def test_write_execution_result_structured_result_preserves_blocked_evidence(self) -> None:
+        result = WriteExecutionResult(
+            target_object="todo",
+            attempted=False,
+            allowed=False,
+            preflight_status="safe",
+            guard_status="blocked",
+            dedupe_decision="update_existing",
+            executed_operation="blocked",
+            remote_object_id="task_existing",
+            blocked_reasons=["semantic_duplicate_detected"],
+            source_context={"scenario": "post_meeting", "customer_id": "C_002"},
+            remote_metadata={"dedupe_target": "task_existing"},
+        )
+
+        envelope = result.structured_result()
+
+        self.assertEqual(envelope["preflight_status"], "safe")
+        self.assertEqual(envelope["guard_status"], "blocked")
+        self.assertEqual(envelope["dedupe_decision"], "update_existing")
+        self.assertEqual(envelope["remote_metadata"]["object_id"], "task_existing")
+        self.assertEqual(envelope["remote_metadata"]["dedupe_target"], "task_existing")
+
+        envelope["blocked_reasons"].append("extra")
+        envelope["source_context"]["customer_id"] = "changed"
+
+        self.assertEqual(result.blocked_reasons, ["semantic_duplicate_detected"])
+        self.assertEqual(result.source_context["customer_id"], "C_002")
+
+    def test_todo_write_result_structured_result_keeps_remote_metadata_for_allowed_path(self) -> None:
+        result = TodoWriteResult(
+            target_object="todo",
+            attempted=True,
+            allowed=True,
+            preflight_status="safe",
+            guard_status="allowed",
+            dedupe_decision="create_new",
+            executed_operation="create",
+            remote_object_id="task_guid_1",
+            remote_url="https://applink.feishu.cn/client/todo/detail?guid=task_guid_1",
+            remote_metadata={"object_type": "task"},
+            source_context={"scenario": "post_meeting"},
+        )
+
+        envelope = result.structured_result()
+
+        self.assertEqual(result.task_guid, "task_guid_1")
+        self.assertEqual(result.task_url, "https://applink.feishu.cn/client/todo/detail?guid=task_guid_1")
+        self.assertEqual(envelope["remote_metadata"]["object_id"], "task_guid_1")
+        self.assertEqual(envelope["remote_metadata"]["url"], "https://applink.feishu.cn/client/todo/detail?guid=task_guid_1")
+        self.assertEqual(envelope["remote_metadata"]["object_type"], "task")
 
     def test_todo_writer_returns_shared_execution_result_for_blocked_candidate(self) -> None:
         class RaisingRunner:
