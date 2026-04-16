@@ -15,13 +15,14 @@
 
 ## 当前结论
 
-当前仓库已经进入“核心上下文恢复阶段已关闭、meeting 场景核心上下文恢复闭环已收口、Todo 仍是第一批统一写回对象、下一步进入 unified-safe-writes 阶段强化安全写回”的阶段。
+当前仓库的 v1.0 phases 1-11 已经全部收口并完成归档。当前不再存在主线 phase blocker，mainline capability、verification closure、safe-write validation、meeting write loop E2E 证据以及最后的 cleanup debt 都已经补齐到 milestone-grade。
 
 - Base: 已可 live 读取
 - Todo: 已可 live 读取
 - Docs / Drive folder: 已可 live 读取
 - Meeting 场景: 已完成真实 `gateway -> typed context recovery -> constrained fallback -> audit output` 验证
 - 当前核心上下文恢复阶段状态: code review clean、`threats_open: 0`、validation verified、human UAT 4/4 passed
+- 当前主线状态: v1.0 archived；剩余仅有 backlog 和下一轮 milestone 选择
 
 ## 模块状态
 
@@ -166,6 +167,7 @@
   - 生成最小 Todo candidate
   - 在确认后调用统一 Todo writer
   - 在输出中展示统一写回结果
+- `python3 -m runtime meeting-write-loop` 已作为一等 operator surface 暴露 meeting write loop 的预览与 confirmed write 入口
 
 当前限制：
 
@@ -228,27 +230,22 @@ python3 -m runtime .
 
 ## 当前阻点
 
-当前没有新的运行前权限阻点，当前核心上下文恢复阶段也没有阻断收尾的 P1 缺口。
+当前没有新的运行前权限阻点，也没有主线 phase 阻断项。
 
-当前更偏实现层的待补项是：
+当前剩余事项主要是非阻断型：
 
-- unified Todo writer 的真实联调与 guard/preflight 仍需继续压实
-- live schema 还没完全覆盖 Todo / write guard 的真实写回联调验证
-- 当前上下文恢复仍未定向读取 archive doc 正文和相关历史 meeting-note docs
-- 多维表格扩表还没按统一接入模型推进到查询优化和写面，目前写面仍只覆盖 3 张核心表
-- 新增表目前只完成 profile 层，尚未进入真实读写链路
-- Base 查询目前仍有“先拉再本地筛”的实现，需要继续收口到精准查询优先
-- ontology 仍未开始设计，已明确后置到 roadmap 主线
+- backlog Phase 999.1 仍是可选清理项，不属于 mainline milestone blocker
+- 部分 live-only 验证仍需要真实 workspace 和个人权限环境，不适合直接固化为仓库内 fixture
+- scene skill / bootstrap-admin / cache artifact 的运行时落地仍属于下一轮里程碑，而不是当前 v1.0 未完成项
 
 ## 下一步
 
 当前最自然的下一步是：
 
-1. 进入 unified-safe-writes 阶段，统一 Todo candidate、schema preflight、write guard 和 writer result 的安全写回闭环
-2. 继续补真实写回链路的联调验证与 dedupe/blocked reason 回归
-3. 把 Base 读取从"大批量读取后本地筛选"继续改成"精准查询优先"
-4. 把 archive doc 正文读取、历史 meeting-note docs 定向读取、ontology 建模留到 roadmap 后续阶段
+1. 如果要继续清理 planning 历史，可选处理 backlog Phase 999.1
+2. 如果要继续产品化，开启下一轮 milestone，把 scene skill 和 bootstrap/admin 从架构合同推进到可运行实现
+3. 如果要进一步压缩人工验证面，继续把 live-only safe-write 和 fallback 检查转成自动化或半自动验证
 
 ## 更新时间
 
-- 2026-04-15
+- 2026-04-16

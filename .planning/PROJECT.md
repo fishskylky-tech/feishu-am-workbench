@@ -14,20 +14,20 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 
 ### Validated
 
-- ✓ Local runtime can resolve Feishu resource hints and render capability diagnostics — existing
-- ✓ Meeting flow can execute live-first gateway with customer resolution and minimum context recovery — existing
-- ✓ Todo write surface returns normalized preflight/guard/dedupe/write results — existing
-- ✓ 客户主数据 / 客户联系记录 / 行动计划 already have a minimal semantic contract in runtime — existing
-- ✓ Repository already contains real-case eval assets and regression tests for the current meeting/Todo path — existing
+- ✓ Local runtime can resolve Feishu resource hints and render capability diagnostics — v1.0
+- ✓ Meeting flow can execute live-first gateway with customer resolution and minimum context recovery — v1.0
+- ✓ Todo write surface returns normalized preflight/guard/dedupe/write results — v1.0
+- ✓ 客户主数据 / 客户联系记录 / 行动计划 already have a minimal semantic contract in runtime — v1.0
+- ✓ Repository already contains real-case eval assets and regression tests for the current meeting/Todo path — v1.0
+- ✓ Root guidance, milestone audit evidence, and runtime operator surface are aligned with shipped state — v1.0
 
 ### Active
 
-- [ ] Initialize the repository as a GSD-managed brownfield project with executable planning artifacts
-- [ ] Harden the live runtime and context-recovery path around the real Feishu workbench structure
-- [ ] Expand the account operating model beyond the current minimum path to contracts, key people, and competitors
-- [ ] Improve archive and meeting-note routing so customer context is more trustworthy and reusable
-- [ ] Preserve portability to Hermes/OpenClaw/Codex-style agents without weakening safety rules
-- [ ] Build a roadmap toward proactive AM outputs such as risk reminders and weekly operating summaries
+- [ ] Introduce scene-skill runtime surfaces beyond the single root skill entrypoint
+- [ ] Land bootstrap/admin flows as executable operator paths rather than architecture-only contracts
+- [ ] Reduce live-only verification dependence for fallback quality and safe-write edge cases
+- [ ] Build proactive AM outputs such as risk reminders and weekly operating summaries
+- [ ] Deepen archive and historical meeting-note understanding beyond link-level recovery
 
 ### Out of Scope
 
@@ -38,12 +38,13 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 
 ## Context
 
-- Local repo already documents architecture, status, validation protocol, security model, and roadmap intent.
+- Shipped milestone: v1.0 archived on 2026-04-16 with roadmap, requirements, audit, and phase artifacts preserved under `.planning/milestones/`.
+- Local repo now documents architecture, status, validation protocol, security model, roadmap intent, and a runtime meeting write-loop operator surface.
 - GitHub remote is active and private, with open issues, PRs, discussions, and one active Projects v2 board for 2026 roadmap execution.
 - Live Feishu Base currently contains 8 business tables, including customer master, contracts, actions, key people, competitors, contact logs, and a potential-customer pool.
 - Live customer archive folder already mixes canonical customer archives, a meeting-note folder, a weekly-info folder, and a template doc; this reflects real workflow value but also data quality risks.
 - Live task module currently centers on a single 神策 tasklist, which is already part of the runtime write path.
-- Existing docs show a strong docs-first and safety-first operating model, but the repo had not yet been initialized into `.planning/` for phased GSD execution.
+- Existing docs now reflect a completed v1.0 brownfield milestone and are ready for the next milestone definition cycle.
 
 ## Constraints
 
@@ -61,7 +62,18 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 | Keep the runtime thin and scene-driven | Foundation should resolve/protect, not over-assemble business context | ✓ Good |
 | Model Base through minimal semantic contracts, not full mirrors | Reduces drift and maintenance cost | ✓ Good |
 | Keep personal-value-first before generalization | Matches current user goal and existing roadmap language | ✓ Good |
-| Use live Feishu structure as a planning input, not just local docs | Prevents roadmap drift from real workspace operations | — Pending |
+| Use live Feishu structure as a planning input, not just local docs | Prevents roadmap drift from real workspace operations | ✓ Good |
+
+## Current State
+
+- v1.0 shipped with phases 1-11 complete and archived.
+- The repository now supports capability diagnostics, customer-grounded context recovery, guarded Todo writes, milestone-grade validation evidence, and a runtime meeting write-loop operator command.
+
+## Next Milestone Goals
+
+- Turn scene-skill architecture contracts into executable scene runtimes.
+- Add bootstrap/admin execution paths for new-workspace compatibility and setup.
+- Continue converting live-only validation boundaries into more repeatable automation.
 
 ## Evolution
 
@@ -81,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-14 after brownfield GSD initialization*
+*Last updated: 2026-04-16 after v1.0 milestone archival*

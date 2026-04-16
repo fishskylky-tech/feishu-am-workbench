@@ -1,115 +1,127 @@
 # feishu-am-workbench
 
-Feishu AM Workbench 是一个面向客户经营（AM）工作的飞书技能。
+Feishu AM Workbench 是一个面向客户经营工作的飞书技能仓库。它的目标不是做一个更长的 prompt，而是把 AM 高频工作沉淀成一套 live-first、recommendation-first、可验证的工作流。
 
-它不是单纯的“会议总结器”，而是一套帮助 AM 把日常工作做稳、做深、做成闭环的工作方法：
+当前仓库已经形成一条可运行的最小闭环：
 
-- 先恢复上下文，再给判断
-- 先出建议，再确认写回
-- 先做校验，再触发变更
+- 先恢复客户上下文，再给经营判断
+- 先给推荐方案，再确认写回
+- 先做 schema preflight 和 write guard，再触发变更
 
-目标是把 AM 的日常动作从“零散信息处理”，升级成“可追踪、可复盘、可持续优化”的经营闭环。
+它优先服务的不是抽象平台化，而是你每天真的会用到的会前准备、会后整理、客户状态跟进和 Todo 执行闭环。
 
-## 产品定位
+## 当前能力边界
 
-这个技能的核心价值，不是“多写一份总结”，而是帮助 AM 把每天最耗精力的工作变得更稳、更快、更可持续。
+当前最成熟、验证最完整的是会议相关主路径：
 
-它重点辅助 AM 做好四类日常工作：
+1. 通过 runtime 做资源探测、客户解析和 capability diagnostics
+2. 在会议场景里恢复最小必要客户上下文
+3. 输出审计化结果，包括资源状态、客户结果、上下文恢复状态、已使用资料、写回上限和开放问题
+4. 在确认后走统一 Todo writer 的 preflight、guard、dedupe 和执行结果归一
 
-1. 会前准备：快速恢复客户上下文，知道这次会要解决什么，不再临时拼信息。
-2. 会后沉淀：把会议结论、待确认问题、后续动作拆清楚，减少“开完会就断线”。
-3. 客户经营跟进：把分散在聊天、纪要、表格里的信号串成连续线程，避免遗漏关键动作。
-4. 团队协同执行：把待办责任人、优先级和重复任务管住，让推进动作真正落地。
+这意味着当前仓库已经不是“会议总结器”，而是一个带飞书工作台底座的 AM operating workflow。
 
-对应的业务结果是：
+## 核心原则
 
-- 降低上下文切换成本，提升每次沟通的准备质量。
-- 减少遗漏、误写和重复任务，提升执行确定性。
-- 让客户经营从“靠记忆”变成“可追踪、可复盘、可优化”的工作流。
+### Live-first
 
-它背后的运行原则可以概括为三句：
+- 会议类场景优先尝试 live runtime，而不是把单份材料当成全部事实
+- live schema 和 live options 是写前真相，缓存只能做兼容或加速
 
-- 先恢复上下文，再做判断。
-- 先给执行建议，再确认落盘。
-- 先保证写入安全，再追求自动化。
+### Recommendation-first
 
-## 核心能力
+- 默认先给建议，不直接写回
+- 高风险主数据更新必须保持受控
+- 缺 owner、schema 不匹配、证据冲突时，宁可阻断也不盲写
 
-### 1. 会前会后助手
+### Thin foundation
 
-- 支持会议纪要、逐字稿、会后整理输入
-- 先恢复客户背景，不把单份纪要当成全部事实
-- 输出中明确区分：事实、判断、开放问题、写回边界
+- runtime 负责资源解析、客户解析、targeted read、schema preflight、write guard 和 normalized writer surface
+- scene 层负责决定读什么、如何判断、给什么建议
+- foundation 不默认拼装完整业务上下文
 
-### 2. 客户经营资产管理
+## 工作台信息层次
 
-- 将客户概况与过程记录分层管理
-- 长文本沉淀在文档，表格保持结构化字段
-- 在需要时关联客户档案和历史线程，避免脱离背景的结论
+当前 workbench 仍然遵循稳定的层次分工：
 
-### 3. 统一 Todo 闭环
+- `客户主数据`: 客户索引与快照层
+- detail tables: `客户联系记录`、`行动计划`、`合同清单`、`客户关键人地图`、`竞品交锋记录`
+- `客户档案`: 长周期叙事和经营解释层
+- Feishu Todo: 执行与提醒载体
 
-- 支持创建、更新、暂不写入、建议拆分子任务等决策
-- 支持语义去重，减少重复任务与并行冲突
+这套分层决定了 skill 的路由方式，也决定了后续 scene skill 不应按表拆，而应按经营场景拆。
 
-## 运行原则
+## 目标架构方向
 
-### 上下文优先
+当前仓库仍以一个根级 skill 为入口，但已经明确了后续演进方向：
 
-- 会议类任务先恢复最小必要背景，再做结论
-- 输出明确标注依据来源，方便复核和追踪
+- 主 skill 保持薄入口和编排层
+- 新能力按 scene skill 方式扩展，而不是继续向根级 SKILL.md 堆规则
+- scene skill 在需要时按需调用专家 agent
+- 所有 scene 复用同一个 runtime foundation
+- 初始化安装、兼容性检查、config 生成、cache 刷新等能力走独立 admin/bootstrap path
 
-### 写入前防护
+当前与目标的边界需要同时成立：
 
-- 写入前先检查字段与选项是否匹配当前环境
-- 写入前检查负责人与关键约束是否满足
-- 不满足安全条件时保持建议模式
+- current state: 根级 skill 仍然是唯一正式入口，scene skill 目录化还没有作为运行时事实落地
+- target state: 根级入口只保留路由与顶层交互，scene skills 承载工作流规则，expert agents 作为场景内协作者按需拉起
 
-### 漂移兼容
+Phase 7 的 canonical architecture references：
 
-- 优先使用当前环境中的真实字段与选项
-- 同义词只用于辅助匹配，不作为盲写依据
-- 兼容失败时宁可阻断写入，也不做不可解释变更
+- [references/scene-skill-architecture.md](references/scene-skill-architecture.md)
+- [references/workspace-bootstrap.md](references/workspace-bootstrap.md)
+- [references/cache-governance.md](references/cache-governance.md)
+
+当前已经锁定的第一波 scene 方向是：
+
+- `post-meeting-synthesis`
+- `customer-recent-status`
+- `archive-refresh`
+- `todo-capture-and-update`
+
+其中优先级最高的是 `post-meeting-synthesis` 和 `customer-recent-status`。
 
 ## 快速开始
 
 ### 前置条件
 
-1. 已安装并可用 lark-cli
-2. 已完成飞书认证并具备目标资源访问权限
-3. 本地 Python 3.10+
+1. Python 3.10+
+2. 已安装并可用 `lark-cli`
+3. 已完成飞书认证并具备 Base、Drive、Task 的目标访问权限
+4. 本地有可用 Python 环境，推荐直接使用仓库内 `.venv`
 
-### 安全配置指南
-
-1. 使用 `.env.example` 作为模板，在本地创建 `.env` 并填入真实资源。
-2. 真实 token、folder token、tasklist guid 只放环境变量，不提交到仓库。
-3. `references/live-resource-links.example.md` 只保留示例值，用于说明格式。
-4. 可选安装 pre-commit 并启用 `detect-secrets`：
+### 1. 激活环境
 
 ```bash
-pip install pre-commit
-pre-commit install
+source .venv/bin/activate
 ```
 
-`.env` 内容是什么：
+### 2. 准备本地运行时输入
 
-- 这是本地运行时环境变量文件，保存你个人环境的 `FEISHU_AM_*` 配置。
-- 典型键包括：`FEISHU_AM_BASE_TOKEN`、`FEISHU_AM_CUSTOMER_MASTER_TABLE_ID`、`FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER`、`FEISHU_AM_MEETING_NOTES_FOLDER`、`FEISHU_AM_TODO_TASKLIST_GUID`。
+在仓库根目录准备本地 `.env`，填入你的 `FEISHU_AM_*` 变量。真实 token、folder token、tasklist guid 不应提交到仓库。
 
-`.env` 作用是什么：
+常见项包括：
 
-- runtime 入口会显式读取仓库根目录 `.env`，把其中的 `FEISHU_AM_*` 注入进程环境，避免每次手动 export。
-- 加载策略是“显式环境变量优先，`.env` 补充”。如果你已在 shell 中 export 同名变量，runtime 不会覆盖它。
+- `FEISHU_AM_WORKBENCH_BASE_URL`
+- `FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER`
+- `FEISHU_AM_MEETING_NOTES_FOLDER`
+- `FEISHU_AM_TODO_TASKLIST_GUID`
+- `FEISHU_AM_TODO_CUSTOMER_FIELD_GUID`
+- `FEISHU_AM_TODO_PRIORITY_FIELD_GUID`
 
-### 1) 先跑环境诊断
+### 3. 先跑 capability 诊断
 
 ```bash
 python3 -m runtime .
 ```
 
-如果三个核心能力都显示为 `available`，就可以进入真实验证。
+理想状态是：
 
-### 2) 再跑会议场景验证
+- `base_access: available`
+- `docs_access: available`
+- `task_access: available`
+
+### 4. 再跑会议主路径验证
 
 ```bash
 python3 -m evals.meeting_output_bridge \
@@ -119,62 +131,76 @@ python3 -m evals.meeting_output_bridge \
   --customer-query 联合利华
 ```
 
-重点观察：资源解析状态、客户解析结果、上下文恢复状态、已使用资料。
+重点观察：
 
-### 3) 运行验证集
+- `资源状态`
+- `客户结果`
+- `上下文恢复状态`
+- `已使用资料`
+- `写回上限`
+- `开放问题`
+
+### 4.5 需要操作级写回时，走 runtime operator surface
+
+先预览 meeting write loop：
 
 ```bash
-python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_eval_runner tests.test_validation_assets
+python3 -m runtime meeting-write-loop \
+  --eval-name unilever-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --customer-query 联合利华
 ```
 
-## 文档导航
+如果你已经确认要执行当前建议态 Todo 写回，再显式加 `--confirm-write`。如果需要把结果接到脚本或别的 agent，再加 `--json`：
 
-如果你要继续在这个仓库里开发，而不是只做一次性试跑，建议配合以下文档一起看：
+```bash
+python3 -m runtime meeting-write-loop \
+  --eval-name unilever-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --customer-query 联合利华 \
+  --confirm-write \
+  --json
+```
 
-- [GETTING-STARTED.md](GETTING-STARTED.md)
-  - 新环境首次上手、诊断和第一条会议验证路径
-- [DEVELOPMENT.md](DEVELOPMENT.md)
-  - 日常开发节奏、分支策略、改动边界和文档同步方式
-- [TESTING.md](TESTING.md)
-  - 自动化测试切片、人工验证项和发 PR 前检查清单
-- [CONFIGURATION.md](CONFIGURATION.md)
-  - `.env`、`FEISHU_AM_*`、模板配置和私有运行时边界
+### 5. 跑自动化切片
+
+```bash
+python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_validation_assets -q
+```
+
+## 仓库导航
+
 - [ARCHITECTURE.md](ARCHITECTURE.md)
-  - 当前 runtime、场景层和写回层的分层边界
-
-## 写回策略
-
-### 默认行为
-
-- 先建议，后确认
-- 未确认不写入
-- 责任人未解析时不创建待办
-
-### 去重行为
-
-- 同一核心任务优先“更新已有任务（update_existing）”
-- 若是更细执行步骤，优先“建议拆分子任务（create_subtask）”
-- 子任务默认是建议态，显式确认（source_context.confirm_create_subtask=true）后才会执行创建
-
-## 路线图（抽象）
-
-### M1 稳态执行内核
-
-持续压实写回稳定性、回归样本和失败模式治理，降低误写/漏写/重复写风险。
-
-### M2 经营闭环增强
-
-从“完成落盘”升级到“主动提炼经营信号”，形成客户周报、风险提醒和动作缺口提示。
-
-### M3 复杂输入深度解读
-
-提升会议纪要与历史资料的分阶段解读能力，强化事实-判断-行动的专家级链路。
-
-### M4 兼容性与通用化
-
-增强跨工作区（workspace）的字段适配能力，降低硬编码依赖，沉淀可迁移的经营方法模型（operating model）。
+  - 当前实现边界与 phase 7 锁定的目标架构口径
+- [references/scene-skill-architecture.md](references/scene-skill-architecture.md)
+  - scene skills、expert agents 与 first-wave boundary 的 canonical contract
+- [references/workspace-bootstrap.md](references/workspace-bootstrap.md)
+  - admin/bootstrap path 的最小交付物、compatibility 与强确认边界
+- [references/cache-governance.md](references/cache-governance.md)
+  - schema、manifest/index、semantic cache 的 trust hierarchy 与 refresh lifecycle
+- [CONFIGURATION.md](CONFIGURATION.md)
+  - 本地环境、workspace config 边界、bootstrap 与 cache 关系
+- [GETTING-STARTED.md](GETTING-STARTED.md)
+  - 首次跑通诊断与会议样例的最短路径
+- [DEVELOPMENT.md](DEVELOPMENT.md)
+  - 日常开发节奏、文档同步点和 phase/GSD 协作方式
+- [TESTING.md](TESTING.md)
+  - 自动化切片、人工 live 验证和文档一致性检查
+- [STATUS.md](STATUS.md)
+  - 当前实际实现状态与下一步主线
+- [ROADMAP.md](ROADMAP.md)
+  - 产品与经营能力演进方向
 
 ## 当前版本
 
-- 版本号：0.2.13（2026-04-15）
-- 上一正式版本：0.2.12（2026-04-14）
+- 版本：0.2.13
+- 当前状态：v1.0 phases 1-11 已完成并归档，mainline、audit gap closure 与 cleanup phase 都已收口
+- 当前主线：可选 backlog 999.1，或进入下一轮 milestone / scene skill 实现
+
+## 后续建议
+
+如果你现在要继续推进仓库：
+
+1. 可选处理 backlog 999.1，把 Phase 1 的历史讨论痕迹进一步整理干净
+2. 开启下一轮 milestone，把 scene skills 或 bootstrap/admin 真正落地为运行面
+3. 如果要继续压缩人工验证面，再把剩余 live-only 检查转成更多可执行验证

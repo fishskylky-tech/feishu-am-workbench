@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 07 Closed
-stopped_at: Phase 7 closed after architecture execution, verification, and security sign-off
-last_updated: "2026-04-16T06:40:30.943Z"
+status: Milestone v1.0 archived
+stopped_at: Milestone v1.0 archived after passed audit and cleanup closeout
+last_updated: "2026-04-16T12:20:00Z"
 last_activity: 2026-04-16
 progress:
-  total_phases: 7
-  completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
-  percent: 57
+  total_phases: 11
+  completed_phases: 11
+  total_plans: 16
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-14)
 
 **Core value:** Use one live-first, safety-first skill to turn AM inputs into actionable customer operating context and guarded write plans inside the existing Feishu workbench.
-**Current focus:** Phase 04 — unified-safe-writes
+**Current focus:** v1.0 is archived; next work is either backlog cleanup or defining the next milestone
 
 ## Initialization Snapshot
 
@@ -37,10 +37,14 @@ See: .planning/PROJECT.md (updated 2026-04-14)
 | 1 | Complete | Baseline artifacts are in place and Phase 1 close criteria were confirmed |
 | 2 | Complete | Runtime hardening, live verification, and customer identification checks have passed |
 | 3 | Complete | Core context recovery is fully closed: review clean, threats_open 0, validation verified, UAT 4/4 passed |
-| 4 | Pending | Unified safe writes; ready for discuss/planning |
-| 5 | Pending | Expanded account model |
-| 6 | Pending | Validation and portability |
+| 4 | Complete | Unified safe writes is closed with contract, scene, and guard hardening |
+| 5 | Complete | Expanded account model is closed with targeted contract, key-people, and competitor reads |
+| 6 | Complete | Validation and portability are closed with executable portability-contract tests |
 | 7 | Complete | Architecture contract, bootstrap boundary, cache governance, and entry-doc integration are closed |
+| 8 | Complete | Audit evidence, root guidance alignment, and closure metadata are now milestone-auditable |
+| 9 | Complete | Context recovery and expanded-account work now have milestone-grade verification artifacts |
+| 10 | Complete | Safe-write validation is closed and meeting write loop E2E proof is executable |
+| 11 | Complete | Planning alignment is closed and runtime now exposes a first-class meeting write-loop operator surface |
 
 ## Working Assumptions
 
@@ -51,25 +55,37 @@ See: .planning/PROJECT.md (updated 2026-04-14)
 ## Session Continuity
 
 Last session: 2026-04-16T05:35:00Z
-Stopped At: Phase 7 closed after architecture execution, verification, and security sign-off
-Resume File: .planning/phases/07-skill-architecture-scene-expansion/07-VERIFICATION.md
+Stopped At: Phase 11 closed after planning alignment and runtime operator-surface cleanup
+Resume File: .planning/milestones/v1.0-ROADMAP.md
 
 ## Next Command
 
-- /gsd-discuss-phase 4
+- Recommended: /gsd-new-milestone
+- Optional: /gsd-plan-phase 999.1
+- Optional: /gsd-complete-milestone
 
 ## Notes For Resume
 
-- Phase 7 closure artifacts are complete in `.planning/phases/07-skill-architecture-scene-expansion/`: SUMMARYs, VERIFICATION, and SECURITY are all present.
-- The repo now has canonical contracts for thin root skill routing, workflow-defined scene skills, admin/bootstrap separation, and subordinate cache governance.
-- Phase 7 closed as an architecture-contract phase; it did not create runnable scene-skill folders or bootstrap commands yet.
-- The next delivery frontier remains Phase 4: normalized write candidates, schema preflight, write guard enforcement, and Todo execution hardening.
+- Phase 8-10 closure artifacts are complete and verified under `.planning/phases/08-*`, `.planning/phases/09-*`, and `.planning/phases/10-*`.
+- The safe-write closure regression command is `source .venv/bin/activate && python -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_eval_runner tests.test_validation_assets -q`.
+- The portability and audit-alignment regression command is `source .venv/bin/activate && python -m unittest tests.test_validation_assets tests.test_portability_contract -q`.
+- The runtime operator command is `source .venv/bin/activate && python -m runtime meeting-write-loop --eval-name unilever-stage-review --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt --customer-query 联合利华`.
+- The only remaining planning item in ROADMAP is backlog Phase 999.1, which is outside the v1.0 mainline milestone flow.
+- v1.0 roadmap and requirements are archived under `.planning/milestones/`.
 
 ## Accumulated Context
 
 ### Roadmap Evolution
 
+- Phase 5 closed: expanded account context now includes contracts, key people, and competitor structures through targeted reads.
+- Phase 6 closed: validation and portability are now enforced by executable contract tests.
 - Phase 7 closed: main skill plus scene skill plus foundation architecture, bootstrap path, and cache strategy design are now canonical repo contracts.
+- Phase 8 closed: baseline/runtime/portability phases now have audit-safe closure artifacts and root guidance matches planning truth.
+- Phase 9 closed: context recovery and expanded-account work now have milestone-grade verification closure.
+- Phase 10 closed: MEET-03 is generalized beyond a single eval, Phase 4 validation is Nyquist-compliant, and the repo has an auditable meeting write-loop E2E proof path.
+- Phase 11 added: closeout cleanup for planning alignment and live write operator surface.
+- Phase 11 closed: roadmap/requirements/state alignment drift is gone, and runtime now exposes a first-class meeting write-loop operator surface.
+- v1.0 archived: roadmap and requirements moved to `.planning/milestones/`, and active planning files are reset for the next milestone cycle.
 
 ### Quick Tasks Completed
 
