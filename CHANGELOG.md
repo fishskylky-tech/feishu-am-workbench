@@ -9,6 +9,33 @@
 - `修复`：问题修正
 - `移除`：废弃能力
 
+## [0.2.14] - 2026-04-16
+
+### 新增
+
+- `runtime/__main__.py`
+  - 新增 `meeting-write-loop` 运行时 operator 子命令，可在本地 runtime CLI 中直接执行 `gateway -> context recovery -> candidate preview -> optional confirmed write`
+- `.planning/MILESTONES.md`、`.planning/milestones/v1.0-ROADMAP.md`、`.planning/milestones/v1.0-REQUIREMENTS.md`
+  - 新增 v1.0 里程碑归档索引与快照，保留 shipped milestone 的 roadmap 与 requirements 事实
+- `tests/test_portability_contract.py`
+  - 新增 host portability 合同测试，持续校验 Hermes/OpenClaw/Codex 规则只存在于文档合同，不硬编码进业务逻辑
+
+### 变更
+
+- `evals/meeting_output_bridge.py`
+  - meeting Todo candidate 生成从单一 eval fixture 收口为可复用 recommendation-mode 能力，支撑 runtime operator 与 E2E proof path 共享同一写回环路
+- `README.md`、`STATUS.md`、`.planning/PROJECT.md`、`.planning/ROADMAP.md`、`.planning/REQUIREMENTS.md`、`.planning/STATE.md`
+  - 活动态项目文档切换为 v1.0 已归档状态，下一轮 milestone 入口与 backlog 边界明确
+- `tests/test_validation_assets.py`
+  - 仓库一致性断言改为识别 milestone archive、runtime operator surface 与 release metadata 同步状态
+
+### 修复
+
+- `tests/test_runtime_smoke.py`
+  - 清理会被真实环境变量污染的 smoke fixture，确保 clean checkout 下的 runtime 回归可以稳定验证 env-backed source contract
+- `CHANGELOG.md`、`VERSION`、`evals/evals.json`、`SKILL.md`
+  - 发布元数据统一到 v1.0 closeout 已发布主线的真实版本口径
+
 ## [0.2.13] - 2026-04-15
 
 ### 新增

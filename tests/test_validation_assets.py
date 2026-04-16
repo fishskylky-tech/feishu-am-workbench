@@ -34,9 +34,9 @@ class ValidationAssetTests(unittest.TestCase):
         version = VERSION_PATH.read_text().strip()
         evals = json.loads(EVALS_PATH.read_text())
 
-        self.assertEqual(version, "0.2.13")
+        self.assertEqual(version, "0.2.14")
         self.assertEqual(evals["version"], version)
-        self.assertIn("## [0.2.13] - 2026-04-15", CHANGELOG_PATH.read_text())
+        self.assertIn("## [0.2.14] - 2026-04-16", CHANGELOG_PATH.read_text())
 
     def test_evals_cover_three_real_transcript_cases(self) -> None:
         evals = json.loads(EVALS_PATH.read_text())["evals"]
