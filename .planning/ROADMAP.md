@@ -9,7 +9,7 @@
 
 This roadmap turns the existing repository from a docs-heavy brownfield into a GSD-managed delivery program rooted in the real Feishu workbench, existing runtime, and validated meeting/Todo path.
 
-**7 phases** | **25 v1 requirements mapped** | All v1 requirements covered ✓
+**10 phases** | **25 v1 requirements mapped** | Gap-closure phases 8-10 pending
 
 ## Phase Overview
 
@@ -22,6 +22,9 @@ This roadmap turns the existing repository from a docs-heavy brownfield into a G
 | 5 | Expanded Account Model | Bring contracts, key people, and competitor structures into targeted read/use paths safely | WORK-02 | 3 |
 | 6 | Validation And Portability | Preserve trust, regression discipline, and host portability as capability breadth grows | FOUND-03, VAL-01, VAL-02, PORT-01 | 4 |
 | 7 | Skill Architecture For Scene Expansion | Define the long-term main-skill plus scene-skill plus foundation architecture, bootstrap path, and cache strategy for expanding AM workflows safely | ARCH-01, ARCH-02, ARCH-03, ARCH-04 | 4 |
+| 8 | Audit Evidence And Guidance Alignment | Close audit blockers caused by missing verification metadata, missing phase closure artifacts, and drifted root guidance | FOUND-01, FOUND-02, FOUND-03, FOUND-04, LIVE-01, LIVE-02, LIVE-03, VAL-03, PORT-01 | 4 |
+| 9 | Context And Account Verification Closure | Turn Phase 3 and Phase 5 context/account work into milestone-auditable verified capability | LIVE-04, WORK-01, WORK-02, WORK-03, MEET-01, MEET-02 | 4 |
+| 10 | Safe Write And E2E Closure | Generalize meeting write candidates and finish the safe-write and validation closure needed for milestone pass | MEET-03, WRITE-01, WRITE-02, WRITE-03, VAL-01, VAL-02 | 4 |
 
 ## Phase Details
 
@@ -139,9 +142,9 @@ Strengthen write-candidate normalization, preflight, guard behavior, and Todo ex
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md - Lock the Phase 4 contract layer for normalized candidates and result envelopes
-- [ ] 04-02-PLAN.md - Implement conservative same-meeting candidate consolidation and concise default writeback summaries
-- [ ] 04-03-PLAN.md - Harden runtime gate enforcement and narrow customer-master write policy
+- [x] 04-01-PLAN.md - Lock the Phase 4 contract layer for normalized candidates and result envelopes
+- [x] 04-02-PLAN.md - Implement conservative same-meeting candidate consolidation and concise default writeback summaries
+- [x] 04-03-PLAN.md - Harden runtime gate enforcement and narrow customer-master write policy
 
 ### Phase 5: Expanded Account Model
 
@@ -165,6 +168,11 @@ Bring the broader customer operating model into active use by safely incorporati
 - Phase 4
 
 **UI hint**: no
+
+**Plans:** 1 plan
+
+Plans:
+- [x] 05-01-PLAN.md - Extend context recovery with targeted contracts, key people, and competitor reads
 
 ### Phase 6: Validation And Portability
 
@@ -192,6 +200,11 @@ Keep the project trustworthy and portable while capabilities expand, using repea
 - Phase 5
 
 **UI hint**: no
+
+**Plans:** 1 plan
+
+Plans:
+- [x] 06-01-PLAN.md - Lock validation and host-portability contracts with executable tests
 
 ### Phase 7: Skill Architecture For Scene Expansion
 
@@ -226,6 +239,109 @@ Plans:
 - [x] 07-02-PLAN.md - Define the separate bootstrap/admin contract and subordinate cache governance model
 - [x] 07-03-PLAN.md - Wire the Phase 7 packaging model into README, loading strategy, and reference indexing
 
+### Phase 8: Audit Evidence And Guidance Alignment
+
+**Goal**
+
+Close milestone blockers caused by missing verification metadata, missing closure artifacts, and stale root guidance so previously delivered work becomes audit-safe.
+
+**Requirements**
+
+- FOUND-01
+- FOUND-02
+- FOUND-03
+- FOUND-04
+- LIVE-01
+- LIVE-02
+- LIVE-03
+- VAL-03
+- PORT-01
+
+**Success criteria**
+
+1. Phase 1, Phase 2, and Phase 6 each have the verification metadata or closure artifacts needed for milestone-level audit traceability
+2. Root guidance docs such as README and STATUS match the actual mainline-complete milestone state recorded in planning artifacts
+3. Requirement traceability, summary metadata, and verification references align so audit 3-source checks can resolve without ambiguity
+4. Portability and milestone-consistency claims are backed by explicit evidence instead of implied status
+
+**Depends on**
+
+- Phase 7
+
+**Gap closure**
+
+- Missing closure evidence for Phases 1, 2, and 6
+- Root guidance drift called out by the milestone audit integration findings
+
+**UI hint**: no
+
+### Phase 9: Context And Account Verification Closure
+
+**Goal**
+
+Convert the existing context-recovery and expanded-account-model implementation into fully auditable milestone capability with explicit verification and live-fallback evidence handling.
+
+**Requirements**
+
+- LIVE-04
+- WORK-01
+- WORK-02
+- WORK-03
+- MEET-01
+- MEET-02
+
+**Success criteria**
+
+1. Phase 3 and Phase 5 have milestone-grade verification artifacts that map requirements to executable evidence
+2. Archive and meeting-note fallback behavior has explicit verification boundaries, including any remaining manual/live checks
+3. Expanded account reads remain customer-grounded and are proven not to regress the current meeting path
+4. The milestone audit can mark the core context/account requirements satisfied rather than orphaned
+
+**Depends on**
+
+- Phase 8
+
+**Gap closure**
+
+- Missing Phase 3 and Phase 5 verification closure
+- Manual-only fallback evidence gap highlighted in audit flow findings
+
+**UI hint**: no
+
+### Phase 10: Safe Write And E2E Closure
+
+**Goal**
+
+Finish the safe-write closure path by removing eval-specific candidate generation, completing validation evidence, and producing auditable end-to-end proof for the meeting write loop.
+
+**Requirements**
+
+- MEET-03
+- WRITE-01
+- WRITE-02
+- WRITE-03
+- VAL-01
+- VAL-02
+
+**Success criteria**
+
+1. Meeting Todo candidate generation is no longer hard-coded to one eval and is valid as a general recommendation-mode capability
+2. Phase 4 validation becomes Nyquist-compliant with explicit automated and manual boundaries
+3. Safe-write behavior has milestone-grade verification artifacts covering preflight, guard, dedupe, and result envelopes
+4. The repo has at least one auditable end-to-end proof path for gateway to context to candidate to guarded write/result to evaluation artifact
+
+**Depends on**
+
+- Phase 8
+- Phase 9
+
+**Gap closure**
+
+- Eval-specific MEET-03 implementation blocker
+- Segmented-only E2E proof and incomplete safe-write validation closure
+
+**UI hint**: no
+
 ## Dependency Notes
 
 - Phase 1 is foundational and already completed by this initialization pass.
@@ -234,6 +350,9 @@ Plans:
 - Phase 5 should not outrun the protections established in Phases 2-4.
 - Phase 6 runs throughout, but its formal completion depends on the earlier phases maturing.
 - Phase 7 should consolidate the next-generation skill packaging and bootstrap model only after the current trust loop and portability baseline are explicit enough to support it.
+- Phase 8 is the audit-repair bridge: it turns prior delivery into milestone-grade evidence and reconciles entry docs with planning truth.
+- Phase 9 should verify context/account behavior before Phase 10 claims a full end-to-end safe-write closeout.
+- Phase 10 is the final milestone gap-closure phase and should be the last stop before re-running `/gsd-audit-milestone`.
 
 ## Backlog
 
@@ -247,7 +366,7 @@ Plans:
 
 ## Recommended Next Step
 
-Proceed with `/gsd-execute-phase 7` once Phase 6 dependencies are in a state you are comfortable planning against, or resume `/gsd-discuss-phase 4` if you want to continue roadmap order strictly.
+Mainline milestone phases 1-7 are complete, but audit gap-closure phases 8-10 are now the active path. Start with Phase 8, then progress through Phase 9 and Phase 10 before re-running `/gsd-audit-milestone`.
 
 ---
 *Roadmap created: 2026-04-14 after brownfield GSD initialization*
