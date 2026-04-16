@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import os
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 import subprocess
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +39,7 @@ from runtime import (  # noqa: E402
 )
 from runtime.diagnostics import suggest_next_actions  # noqa: E402
 from runtime.models import TodoWriteResult, WriteCandidate, WriteExecutionResult  # noqa: E402
+import runtime.__main__ as runtime_main  # noqa: E402
 
 
 class FakeCustomerBackend:
@@ -180,13 +185,20 @@ class RuntimeSmokeTests(unittest.TestCase):
         "FEISHU_AM_TODO_CUSTOMER_FIELD_GUID": "a7009aff-7d85-4378-82c9-1584873f469d",
         "FEISHU_AM_TODO_PRIORITY_FIELD_GUID": "f7587037-8ad1-443c-b350-f6600e0ccadd",
     }
+    CLEARED_RUNTIME_ENV = (
+        "FEISHU_AM_BASE_TOKEN",
+        "FEISHU_AM_CUSTOMER_MASTER_TABLE_ID",
+    )
 
     def setUp(self) -> None:
         self._env_backup = {
-            key: os.environ.get(key) for key in self.TEST_RUNTIME_ENV
+            key: os.environ.get(key)
+            for key in (*self.TEST_RUNTIME_ENV, *self.CLEARED_RUNTIME_ENV)
         }
         for key, value in self.TEST_RUNTIME_ENV.items():
             os.environ[key] = value
+        for key in self.CLEARED_RUNTIME_ENV:
+            os.environ.pop(key, None)
 
     def tearDown(self) -> None:
         for key, value in self._env_backup.items():
@@ -1290,6 +1302,60 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(checks["docs_access"].status, "degraded")
         self.assertEqual(checks["task_access"].status, "available")
 
+    def test_capability_report_supports_current_lark_cli_base_table_shape(self) -> None:
+        responses = {
+            "base +table-list --base-token app_example_base_token --limit 200": subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"ok":true,"data":{"tables":['
+                    '{"id":"tbl_customer_master_example","name":"客户主数据"},'
+                    '{"id":"tbla91dGjJsb0axd","name":"客户联系记录"},'
+                    '{"id":"tblqbbS46bWilKd7","name":"行动计划"}'
+                    ']}}'
+                ),
+                stderr="",
+            ),
+            "task tasklists list": subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"items":[{"guid":"00000000-0000-4000-8000-000000000001"}]}}'
+                ),
+                stderr="",
+            ),
+            (
+                'drive files list --params '
+                '{"folder_token":"fld_customer_archive_example"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"files":[]}}',
+                stderr="",
+            ),
+            (
+                'drive files list --params '
+                '{"folder_token":"fld_meeting_notes_example"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"files":[]}}',
+                stderr="",
+            ),
+        }
+        client = LarkCliClient(runner=FakeRunner(responses))
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        reporter = LiveCapabilityReporter(
+            client,
+            config,
+            LarkCliResourceProbe(client, config),
+        )
+        report = reporter.build(sources)
+        checks = {item.name: item for item in report.checks}
+        self.assertEqual(checks["base_access"].status, "available")
+        self.assertTrue(checks["base_access"].details["required_tables_verified"])
+
     def test_todo_writer_blocks_before_live_create_when_preflight_fails(self) -> None:
         class RaisingRunner:
             def __call__(self, command, capture_output, text, check):
@@ -2181,6 +2247,147 @@ class RuntimeSmokeTests(unittest.TestCase):
             )()
         )
         self.assertEqual(actions, ["task adapter is usable; keep this as the known-good baseline"])
+
+    def test_runtime_cli_meeting_write_loop_outputs_candidate_preview_json(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
+                "customer_resolution": type("CustomerResolution", (), {"status": "resolved"})(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {"status": "completed", "write_ceiling": "normal"},
+        )()
+        candidate = WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "customer"],
+            payload={"summary": "确认联合利华后续动作", "customer": "联合利华"},
+            match_basis={"customer": "联合利华"},
+            source_context={"scenario": "post_meeting"},
+        )
+
+        with patch.object(runtime_main.FeishuWorkbenchGateway, "for_live_lark_cli") as gateway_factory, patch.object(
+            runtime_main, "RuntimeSourceLoader"
+        ) as source_loader_cls, patch.object(runtime_main.LiveWorkbenchConfig, "from_sources", return_value=object()), patch.object(
+            runtime_main, "LarkCliBaseQueryBackend", return_value=object()
+        ), patch.object(runtime_main, "recover_live_context", return_value=recovery), patch.object(
+            runtime_main, "build_meeting_todo_candidates", return_value=[candidate]
+        ), patch.object(
+            runtime_main,
+            "build_meeting_output_artifact",
+            return_value={"output_text": "artifact output", "write_result_details": []},
+        ):
+            gateway_factory.return_value.run.return_value = gateway_result
+            source_loader_cls.return_value.load.return_value = object()
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                exit_code = runtime_main.main(
+                    [
+                        "meeting-write-loop",
+                        "--eval-name",
+                        "unilever-stage-review",
+                        "--transcript-file",
+                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"),
+                        "--customer-query",
+                        "联合利华",
+                        "--repo-root",
+                        str(REPO_ROOT),
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(payload["candidate_count"], 1)
+        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认联合利华后续动作")
+        self.assertEqual(payload["context_status"], "completed")
+        self.assertEqual(payload["write_result_details"], [])
+
+    def test_runtime_cli_meeting_write_loop_runs_confirmed_write_when_requested(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
+                "customer_resolution": type("CustomerResolution", (), {"status": "resolved"})(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {"status": "completed", "write_ceiling": "normal"},
+        )()
+        candidate = WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "customer"],
+            payload={"summary": "确认联合利华后续动作", "customer": "联合利华"},
+            match_basis={"customer": "联合利华"},
+            source_context={"scenario": "post_meeting"},
+        )
+        write_result = WriteExecutionResult(
+            target_object="todo",
+            attempted=True,
+            allowed=True,
+            preflight_status="safe",
+            guard_status="allowed",
+            dedupe_decision="create_new",
+            executed_operation="create",
+            remote_object_id="task_guid_11",
+            source_context={"scenario": "post_meeting"},
+        )
+
+        with patch.object(runtime_main.FeishuWorkbenchGateway, "for_live_lark_cli") as gateway_factory, patch.object(
+            runtime_main, "RuntimeSourceLoader"
+        ) as source_loader_cls, patch.object(runtime_main.LiveWorkbenchConfig, "from_sources", return_value=object()), patch.object(
+            runtime_main, "LarkCliBaseQueryBackend", return_value=object()
+        ), patch.object(runtime_main, "recover_live_context", return_value=recovery), patch.object(
+            runtime_main, "build_meeting_todo_candidates", return_value=[candidate]
+        ), patch.object(runtime_main.TodoWriter, "for_live_lark_cli", return_value=object()) as todo_writer_factory, patch.object(
+            runtime_main, "run_confirmed_todo_write", return_value=[write_result]
+        ) as confirmed_write, patch.object(
+            runtime_main,
+            "build_meeting_output_artifact",
+            return_value={
+                "output_text": "artifact output\n统一写回结果:\n- todo: 已创建新待办",
+                "write_result_details": [write_result.structured_result()],
+            },
+        ):
+            gateway_factory.return_value.run.return_value = gateway_result
+            source_loader_cls.return_value.load.return_value = object()
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                exit_code = runtime_main.main(
+                    [
+                        "meeting-write-loop",
+                        "--eval-name",
+                        "unilever-stage-review",
+                        "--transcript-file",
+                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"),
+                        "--customer-query",
+                        "联合利华",
+                        "--repo-root",
+                        str(REPO_ROOT),
+                        "--confirm-write",
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(exit_code, 0)
+        todo_writer_factory.assert_called_once_with(str(REPO_ROOT))
+        confirmed_write.assert_called_once()
+        self.assertEqual(payload["write_result_details"][0]["executed_operation"], "create")
+        self.assertEqual(payload["write_result_details"][0]["remote_metadata"]["object_id"], "task_guid_11")
 
 
 if __name__ == "__main__":
