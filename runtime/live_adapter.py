@@ -22,6 +22,35 @@ from .semantic_registry import (
 )
 
 
+def _extract_base_tables(payload: dict[str, Any]) -> list[dict[str, str]]:
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return []
+    raw_tables = data.get("items")
+    if not isinstance(raw_tables, list):
+        raw_tables = data.get("tables")
+    if not isinstance(raw_tables, list):
+        return []
+    tables: list[dict[str, str]] = []
+    for item in raw_tables:
+        if not isinstance(item, dict):
+            continue
+        table_id = item.get("table_id")
+        if table_id is None:
+            table_id = item.get("id")
+        table_name = item.get("table_name")
+        if table_name is None:
+            table_name = item.get("name")
+        normalized: dict[str, str] = {}
+        if table_id is not None:
+            normalized["table_id"] = str(table_id)
+        if table_name is not None:
+            normalized["table_name"] = str(table_name)
+        if normalized:
+            tables.append(normalized)
+    return tables
+
+
 @dataclass
 class LiveWorkbenchConfig:
     base_token: str | None
@@ -118,7 +147,7 @@ class LarkCliResourceProbe:
             return ResourceProbeOutcome(
                 key=hint.key,
                 confirmed=False,
-                status="unavailable",
+                status="blocked",
                 reason="resource_missing",
             )
         if hint.key == "todo_tasklist_guid":
@@ -130,7 +159,7 @@ class LarkCliResourceProbe:
         return ResourceProbeOutcome(
             key=hint.key,
             confirmed=False,
-            status="unavailable",
+            status="blocked",
             reason="unsupported_probe",
         )
 
@@ -141,7 +170,7 @@ class LarkCliResourceProbe:
             return ResourceProbeOutcome(
                 key="todo_tasklist_guid",
                 confirmed=False,
-                status="unavailable",
+                status="blocked",
                 reason=exc.error_type,
                 hint=exc.hint,
                 details={"message": exc.message},
@@ -172,7 +201,7 @@ class LarkCliResourceProbe:
                 ]
             )
         except LarkCliCommandError as exc:
-            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "unavailable"
+            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "blocked"
             return ResourceProbeOutcome(
                 key="drive_folder",
                 confirmed=False,
@@ -200,7 +229,7 @@ class LarkCliResourceProbe:
                 ]
             )
         except LarkCliCommandError as exc:
-            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "unavailable"
+            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "blocked"
             return ResourceProbeOutcome(
                 key="base_token",
                 confirmed=False,
@@ -473,6 +502,32 @@ class LarkCliBaseQueryBackend:
             limit=limit,
         )
 
+    def discover_archive_candidates(
+        self, customer_id: str, short_name: str, limit: int = 10
+    ) -> list[dict[str, Any]]:
+        return self._discover_drive_candidates(
+            folder_token=self.config.customer_archive_folder,
+            customer_id=customer_id,
+            short_name=short_name,
+            topic_text="客户档案",
+            limit=limit,
+        )
+
+    def discover_meeting_note_candidates(
+        self,
+        customer_id: str,
+        short_name: str,
+        topic_text: str,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        return self._discover_drive_candidates(
+            folder_token=self.config.meeting_notes_folder,
+            customer_id=customer_id,
+            short_name=short_name,
+            topic_text=topic_text,
+            limit=limit,
+        )
+
     def query_rows_by_field_value(
         self,
         table_name: str,
@@ -576,6 +631,71 @@ class LarkCliBaseQueryBackend:
             if len(matches) >= limit:
                 break
         return matches
+
+    def _discover_drive_candidates(
+        self,
+        *,
+        folder_token: str | None,
+        customer_id: str,
+        short_name: str,
+        topic_text: str,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        if not folder_token:
+            return []
+        items = self._list_drive_items(folder_token, limit=max(limit * 5, 20))
+        query_terms = [term for term in {customer_id, short_name, topic_text} if term]
+        candidates: list[dict[str, Any]] = []
+        for item in items:
+            title = self._customer_backend._stringify(
+                item.get("name") or item.get("title")
+            ).strip()
+            if not title:
+                continue
+            if query_terms and not any(term in title for term in query_terms):
+                continue
+            candidates.append(
+                {
+                    "title": title,
+                    "url": self._customer_backend._stringify(
+                        item.get("url") or item.get("link") or item.get("permalink")
+                    ).strip(),
+                    "token": self._customer_backend._stringify(
+                        item.get("file_token") or item.get("token") or item.get("id")
+                    ).strip(),
+                }
+            )
+            if len(candidates) >= limit:
+                break
+        return candidates
+
+    def _list_drive_items(self, folder_token: str, limit: int) -> list[dict[str, Any]]:
+        try:
+            payload = self.client.invoke_json(
+                [
+                    "drive",
+                    "files",
+                    "list",
+                    "--params",
+                    json.dumps(
+                        {
+                            "folder_token": folder_token,
+                            "page_size": limit,
+                        },
+                        ensure_ascii=False,
+                    ),
+                ]
+            )
+        except LarkCliCommandError:
+            return []
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            return []
+        for key in ("items", "files", "list"):
+            value = data.get(key)
+            if isinstance(value, list):
+                return [item for item in value if isinstance(item, dict)]
+        return []
 
 
 class LarkCliSchemaBackend:
@@ -864,7 +984,7 @@ class LiveCapabilityReporter:
         if not self.config.base_token:
             return CapabilityCheck(
                 name="base_access",
-                status="unavailable",
+                status="blocked",
                 reasons=["missing_base_token"],
                 details={"env_var": "FEISHU_AM_BASE_TOKEN"},
             )
@@ -880,15 +1000,14 @@ class LiveCapabilityReporter:
                 ]
             )
         except LarkCliCommandError as exc:
-            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "unavailable"
+            status = "degraded" if exc.error_type in {"permission", "missing_scope"} else "blocked"
             return CapabilityCheck(
                 name="base_access",
                 status=status,
                 reasons=[exc.error_type],
                 details={"message": exc.message, "hint": exc.hint},
             )
-        data = payload.get("data")
-        items = data.get("items") if isinstance(data, dict) else []
+        items = _extract_base_tables(payload)
         available_table_ids = {
             str(item.get("table_id"))
             for item in items
@@ -940,7 +1059,7 @@ class LiveCapabilityReporter:
         if not checks:
             return CapabilityCheck(
                 name="docs_access",
-                status="unavailable",
+                status="blocked",
                 reasons=["docs_resource_missing"],
             )
         if all(item.confirmed for item in checks):
@@ -950,7 +1069,7 @@ class LiveCapabilityReporter:
                 details={"folders": [item.key for item in checks]},
             )
         statuses = {item.status for item in checks}
-        status = "degraded" if "degraded" in statuses else "unavailable"
+        status = "degraded" if "degraded" in statuses else "blocked"
         reasons = [item.reason or "docs_unconfirmed" for item in checks if not item.confirmed]
         details = {
             "outcomes": [
@@ -974,7 +1093,7 @@ class LiveCapabilityReporter:
         if not hint:
             return CapabilityCheck(
                 name="task_access",
-                status="unavailable",
+                status="blocked",
                 reasons=["tasklist_missing"],
             )
         outcome = self.resource_probe.inspect(hint)

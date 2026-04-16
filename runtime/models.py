@@ -7,13 +7,15 @@ from typing import Any, Literal
 
 
 Status = Literal["resolved", "partial", "unresolved"]
+ContextStatus = Literal["not-run", "completed", "partial", "context-limited"]
 PreflightStatus = Literal["safe", "safe_with_drift", "blocked"]
-CapabilityStatus = Literal["available", "degraded", "unavailable"]
+CapabilityStatus = Literal["available", "degraded", "blocked"]
 TableRole = Literal["snapshot", "detail", "dimension", "bridge"]
 WriteOperation = Literal["create", "update"]
 DedupeDecision = Literal["create_new", "update_existing", "create_subtask", "no_write"]
 GuardStatus = Literal["allowed", "blocked"]
 ExecutedOperation = Literal["create", "update", "blocked", "no_write"]
+WriteCeiling = Literal["normal", "recommendation-only"]
 
 
 @dataclass
@@ -83,6 +85,24 @@ class CustomerResolution:
     status: Literal["resolved", "ambiguous", "missing"]
     candidates: list[CustomerMatch] = field(default_factory=list)
     query: str = ""
+
+
+@dataclass
+class ContextRecoveryResult:
+    status: ContextStatus
+    used_sources: list[str] = field(default_factory=list)
+    fallback_reason: str | None = None
+    key_context: list[str] = field(default_factory=list)
+    missing_sources: list[str] = field(default_factory=list)
+    open_questions: list[str] = field(default_factory=list)
+    write_ceiling: WriteCeiling = "normal"
+    candidate_conflicts: list[str] = field(default_factory=list)
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError as exc:
+            raise KeyError(key) from exc
 
 
 @dataclass

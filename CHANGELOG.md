@@ -9,6 +9,37 @@
 - `修复`：问题修正
 - `移除`：废弃能力
 
+## [0.2.13] - 2026-04-15
+
+### 新增
+
+- `runtime/models.py`
+  - 新增 typed `ContextRecoveryResult`、`ContextStatus` 和 `WriteCeiling`，把 Phase 3 的上下文恢复结果从松散字典收口为显式契约
+- `runtime/live_adapter.py`
+  - 新增 folder-scoped archive / meeting-note candidate discovery，支持受限 fallback 证据发现而不把候选误当已确认事实
+- `tests/test_runtime_smoke.py`
+  - 新增当前 `lark-cli` Base table-list 返回 `data.tables / id / name` 形态的兼容回归
+
+### 变更
+
+- `evals/meeting_output_bridge.py`
+  - meeting 场景的上下文恢复改为 gateway-first typed recovery path
+  - 显式链接优先，缺失时才进入受限 fallback 搜索，并把冲突候选与证据不足暴露为审计字段
+  - 最终输出固定展示 `资源状态`、`客户结果`、`上下文恢复状态`、`已使用资料`、`写回上限`、`开放问题`
+- `runtime/semantic_registry.py`
+  - 继续保持 3 张核心表的最小语义面，并补齐 archive / meeting-note 相关窄别名，避免 Phase 3 扩展漂移成全量 schema mirror
+- `tests/test_meeting_output_bridge.py`
+  - 扩充 gateway-first、archive fallback、meeting-note candidate conflict、审计字段渲染等回归覆盖
+- `STATUS.md`、`VALIDATION.md`、`README.md`、`SKILL.md`、`evals/evals.json`
+  - 同步 Phase 3 已关闭后的仓库级状态、版本与验证口径
+
+### 修复
+
+- `runtime/live_adapter.py`
+  - 修复对当前 `lark-cli` Base capability payload 形态的兼容问题，避免 capability diagnostics 因 `data.tables` 返回结构而误判
+- `evals/meeting_output_bridge.py`
+  - 修复 fallback 路径可能过度自信的问题，在冲突或弱证据场景下明确下调到 `recommendation-only`
+
 ## [0.2.12] - 2026-04-14
 
 ### 新增
@@ -91,7 +122,7 @@
   - 新增 meeting output bridge，支持 gateway 结果承接、最小 Stage 3 context recovery 和 CLI 生成待检输出
 - `tests/test_eval_runner.py`、`tests/test_meeting_output_bridge.py`、`tests/test_validation_assets.py`
   - 补齐 runner、bridge 和验证资产的回归测试
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 统一沉淀 3 个真实案例的 baseline / green / regression 结论
 
 ### 变更
@@ -126,7 +157,7 @@
 - `tests/test_meeting_output_bridge.py`
   - 增加 Stage 3 context recovery 回归测试
   - 校验最小 Base 上下文恢复可将 meeting 场景从 `partial` 推进到 `completed`
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 更新为真实 live-first Stage 1/2/3 最小闭环已验证通过
 - `VALIDATION.md`
   - 执行层说明更新为：bridge 已可读取最小 live context，而不只是承接 gateway 结果
@@ -146,7 +177,7 @@
   - 覆盖 resolved customer -> `partial`、missing customer -> `context-limited`、以及 `--run-gateway` CLI 路径
 - `VALIDATION.md`
   - 执行层说明从“静态 bridge”升级为“可调用 gateway 的 bridge”
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 补充当前 bridge 已能接收真实 gateway 结果，但 live gateway 全链路仍待实测
 
 ## [0.2.8] - 2026-04-11
@@ -193,7 +224,7 @@
   - 明确当前验证资产由文档层、数据层和最小 runner 三层组成
 - `SKILL.md`
   - 做一轮高频加载成本压缩，减少重复说明，不改变核心规则语义
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 更新为 P1 / P3 方向的统一结论
   - 区分“runner 已落地”和“真实 live-first 全链路仍待业务场景实测”
 
@@ -208,7 +239,7 @@
 - `references/INDEX.md`
   - 21 个 reference 文件的一句话说明 + "何时加载"快速索引
   - 解决 reference 文件多但无导航入口的问题
-- `validation-reports/2026-04-11-multi-case-skill-validation.md`
+- `archive/validation-reports/2026-04-11-multi-case-skill-validation.md`
   - 统一记录 3 个真实案例的 baseline / current-branch / regression 结论
   - 给出按 P1 / P2 / P3 排序的修改建议
 

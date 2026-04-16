@@ -9,10 +9,12 @@ from typing import Protocol
 from runtime.gateway import FeishuWorkbenchGateway
 from runtime.lark_cli import LarkCliClient
 from runtime.live_adapter import LarkCliBaseQueryBackend, LiveWorkbenchConfig
+from runtime.semantic_registry import SEMANTIC_FIELD_REGISTRY
 from runtime.runtime_sources import RuntimeSourceLoader
 from runtime.models import (
     CustomerMatch,
     CustomerResolution,
+    ContextRecoveryResult,
     GatewayResult,
     ResourceResolution,
     WriteCandidate,
@@ -42,13 +44,24 @@ def build_meeting_output(
     eval_name: str,
     transcript_path: Path,
     gateway_result: GatewayResult,
-    context_status: str,
+    context_status: str | None = None,
     used_sources: list[str] | None = None,
     fallback_reason: str | None = None,
     key_context: list[str] | None = None,
     missing_sources: list[str] | None = None,
+    recovery: ContextRecoveryResult | None = None,
     write_results: list[WriteExecutionResult] | None = None,
 ) -> str:
+    if recovery is not None:
+        context_status = recovery.status
+        used_sources = recovery.used_sources
+        fallback_reason = recovery.fallback_reason
+        key_context = recovery.key_context
+        missing_sources = recovery.missing_sources
+
+    if context_status is None:
+        raise ValueError("context_status is required when recovery is not provided")
+
     transcript_title = transcript_path.name
     transcript_text, transcript_status = _read_transcript_text(transcript_path)
     lines = [
@@ -71,6 +84,12 @@ def build_meeting_output(
         lines.extend(f"- {item}" for item in key_context)
     if missing_sources:
         lines.append(f"未找到但应存在的资料: {'、'.join(missing_sources)}")
+    if recovery is not None:
+        lines.append(f"写回上限: {recovery.write_ceiling}")
+        audit_open_questions = [*recovery.open_questions, *recovery.candidate_conflicts]
+        if audit_open_questions:
+            lines.append("开放问题:")
+            lines.extend(f"- {item}" for item in audit_open_questions)
     if write_results:
         lines.append("统一写回结果:")
         lines.extend(_render_write_results(write_results))
@@ -104,11 +123,7 @@ def run_gateway_and_build_meeting_output(
         eval_name=eval_name,
         transcript_path=transcript_path,
         gateway_result=gateway_result,
-        context_status=context["status"],
-        used_sources=context["used_sources"],
-        fallback_reason=context["fallback_reason"],
-        key_context=context["key_context"],
-        missing_sources=context["missing_sources"],
+        recovery=context,
     )
     return output_text, gateway_result
 
@@ -197,30 +212,33 @@ def recover_live_context(
     gateway_result: GatewayResult,
     query_backend: QueryBackend,
     topic_text: str = "",
-) -> dict[str, object]:
+) -> ContextRecoveryResult:
     resolution = gateway_result.customer_resolution
     if resolution is None:
-        return {
-            "status": "context-limited",
-            "used_sources": [],
-            "fallback_reason": "gateway did not return customer resolution",
-            "key_context": [],
-            "missing_sources": ["客户主数据"],
-        }
+        return ContextRecoveryResult(
+            status="context-limited",
+            fallback_reason="gateway did not return customer resolution",
+            missing_sources=["客户主数据"],
+            write_ceiling="recommendation-only",
+            open_questions=["客户解析未返回结果，当前上下文不能视为 grounded context"],
+        )
     if resolution.status in {"missing", "ambiguous"}:
-        return {
-            "status": "context-limited",
-            "used_sources": [],
-            "fallback_reason": f"customer cannot be resolved ({resolution.status}) from current live customer master",
-            "key_context": [],
-            "missing_sources": ["客户主数据"],
-        }
+        return ContextRecoveryResult(
+            status="context-limited",
+            fallback_reason=f"customer cannot be resolved ({resolution.status}) from current live customer master",
+            missing_sources=["客户主数据"],
+            write_ceiling="recommendation-only",
+            open_questions=["客户解析未达唯一命中，当前只能保持建议态"],
+        )
 
     best = resolution.candidates[0]
     customer_id = best.customer_id
     used_sources = ["客户主数据"]
     key_context = [_render_customer_snapshot(best)]
+    key_context.extend(_render_customer_master_details(best))
     missing_sources: list[str] = []
+    open_questions: list[str] = []
+    candidate_conflicts: list[str] = []
 
     contact_rows = query_backend.query_rows_by_customer_id("客户联系记录", customer_id, limit=5)
     if contact_rows:
@@ -228,6 +246,7 @@ def recover_live_context(
         key_context.append(_render_latest_contact(contact_rows[0]))
     else:
         missing_sources.append("客户联系记录")
+        open_questions.append("缺少最近客户联系记录，需人工确认最近一次有效沟通")
 
     action_rows = query_backend.query_rows_by_customer_id("行动计划", customer_id, limit=5)
     if action_rows:
@@ -235,33 +254,250 @@ def recover_live_context(
         key_context.append(_render_latest_action(action_rows[0]))
     else:
         missing_sources.append("行动计划")
+        open_questions.append("缺少当前行动计划，需确认是否存在未沉淀的推进事项")
 
     meeting_notes = _rank_related_meeting_notes(contact_rows, topic_text=topic_text, limit=3)
     if meeting_notes:
         used_sources.append("相关会议纪要候选")
         key_context.append(f"相关会议纪要候选: {'；'.join(meeting_notes)}")
-
-    if best.archive_link:
-        used_sources.append("客户档案链接")
-        key_context.append(f"客户档案链接: {best.archive_link}")
     else:
-        missing_sources.append("客户档案")
+        note_resolution = _resolve_meeting_note_context(
+            query_backend=query_backend,
+            customer=best,
+            topic_text=topic_text,
+            limit=3,
+        )
+        if note_resolution["used_source"]:
+            used_sources.append(str(note_resolution["used_source"]))
+        if note_resolution["key_context"]:
+            key_context.append(str(note_resolution["key_context"]))
+        open_questions.extend(note_resolution["open_questions"])
+        candidate_conflicts.extend(note_resolution["candidate_conflicts"])
+
+    archive_resolution = _resolve_archive_context(query_backend=query_backend, customer=best)
+    if archive_resolution["used_source"]:
+        used_sources.append(str(archive_resolution["used_source"]))
+    if archive_resolution["key_context"]:
+        key_context.append(str(archive_resolution["key_context"]))
+    missing_sources.extend(archive_resolution["missing_sources"])
+    open_questions.extend(archive_resolution["open_questions"])
+    candidate_conflicts.extend(archive_resolution["candidate_conflicts"])
 
     status = "completed" if not missing_sources else "partial"
     fallback_reason = None if status == "completed" else "some targeted live reads are still missing"
+    write_ceiling = "normal" if status == "completed" and not candidate_conflicts else "recommendation-only"
+    return ContextRecoveryResult(
+        status=status,
+        used_sources=used_sources,
+        fallback_reason=fallback_reason,
+        key_context=key_context,
+        missing_sources=missing_sources,
+        open_questions=open_questions,
+        write_ceiling=write_ceiling,
+        candidate_conflicts=candidate_conflicts,
+    )
+
+
+def _resolve_archive_context(
+    *,
+    query_backend: QueryBackend,
+    customer: CustomerMatch,
+) -> dict[str, object]:
+    if customer.archive_link:
+        return {
+            "used_source": "客户档案链接",
+            "key_context": f"客户档案链接: {customer.archive_link}",
+            "missing_sources": [],
+            "open_questions": [],
+            "candidate_conflicts": [],
+        }
+
+    candidates = _call_optional_backend(
+        query_backend,
+        "discover_archive_candidates",
+        customer.customer_id or "",
+        customer.short_name,
+        10,
+    )
+    ranked = _rank_drive_candidates(candidates, customer=customer, topic_text="")
+    if len(ranked) == 1:
+        if not _has_explicit_customer_evidence(ranked[0], customer):
+            return {
+                "used_source": "客户档案候选",
+                "key_context": f"客户档案候选: {_render_drive_candidate(ranked[0])}",
+                "missing_sources": [],
+                "open_questions": ["客户档案候选缺少显式客户证据，需人工确认 canonical archive"],
+                "candidate_conflicts": [
+                    "客户档案候选缺少显式客户证据: " + _render_drive_candidate(ranked[0])
+                ],
+            }
+        return {
+            "used_source": "客户档案候选",
+            "key_context": f"客户档案候选: {_render_drive_candidate(ranked[0])}",
+            "missing_sources": [],
+            "open_questions": [],
+            "candidate_conflicts": [],
+        }
+    if len(ranked) > 1:
+        return {
+            "used_source": None,
+            "key_context": None,
+            "missing_sources": ["客户档案"],
+            "open_questions": ["客户档案候选存在多个高相似结果，需人工确认 canonical archive"],
+            "candidate_conflicts": [
+                "客户档案候选冲突: " + "；".join(_render_drive_candidate(item) for item in ranked)
+            ],
+        }
     return {
-        "status": status,
-        "used_sources": used_sources,
-        "fallback_reason": fallback_reason,
-        "key_context": key_context,
-        "missing_sources": missing_sources,
+        "used_source": None,
+        "key_context": None,
+        "missing_sources": ["客户档案"],
+        "open_questions": ["客户档案链接缺失，暂时无法补充 archive 视角"],
+        "candidate_conflicts": [],
     }
+
+
+def _resolve_meeting_note_context(
+    *,
+    query_backend: QueryBackend,
+    customer: CustomerMatch,
+    topic_text: str,
+    limit: int,
+) -> dict[str, object]:
+    candidates = _call_optional_backend(
+        query_backend,
+        "discover_meeting_note_candidates",
+        customer.customer_id or "",
+        customer.short_name,
+        topic_text,
+        limit,
+    )
+    ranked = _rank_drive_candidates(candidates, customer=customer, topic_text=topic_text)
+    if not ranked:
+        return {
+            "used_source": None,
+            "key_context": None,
+            "open_questions": [],
+            "candidate_conflicts": [],
+        }
+    rendered = [_render_drive_candidate(item) for item in ranked[:limit]]
+    if len(ranked) > 1:
+        return {
+            "used_source": "会议纪要候选",
+            "key_context": f"相关会议纪要候选: {'；'.join(rendered)}",
+            "open_questions": ["会议纪要候选存在多个同分结果，需人工确认关联会议线程"],
+            "candidate_conflicts": ["会议纪要候选冲突: " + "；".join(rendered)],
+        }
+    if not _has_explicit_customer_evidence(ranked[0], customer):
+        return {
+            "used_source": "会议纪要候选",
+            "key_context": f"相关会议纪要候选: {'；'.join(rendered)}",
+            "open_questions": ["会议纪要候选缺少显式客户证据，需人工确认关联会议线程"],
+            "candidate_conflicts": ["会议纪要候选缺少显式客户证据: " + rendered[0]],
+        }
+    return {
+        "used_source": "会议纪要候选",
+        "key_context": f"相关会议纪要候选: {'；'.join(rendered)}",
+        "open_questions": [],
+        "candidate_conflicts": [],
+    }
+
+
+def _call_optional_backend(
+    query_backend: QueryBackend,
+    method_name: str,
+    *args: object,
+) -> list[dict[str, object]]:
+    method = getattr(query_backend, method_name, None)
+    if not callable(method):
+        return []
+    result = method(*args)
+    if not isinstance(result, list):
+        return []
+    return [item for item in result if isinstance(item, dict)]
+
+
+def _rank_drive_candidates(
+    candidates: list[dict[str, object]],
+    *,
+    customer: CustomerMatch,
+    topic_text: str,
+) -> list[dict[str, object]]:
+    if not candidates:
+        return []
+    topic_terms = _topic_terms(topic_text)
+    scored: list[tuple[int, dict[str, object]]] = []
+    for candidate in candidates:
+        title = str(candidate.get("title") or candidate.get("name") or "")
+        score = 0
+        if customer.customer_id and str(candidate.get("customer_id") or "") == customer.customer_id:
+            score += 20
+        if customer.short_name and str(candidate.get("short_name") or "") == customer.short_name:
+            score += 10
+        if customer.short_name and customer.short_name in title:
+            score += 5
+        if topic_terms:
+            score += len(_topic_terms(title).intersection(topic_terms)) * 10
+        if score > 0:
+            scored.append((score, candidate))
+    if not scored:
+        return []
+    scored.sort(key=lambda item: item[0], reverse=True)
+    top_score = scored[0][0]
+    return [candidate for score, candidate in scored if score == top_score]
+
+
+def _has_explicit_customer_evidence(
+    candidate: dict[str, object],
+    customer: CustomerMatch,
+) -> bool:
+    customer_id = str(candidate.get("customer_id") or "").strip()
+    short_name = str(candidate.get("short_name") or "").strip()
+    return bool(
+        (customer.customer_id and customer_id == customer.customer_id)
+        or (customer.short_name and short_name == customer.short_name)
+    )
+
+
+def _render_drive_candidate(candidate: dict[str, object]) -> str:
+    title = str(candidate.get("title") or candidate.get("name") or "未命名文档")
+    url = str(candidate.get("url") or candidate.get("link") or candidate.get("permalink") or "")
+    if url:
+        return f"{title}｜{url}"
+    return title
 
 
 def _render_customer_snapshot(best: CustomerMatch) -> str:
     customer_id = best.customer_id or "missing"
     short_name = best.short_name or "unknown"
     return f"客户主数据快照: {short_name}｜客户ID {customer_id}"
+
+
+def _render_customer_master_details(best: CustomerMatch) -> list[str]:
+    raw_record = best.raw_record if isinstance(best.raw_record, dict) else {}
+    details: list[str] = []
+    strategy_summary = _semantic_value("客户主数据", "strategy_summary", raw_record)
+    last_contact_at = _semantic_value("客户主数据", "last_contact_at", raw_record)
+    next_action_summary = _semantic_value("客户主数据", "next_action_summary", raw_record)
+    if strategy_summary:
+        details.append(f"客户主数据策略摘要: {strategy_summary}")
+    if last_contact_at:
+        details.append(f"客户主数据上次接触: {last_contact_at}")
+    if next_action_summary:
+        details.append(f"客户主数据下次行动: {next_action_summary}")
+    return details
+
+
+def _semantic_value(table_name: str, semantic_field: str, raw_record: dict[str, object]) -> str:
+    slot = SEMANTIC_FIELD_REGISTRY.get(table_name, {}).get(semantic_field, {})
+    candidate_keys = [slot.get("canonical_name"), *slot.get("aliases", [])]
+    for key in candidate_keys:
+        if not key:
+            continue
+        value = raw_record.get(str(key))
+        if value not in (None, ""):
+            return str(value)
+    return ""
 
 
 def _render_latest_contact(row: dict[str, object]) -> str:

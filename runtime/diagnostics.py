@@ -45,7 +45,16 @@ def build_live_diagnostic(repo_root: str | Path) -> dict[str, Any]:
 def render_live_diagnostic(report: dict[str, Any]) -> str:
     lines: list[str] = []
     resource = report["resource_resolution"]
+    overall_status = _overall_status(report)
+    summary_reason = _summary_reason(report)
+    summary_actions = _summary_next_actions(report)
+
     lines.append("Feishu Workbench Runtime Diagnostic")
+    lines.append(f"conclusion: {overall_status}")
+    if summary_reason:
+        lines.append(f"reason: {summary_reason}")
+    for action in summary_actions:
+        lines.append(f"next action: {action}")
     lines.append(f"resource status: {resource['status']}")
     if resource["missing_keys"]:
         lines.append(f"missing resources: {', '.join(resource['missing_keys'])}")
@@ -63,7 +72,7 @@ def _render_check(check: dict[str, Any]) -> list[str]:
     lines = [f"- {check['name']}: {check['status']}"]
     reasons = check.get("reasons") or []
     if reasons:
-        lines.append(f"  reasons: {', '.join(reasons)}")
+        lines.append(f"  reason: {', '.join(reasons)}")
     details = check.get("details") or {}
     detail_lines = _render_details(details)
     lines.extend([f"  {line}" for line in detail_lines])
@@ -99,6 +108,12 @@ def _render_details(details: dict[str, Any]) -> list[str]:
 def suggest_next_actions(check: CapabilityCheck) -> list[str]:
     if check.name == "base_access" and "missing_base_token" in check.reasons:
         return ["export FEISHU_AM_BASE_TOKEN into the current shell before live Base reads"]
+    if check.name == "docs_access" and "docs_resource_missing" in check.reasons:
+        return [
+            "export FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER and FEISHU_AM_MEETING_NOTES_FOLDER before live Docs reads"
+        ]
+    if check.name == "task_access" and "tasklist_missing" in check.reasons:
+        return ["export FEISHU_AM_TODO_TASKLIST_GUID before live Task reads"]
     if check.name == "docs_access" and any(
         reason in {"permission", "missing_scope"} for reason in check.reasons
     ):
@@ -107,7 +122,60 @@ def suggest_next_actions(check: CapabilityCheck) -> list[str]:
         return ["task adapter is usable; keep this as the known-good baseline"]
     if check.status == "available":
         return ["no action required"]
-    return ["inspect lark-cli auth state and current resource hint sources"]
+    return ["inspect lark-cli auth state and the current private runtime env configuration"]
+
+
+def _overall_status(report: dict[str, Any]) -> str:
+    resource = report["resource_resolution"]
+    capability_report = report.get("capability_report") or []
+    statuses = {str(check.get("status", "")) for check in capability_report}
+    if resource["missing_keys"] or "blocked" in statuses:
+        return "blocked"
+    if resource["unconfirmed_keys"] or "degraded" in statuses or resource["status"] == "partial":
+        return "degraded"
+    return "available"
+
+
+def _summary_reason(report: dict[str, Any]) -> str | None:
+    resource = report["resource_resolution"]
+    if resource["missing_keys"]:
+        return f"missing required private runtime inputs: {', '.join(resource['missing_keys'])}"
+    if resource["unconfirmed_keys"]:
+        return f"some configured resources are not yet confirmed live: {', '.join(resource['unconfirmed_keys'])}"
+    blocked_checks = [check for check in report.get("capability_report") or [] if check.get("status") == "blocked"]
+    if blocked_checks:
+        names = ", ".join(str(check.get("name")) for check in blocked_checks)
+        return f"live startup is blocked in: {names}"
+    degraded_checks = [check for check in report.get("capability_report") or [] if check.get("status") == "degraded"]
+    if degraded_checks:
+        names = ", ".join(str(check.get("name")) for check in degraded_checks)
+        return f"live startup is degraded in: {names}"
+    return None
+
+
+def _summary_next_actions(report: dict[str, Any]) -> list[str]:
+    resource = report["resource_resolution"]
+    if resource["missing_keys"]:
+        env_map = {
+            "base_token": "FEISHU_AM_BASE_TOKEN",
+            "customer_archive_folder": "FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER",
+            "meeting_notes_folder": "FEISHU_AM_MEETING_NOTES_FOLDER",
+            "todo_tasklist_guid": "FEISHU_AM_TODO_TASKLIST_GUID",
+        }
+        needed = [env_map[key] for key in resource["missing_keys"] if key in env_map]
+        if needed:
+            return [f"export the missing env vars and rerun: {', '.join(needed)}"]
+    actions: list[str] = []
+    for check in report.get("capability_report") or []:
+        actions.extend(suggest_next_actions(_to_check(check)))
+    meaningful_actions = [action for action in actions if action != "no action required"]
+    if meaningful_actions:
+        actions = meaningful_actions
+    deduped: list[str] = []
+    for action in actions:
+        if action not in deduped:
+            deduped.append(action)
+    return deduped[:3]
 
 
 def _to_check(raw: dict[str, Any]) -> CapabilityCheck:

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import os
+import tempfile
 import unittest
 from pathlib import Path
 import subprocess
@@ -31,7 +33,7 @@ from runtime import (  # noqa: E402
     TABLE_PROFILES,
     get_required_base_tables,
 )
-from runtime.diagnostics import suggest_next_actions  # noqa: E402
+from runtime.diagnostics import _summary_next_actions, suggest_next_actions  # noqa: E402
 from runtime.models import WriteCandidate  # noqa: E402
 
 
@@ -149,6 +151,98 @@ class FakeRunner:
 
 
 class RuntimeSmokeTests(unittest.TestCase):
+    TEST_RUNTIME_ENV = {
+        "FEISHU_AM_WORKBENCH_BASE_URL": "https://example.com/base/app_example_base_token?table=tbl_customer_master_example",
+        "FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER": "fld_customer_archive_example",
+        "FEISHU_AM_MEETING_NOTES_FOLDER": "fld_meeting_notes_example",
+        "FEISHU_AM_TODO_TASKLIST_GUID": "00000000-0000-4000-8000-000000000001",
+        "FEISHU_AM_TODO_CUSTOMER_FIELD_GUID": "a7009aff-7d85-4378-82c9-1584873f469d",
+        "FEISHU_AM_TODO_PRIORITY_FIELD_GUID": "f7587037-8ad1-443c-b350-f6600e0ccadd",
+    }
+
+    def setUp(self) -> None:
+        self._env_backup = {
+            key: os.environ.get(key) for key in self.TEST_RUNTIME_ENV
+        }
+        for key, value in self.TEST_RUNTIME_ENV.items():
+            os.environ[key] = value
+
+    def tearDown(self) -> None:
+        for key, value in self._env_backup.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    def test_runtime_source_loader_requires_env_for_live_resource_hints(self) -> None:
+        env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
+        try:
+            for key in RuntimeSourceLoader.ENV_VARS.values():
+                os.environ.pop(key, None)
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                (root / "references").mkdir()
+                (root / "references" / "actual-field-mapping.md").write_text(
+                    "tasklist_guid: 11111111-1111-1111-1111-111111111111\n",
+                    encoding="utf-8",
+                )
+                (root / "references" / "workbench-information-architecture.md").write_text(
+                    "Layer 4: Customer archive Location: Feishu docs folder `archive_from_repo`\n",
+                    encoding="utf-8",
+                )
+                (root / "references" / "update-routing.md").write_text(
+                    "Default meeting-note folder: `meeting_notes_from_repo`\n",
+                    encoding="utf-8",
+                )
+                (root / "references" / "live-resource-links.example.md").write_text(
+                    "Workbench Base: `https://example.com/base/app_token?table=tbl123`\n",
+                    encoding="utf-8",
+                )
+                (root / "SKILL.md").write_text(
+                    "dedicated Feishu folder `skill_meeting_notes`\n",
+                    encoding="utf-8",
+                )
+
+                sources = RuntimeSourceLoader(root).load()
+
+            self.assertIsNone(sources.base_token)
+            self.assertIsNone(sources.customer_archive_folder)
+            self.assertIsNone(sources.meeting_notes_folder)
+            self.assertIsNone(sources.todo_tasklist_guid)
+            self.assertEqual(sources.source_files, [])
+        finally:
+            for key, value in env_backup.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
+    def test_runtime_source_loader_uses_env_backed_values_only(self) -> None:
+        env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
+        try:
+            os.environ["FEISHU_AM_WORKBENCH_BASE_URL"] = "https://example.com/base/app_token?table=tbl123"
+            os.environ["FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER"] = "archive_folder"
+            os.environ["FEISHU_AM_MEETING_NOTES_FOLDER"] = "meeting_folder"
+            os.environ["FEISHU_AM_TODO_TASKLIST_GUID"] = "22222222-2222-2222-2222-222222222222"
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                sources = RuntimeSourceLoader(Path(temp_dir)).load()
+
+            self.assertEqual(sources.base_token.value, "app_token")
+            self.assertEqual(sources.base_token.source_file, "env:FEISHU_AM_WORKBENCH_BASE_URL")
+            self.assertEqual(sources.customer_master_table_id.value, "tbl123")
+            self.assertEqual(sources.customer_archive_folder.source_file, "env:FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER")
+            self.assertEqual(sources.meeting_notes_folder.source_file, "env:FEISHU_AM_MEETING_NOTES_FOLDER")
+            self.assertEqual(sources.todo_tasklist_guid.source_file, "env:FEISHU_AM_TODO_TASKLIST_GUID")
+            self.assertIn("env:FEISHU_AM_WORKBENCH_BASE_URL", sources.source_files)
+        finally:
+            for key, value in env_backup.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
     def test_write_candidate_supports_shared_write_metadata(self) -> None:
         candidate = WriteCandidate(
             object_name="待办",
@@ -252,8 +346,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华续费方案", '
                 '"due": {"timestamp": "1776643200000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
                 '"update_fields": ["summary", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -354,8 +447,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
                 '"update_fields": ["summary", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -588,7 +680,15 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(sources.meeting_notes_folder.value, "fld_meeting_notes_example")
         self.assertEqual(sources.todo_tasklist_guid.value, "00000000-0000-4000-8000-000000000001")
         self.assertEqual(sources.customer_archive_folder.value, "fld_customer_archive_example")
-        self.assertEqual(sources.todo_priority_options, ["高", "中", "低"])
+        self.assertEqual(
+            sources.todo_customer_field_guid.value,
+            "a7009aff-7d85-4378-82c9-1584873f469d",
+        )
+        self.assertEqual(
+            sources.todo_priority_field_guid.value,
+            "f7587037-8ad1-443c-b350-f6600e0ccadd",
+        )
+        self.assertEqual(sources.todo_priority_options, [])
 
     def test_customer_resolver_preserves_raw_row(self) -> None:
         backend = FakeCustomerBackend(
@@ -604,6 +704,89 @@ class RuntimeSmokeTests(unittest.TestCase):
         resolution = CustomerResolver(backend).resolve("联合利华")
         self.assertEqual(resolution.status, "resolved")
         self.assertEqual(resolution.candidates[0].raw_record["客户名称"], "联合利华中国")
+
+    def test_customer_resolver_matches_customer_id_exactly(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华",
+                    "客户名称": "联合利华中国",
+                }
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("C_002")
+
+        self.assertEqual(resolution.status, "resolved")
+        self.assertEqual(resolution.candidates[0].customer_id, "C_002")
+
+    def test_customer_resolver_resolves_single_remaining_candidate(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华华东",
+                    "客户名称": "联合利华华东",
+                }
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("联合利华")
+
+        self.assertEqual(resolution.status, "resolved")
+        self.assertEqual(resolution.candidates[0].short_name, "联合利华华东")
+
+    def test_customer_resolver_returns_missing_when_no_candidate_exists(self) -> None:
+        backend = FakeCustomerBackend([])
+
+        resolution = CustomerResolver(backend).resolve("不存在客户")
+
+        self.assertEqual(resolution.status, "missing")
+        self.assertEqual(resolution.query, "不存在客户")
+        self.assertEqual(resolution.candidates, [])
+
+    def test_customer_resolver_returns_ambiguous_for_multiple_candidates(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华华东",
+                    "客户名称": "联合利华华东",
+                },
+                {
+                    "客户ID": "C_003",
+                    "简称": "联合利华华北",
+                    "客户名称": "联合利华华北",
+                },
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("联合利华")
+
+        self.assertEqual(resolution.status, "ambiguous")
+        self.assertEqual(len(resolution.candidates), 2)
+
+    def test_customer_resolver_returns_ambiguous_for_multiple_exact_matches(self) -> None:
+        backend = FakeCustomerBackend(
+            [
+                {
+                    "客户ID": "C_002",
+                    "简称": "联合利华",
+                    "客户名称": "联合利华中国",
+                },
+                {
+                    "客户ID": "C_003",
+                    "简称": "联合利华",
+                    "客户名称": "联合利华餐饮",
+                },
+            ]
+        )
+
+        resolution = CustomerResolver(backend).resolve("联合利华")
+
+        self.assertEqual(resolution.status, "ambiguous")
+        self.assertEqual(len(resolution.candidates), 2)
 
     def test_gateway_runs_full_smoke_flow(self) -> None:
         customer_backend = FakeCustomerBackend(
@@ -916,7 +1099,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         backend = LarkCliSchemaBackend(client, config)
         schema = backend.get_table_schema("待办")
         self.assertEqual(schema["customer"]["field_id"], "a7009aff-7d85-4378-82c9-1584873f469d")
-        self.assertEqual(schema["priority"]["options"], ["高", "中", "低"])
+        self.assertEqual(schema["priority"]["options"], [])
         self.assertEqual(
             schema["owner"]["valid_member_ids"],
             ["ou_owner", "ou_editor"],
@@ -989,6 +1172,60 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(checks["docs_access"].status, "degraded")
         self.assertEqual(checks["task_access"].status, "available")
 
+    def test_capability_report_supports_current_lark_cli_base_table_shape(self) -> None:
+        responses = {
+            "base +table-list --base-token app_example_base_token --limit 200": subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"ok":true,"data":{"tables":['
+                    '{"id":"tbl_customer_master_example","name":"客户主数据"},'
+                    '{"id":"tbla91dGjJsb0axd","name":"客户联系记录"},'
+                    '{"id":"tblqbbS46bWilKd7","name":"行动计划"}'
+                    ']}}'
+                ),
+                stderr="",
+            ),
+            "task tasklists list": subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=(
+                    '{"code":0,"data":{"items":[{"guid":"00000000-0000-4000-8000-000000000001"}]}}'
+                ),
+                stderr="",
+            ),
+            (
+                'drive files list --params '
+                '{"folder_token":"fld_customer_archive_example"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"files":[]}}',
+                stderr="",
+            ),
+            (
+                'drive files list --params '
+                '{"folder_token":"fld_meeting_notes_example"}'
+            ): subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout='{"code":0,"data":{"files":[]}}',
+                stderr="",
+            ),
+        }
+        client = LarkCliClient(runner=FakeRunner(responses))
+        sources = RuntimeSourceLoader(REPO_ROOT).load()
+        config = LiveWorkbenchConfig.from_sources(sources)
+        reporter = LiveCapabilityReporter(
+            client,
+            config,
+            LarkCliResourceProbe(client, config),
+        )
+        report = reporter.build(sources)
+        checks = {item.name: item for item in report.checks}
+        self.assertEqual(checks["base_access"].status, "available")
+        self.assertTrue(checks["base_access"].details["required_tables_verified"])
+
     def test_todo_writer_blocks_before_live_create_when_preflight_fails(self) -> None:
         class RaisingRunner:
             def __call__(self, command, capture_output, text, check):
@@ -1026,8 +1263,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"description": "带客户档案链接", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}'
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1133,8 +1369,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_guid_1"} --data '
                 '{"task": {"summary": "更新后的标题", "description": "更新后的描述", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "6238286f-b2e2-5ab8-e902-a3bb9dc242b0"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1259,8 +1494,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
                 '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", "description": "补充新的会后上下文", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}, '
-                '{"guid": "f7587037-8ad1-443c-b350-f6600e0ccadd", "single_select_value": "d7aff674-0ef8-6397-9108-fb260e21bde9"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1830,7 +2064,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             "capability_report": [
                 {
                     "name": "base_access",
-                    "status": "unavailable",
+                    "status": "blocked",
                     "reasons": ["missing_base_token"],
                     "details": {"env_var": "FEISHU_AM_BASE_TOKEN"},
                 },
@@ -1844,9 +2078,35 @@ class RuntimeSmokeTests(unittest.TestCase):
             "customer_resolution": None,
         }
         rendered = render_live_diagnostic(report)
+        self.assertIn("conclusion: blocked", rendered)
+        self.assertIn("reason: some configured resources are not yet confirmed live: meeting_notes_folder", rendered)
         self.assertIn("resource status: partial", rendered)
         self.assertIn("next action: export FEISHU_AM_BASE_TOKEN", rendered)
         self.assertIn("next action: run lark-cli auth login", rendered)
+
+    def test_capability_report_uses_blocked_for_missing_required_inputs(self) -> None:
+        env_backup = {key: os.environ.get(key) for key in RuntimeSourceLoader.ENV_VARS.values()}
+        try:
+            for key in RuntimeSourceLoader.ENV_VARS.values():
+                os.environ.pop(key, None)
+
+            client = LarkCliClient(runner=FakeRunner({}))
+            sources = RuntimeSourceLoader(Path("/tmp/empty-runtime-sources")).load()
+            config = LiveWorkbenchConfig.from_sources(sources)
+            reporter = LiveCapabilityReporter(client, config, LarkCliResourceProbe(client, config))
+
+            report = reporter.build(sources)
+            checks = {item.name: item for item in report.checks}
+
+            self.assertEqual(checks["base_access"].status, "blocked")
+            self.assertEqual(checks["docs_access"].status, "blocked")
+            self.assertEqual(checks["task_access"].status, "blocked")
+        finally:
+            for key, value in env_backup.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
 
     def test_suggest_next_actions_for_available_task_access(self) -> None:
         actions = suggest_next_actions(
@@ -1857,6 +2117,35 @@ class RuntimeSmokeTests(unittest.TestCase):
             )()
         )
         self.assertEqual(actions, ["task adapter is usable; keep this as the known-good baseline"])
+
+    def test_summary_next_actions_filters_no_action_required_when_real_actions_exist(self) -> None:
+        report = {
+            "resource_resolution": {
+                "status": "resolved",
+                "missing_keys": [],
+                "unconfirmed_keys": [],
+                "hints": [],
+            },
+            "capability_report": [
+                {
+                    "name": "base_access",
+                    "status": "blocked",
+                    "reasons": ["missing_base_token"],
+                    "details": {},
+                },
+                {
+                    "name": "archive_access",
+                    "status": "available",
+                    "reasons": [],
+                    "details": {},
+                },
+            ],
+        }
+
+        actions = _summary_next_actions(report)
+
+        self.assertIn("export FEISHU_AM_BASE_TOKEN into the current shell before live Base reads", actions)
+        self.assertNotIn("no action required", actions)
 
 
 if __name__ == "__main__":
