@@ -10,6 +10,7 @@ from .models import (
     PreflightReport,
     WriteCandidate,
 )
+from .semantic_registry import get_customer_master_direct_write_allowlist
 
 
 class SchemaBackend(Protocol):
@@ -129,6 +130,16 @@ class SchemaPreflightRunner:
                 write_policy=write_policy,
                 reason="Field is guarded and cannot be updated in this write path.",
             )
+
+        if (
+            candidate
+            and candidate.object_name == "客户主数据"
+            and payload is not None
+            and semantic_field not in get_customer_master_direct_write_allowlist()
+            and semantic_field not in {"customer_id", "short_name"}
+        ):
+            drift_items.append("customer_master_direct_write_not_allowlisted")
+            status = "safe_with_drift"
 
         if (
             candidate

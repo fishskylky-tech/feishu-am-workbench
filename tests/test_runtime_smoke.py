@@ -88,6 +88,27 @@ class FakeSchemaBackend:
             }
         if object_name == "客户主数据":
             return {
+                "last_contact_at": {
+                    "field_id": "fld_last_contact",
+                    "name": "上次接触日期",
+                    "type": "datetime",
+                    "allowed_live_types": ["datetime", "text"],
+                    "write_policy": "safe_update",
+                },
+                "next_action_summary": {
+                    "field_id": "fld_next_action",
+                    "name": "下次行动计划",
+                    "type": "text",
+                    "allowed_live_types": ["text"],
+                    "write_policy": "safe_update",
+                },
+                "strategy_summary": {
+                    "field_id": "fld_strategy_summary",
+                    "name": "策略摘要",
+                    "type": "text",
+                    "allowed_live_types": ["text"],
+                    "write_policy": "safe_update",
+                },
                 "renewal_risk": {
                     "field_id": "fld_risk",
                     "name": "续费风险",
@@ -917,6 +938,51 @@ class RuntimeSmokeTests(unittest.TestCase):
         report = runner.run(candidate)
         self.assertEqual(report.status, "blocked")
         self.assertIn("protected_field_policy_changed", report.blocked_reasons)
+
+    def test_preflight_marks_non_allowlisted_customer_master_field_for_guard_review(self) -> None:
+        runner = SchemaPreflightRunner(FakeSchemaBackend())
+        candidate = WriteCandidate(
+            object_name="客户主数据",
+            layer="snapshot",
+            semantic_fields=["strategy_summary"],
+            payload={"strategy_summary": "推进续费策略对齐"},
+        )
+        report = runner.run(candidate)
+        self.assertEqual(report.status, "safe_with_drift")
+        self.assertIn(
+            "customer_master_direct_write_not_allowlisted",
+            report.field_results[0].drift_items,
+        )
+
+    def test_write_guard_allows_only_low_risk_customer_master_fact_fields(self) -> None:
+        runner = SchemaPreflightRunner(FakeSchemaBackend())
+        allowed_candidate = WriteCandidate(
+            object_name="客户主数据",
+            layer="snapshot",
+            semantic_fields=["last_contact_at", "next_action_summary"],
+            payload={
+                "last_contact_at": "2026-04-16",
+                "next_action_summary": "下周确认续费节奏",
+            },
+        )
+        allowed_report = runner.run(allowed_candidate)
+        allowed_guard = WriteGuard().evaluate(allowed_candidate, allowed_report)
+        self.assertEqual(allowed_report.status, "safe")
+        self.assertTrue(allowed_guard.allowed)
+
+        blocked_candidate = WriteCandidate(
+            object_name="客户主数据",
+            layer="snapshot",
+            semantic_fields=["strategy_summary"],
+            payload={"strategy_summary": "推进续费策略对齐"},
+        )
+        blocked_report = runner.run(blocked_candidate)
+        blocked_guard = WriteGuard().evaluate(blocked_candidate, blocked_report)
+        self.assertFalse(blocked_guard.allowed)
+        self.assertIn(
+            "customer_master_recommendation_only:strategy_summary",
+            blocked_guard.reasons,
+        )
 
     def test_preflight_marks_alias_resolution_as_drift(self) -> None:
         class AliasSchemaBackend:

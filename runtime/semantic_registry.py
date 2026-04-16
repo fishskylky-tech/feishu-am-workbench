@@ -5,6 +5,9 @@ from __future__ import annotations
 from .models import TableProfile
 
 
+CUSTOMER_MASTER_DIRECT_WRITE_ALLOWLIST = {"last_contact_at", "next_action_summary"}
+
+
 TABLE_PROFILES: dict[str, TableProfile] = {
     "客户主数据": TableProfile(
         table_name="客户主数据",
@@ -289,6 +292,10 @@ SEMANTIC_FIELD_REGISTRY: dict[str, dict[str, dict[str, object]]] = {
 
 def get_table_profile(table_name: str) -> TableProfile | None:
     return TABLE_PROFILES.get(table_name)
+
+
+def get_customer_master_direct_write_allowlist() -> set[str]:
+    return set(CUSTOMER_MASTER_DIRECT_WRITE_ALLOWLIST)
 
 
 def get_required_base_tables() -> list[str]:
