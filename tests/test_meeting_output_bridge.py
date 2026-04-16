@@ -30,6 +30,7 @@ from runtime.models import (  # noqa: E402
 )
 
 from evals.meeting_output_bridge import build_meeting_output  # noqa: E402
+from evals.meeting_output_bridge import build_meeting_output_artifact  # noqa: E402
 from evals.meeting_output_bridge import main as bridge_main  # noqa: E402
 from evals.meeting_output_bridge import build_meeting_todo_candidates  # noqa: E402
 from evals.meeting_output_bridge import recover_live_context  # noqa: E402
@@ -73,9 +74,9 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
 
         self.assertIn("统一写回结果:", output_text)
-        self.assertIn("- todo: blocked", output_text)
-        self.assertIn("dedupe=update_existing", output_text)
-        self.assertIn("blocked=semantic_duplicate_detected", output_text)
+        self.assertIn("- todo: 未执行", output_text)
+        self.assertIn("原因：semantic_duplicate_detected", output_text)
+        self.assertNotIn("dedupe=", output_text)
 
     def test_build_meeting_output_handles_missing_transcript_file(self) -> None:
         gateway_result = GatewayResult(
@@ -129,6 +130,90 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(candidate.match_basis["customer"], "联合利华")
         self.assertEqual(candidate.match_basis["time_window"], "2026-04")
         self.assertNotIn("owner", candidate.payload)
+
+    def test_build_meeting_todo_candidates_consolidates_same_meeting_same_theme_actions(self) -> None:
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        candidates = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=gateway_result,
+            action_items=[
+                {"summary": "确认 Campaign 优化方案", "theme": "campaign_optimization", "due_at": "2026-04-20"},
+                {"summary": "同步 Campaign 优化排期", "theme": "campaign_optimization", "due_at": "2026-04-21"},
+                {"summary": "整理续费沟通口径", "theme": "renewal_follow_up", "due_at": "2026-04-22"},
+            ],
+        )
+
+        self.assertEqual(len(candidates), 2)
+        themes = {candidate.match_basis["action_theme"]: candidate for candidate in candidates}
+        merged = themes["campaign_optimization"]
+        self.assertEqual(merged.operation, "create")
+        self.assertEqual(merged.target_object, "todo")
+        self.assertEqual(merged.source_context["customer_id"], "C_002")
+        self.assertEqual(merged.source_context["merged_action_count"], 2)
+        self.assertIn("同步 Campaign 优化排期", merged.payload["description"])
+        self.assertIsNone(themes["renewal_follow_up"].source_context.get("merged_action_count"))
+
+    def test_build_meeting_output_artifact_keeps_structured_results_while_default_output_stays_concise(self) -> None:
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+
+        artifact = build_meeting_output_artifact(
+            eval_name="unilever-stage-review",
+            transcript_path=UNILEVER_TRANSCRIPT,
+            gateway_result=gateway_result,
+            context_status="completed",
+            used_sources=["客户主数据", "客户联系记录", "行动计划", "客户档案"],
+            write_results=[
+                WriteExecutionResult(
+                    target_object="todo",
+                    attempted=True,
+                    allowed=True,
+                    preflight_status="safe",
+                    guard_status="allowed",
+                    dedupe_decision="update_existing",
+                    executed_operation="update",
+                    remote_object_id="task_existing",
+                    source_context={"scenario": "post_meeting"},
+                ),
+                WriteExecutionResult(
+                    target_object="todo",
+                    attempted=False,
+                    allowed=False,
+                    preflight_status="safe",
+                    guard_status="blocked",
+                    dedupe_decision="create_subtask",
+                    executed_operation="blocked",
+                    blocked_reasons=["semantic_duplicate_detected", "subtask_recommended"],
+                    source_context={"scenario": "post_meeting"},
+                ),
+            ],
+        )
+
+        output_text = artifact["output_text"]
+        self.assertIn("统一写回结果:", output_text)
+        self.assertIn("已更新已有待办", output_text)
+        self.assertIn("未执行，原因：semantic_duplicate_detected、subtask_recommended", output_text)
+        self.assertNotIn("dedupe=", output_text)
+        self.assertNotIn("preflight=", output_text)
+        self.assertEqual(artifact["write_result_details"][0]["dedupe_decision"], "update_existing")
+        self.assertEqual(artifact["write_result_details"][1]["blocked_reasons"], ["semantic_duplicate_detected", "subtask_recommended"])
+        self.assertTrue(evaluate_case(eval_name="unilever-stage-review", output_text=output_text)["passed"])
 
     def test_write_candidate_routing_metadata_returns_isolated_required_fields(self) -> None:
         candidate = WriteCandidate(

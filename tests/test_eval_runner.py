@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from evals.runner import evaluate_case
+from evals.runner import evaluate_artifact, evaluate_case
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -110,6 +110,43 @@ fallback 原因: permission scope insufficient for current live lookup
         self.assertEqual(completed.returncode, 0, completed.stderr)
         payload = json.loads(completed.stdout)
         self.assertTrue(payload["passed"])
+
+    def test_evaluate_artifact_keeps_structured_write_details_for_concise_output(self) -> None:
+        artifact = {
+            "output_text": """
+资源解析状态: resolved
+客户解析结果: 联合利华 / 客户ID C_002
+上下文恢复状态: completed
+已使用飞书资料: 客户主数据、客户联系记录、行动计划、客户档案
+统一写回结果:
+- todo: 已更新已有待办，命中重复后执行了更新
+Meeting type: stage_review
+write ceiling: 客户主数据: no-write; Todo: no-write
+Open questions:
+- 招募来源口径
+- 激活来源口径
+- 画像如何落地到投放
+Schedule:
+- 2026-08 或 2026-09 高峰
+- precision gap: 2026年下半年
+""",
+            "write_result_details": [
+                {
+                    "target_object": "todo",
+                    "dedupe_decision": "update_existing",
+                    "preflight_status": "safe",
+                    "guard_status": "allowed",
+                    "executed_operation": "update",
+                    "blocked_reasons": [],
+                }
+            ],
+        }
+
+        result = evaluate_artifact(eval_name="unilever-stage-review", artifact=artifact)
+
+        self.assertTrue(result["passed"])
+        self.assertEqual(result["artifact"]["write_result_details"][0]["dedupe_decision"], "update_existing")
+        self.assertEqual(result["artifact"]["write_result_details"][0]["executed_operation"], "update")
 
 
 if __name__ == "__main__":

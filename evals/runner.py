@@ -59,6 +59,24 @@ def evaluate_case(*, eval_id: int | None = None, eval_name: str | None = None, o
     return evaluate_output(case, output_text)
 
 
+def evaluate_artifact(
+    *,
+    eval_id: int | None = None,
+    eval_name: str | None = None,
+    artifact: dict[str, Any],
+) -> dict[str, Any]:
+    result = evaluate_case(
+        eval_id=eval_id,
+        eval_name=eval_name,
+        output_text=str(artifact.get("output_text") or ""),
+    )
+    write_result_details = artifact.get("write_result_details")
+    result["artifact"] = {
+        "write_result_details": write_result_details if isinstance(write_result_details, list) else [],
+    }
+    return result
+
+
 def _evaluate_assertion(assertion: dict[str, Any], output_text: str) -> AssertionResult:
     assertion_type = assertion["type"]
     text = output_text.casefold()

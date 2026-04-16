@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 import re
-from typing import Protocol
+from typing import Any, Protocol
 
 from runtime.gateway import FeishuWorkbenchGateway
 from runtime.lark_cli import LarkCliClient
@@ -52,6 +52,34 @@ def build_meeting_output(
     recovery: ContextRecoveryResult | None = None,
     write_results: list[WriteExecutionResult] | None = None,
 ) -> str:
+    artifact = build_meeting_output_artifact(
+        eval_name=eval_name,
+        transcript_path=transcript_path,
+        gateway_result=gateway_result,
+        context_status=context_status,
+        used_sources=used_sources,
+        fallback_reason=fallback_reason,
+        key_context=key_context,
+        missing_sources=missing_sources,
+        recovery=recovery,
+        write_results=write_results,
+    )
+    return str(artifact["output_text"])
+
+
+def build_meeting_output_artifact(
+    *,
+    eval_name: str,
+    transcript_path: Path,
+    gateway_result: GatewayResult,
+    context_status: str | None = None,
+    used_sources: list[str] | None = None,
+    fallback_reason: str | None = None,
+    key_context: list[str] | None = None,
+    missing_sources: list[str] | None = None,
+    recovery: ContextRecoveryResult | None = None,
+    write_results: list[WriteExecutionResult] | None = None,
+) -> dict[str, Any]:
     if recovery is not None:
         context_status = recovery.status
         used_sources = recovery.used_sources
@@ -62,6 +90,7 @@ def build_meeting_output(
     if context_status is None:
         raise ValueError("context_status is required when recovery is not provided")
 
+    write_result_details = [item.structured_result() for item in (write_results or [])]
     transcript_title = transcript_path.name
     transcript_text, transcript_status = _read_transcript_text(transcript_path)
     lines = [
@@ -95,7 +124,10 @@ def build_meeting_output(
         lines.extend(_render_write_results(write_results))
 
     lines.extend(_render_case_body(eval_name, transcript_text))
-    return "\n".join(lines)
+    return {
+        "output_text": "\n".join(lines),
+        "write_result_details": write_result_details,
+    }
 
 
 def _read_transcript_text(transcript_path: Path) -> tuple[str, str]:
@@ -132,6 +164,7 @@ def build_meeting_todo_candidates(
     *,
     eval_name: str,
     gateway_result: GatewayResult,
+    action_items: list[dict[str, object]] | None = None,
 ) -> list[WriteCandidate]:
     resolution = gateway_result.customer_resolution
     if resolution is None or resolution.status != "resolved" or not resolution.candidates:
@@ -139,6 +172,14 @@ def build_meeting_todo_candidates(
     customer = resolution.candidates[0]
     if eval_name != "unilever-stage-review":
         return []
+    if action_items:
+        candidates = _build_action_item_candidates(
+            eval_name=eval_name,
+            customer=customer,
+            action_items=action_items,
+        )
+        if candidates:
+            return _consolidate_same_meeting_candidates(candidates)
     summary = _build_recommended_todo_summary(eval_name, customer.short_name)
     return [
         WriteCandidate(
@@ -164,6 +205,128 @@ def build_meeting_todo_candidates(
             },
         )
     ]
+
+
+def _build_action_item_candidates(
+    *,
+    eval_name: str,
+    customer: CustomerMatch,
+    action_items: list[dict[str, object]],
+) -> list[WriteCandidate]:
+    candidates: list[WriteCandidate] = []
+    for item in action_items:
+        summary = str(item.get("summary") or "").strip()
+        if not summary:
+            continue
+        theme = _normalize_action_theme(str(item.get("theme") or summary))
+        description = str(item.get("description") or "").strip()
+        payload: dict[str, object] = {
+            "summary": summary,
+            "customer": customer.short_name,
+            "priority": str(item.get("priority") or "高"),
+            "description": description or "来自会议场景的建议态跟进动作；负责人待确认后才能真正写入。",
+        }
+        due_at = item.get("due_at")
+        if due_at is not None:
+            payload["due_at"] = due_at
+        candidates.append(
+            WriteCandidate(
+                object_name="待办",
+                target_object="todo",
+                layer="reminder",
+                operation="create",
+                semantic_fields=["summary", "owner", "customer", "priority", "due_at"],
+                payload=payload,
+                match_basis={
+                    "customer": customer.short_name,
+                    "time_window": "2026-04",
+                    "action_theme": theme,
+                },
+                source_context={
+                    "scenario": "post_meeting",
+                    "meeting_eval": eval_name,
+                    "customer_id": customer.customer_id,
+                    "same_meeting": True,
+                    "action_theme": theme,
+                },
+            )
+        )
+    return candidates
+
+
+def _consolidate_same_meeting_candidates(candidates: list[WriteCandidate]) -> list[WriteCandidate]:
+    grouped: dict[tuple[str, str, str, str, str], list[WriteCandidate]] = {}
+    passthrough: list[WriteCandidate] = []
+    for candidate in candidates:
+        merge_key = _candidate_merge_key(candidate)
+        if merge_key is None:
+            passthrough.append(candidate)
+            continue
+        grouped.setdefault(merge_key, []).append(candidate)
+
+    consolidated = list(passthrough)
+    for group in grouped.values():
+        if len(group) == 1:
+            consolidated.append(group[0])
+            continue
+        base = group[0]
+        merged_summaries: list[str] = []
+        seen: set[str] = set()
+        for current in group:
+            summary = str(current.payload.get("summary") or "").strip()
+            if summary and summary not in seen:
+                seen.add(summary)
+                merged_summaries.append(summary)
+        payload = dict(base.payload)
+        payload["description"] = _merge_candidate_description(base, merged_summaries)
+        source_context = dict(base.source_context)
+        source_context["merged_action_count"] = len(group)
+        source_context["merged_summaries"] = merged_summaries
+        consolidated.append(
+            WriteCandidate(
+                object_name=base.object_name,
+                target_object=base.target_object,
+                layer=base.layer,
+                operation=base.operation,
+                semantic_fields=list(base.semantic_fields),
+                payload=payload,
+                match_basis=dict(base.match_basis),
+                source_context=source_context,
+            )
+        )
+    return consolidated
+
+
+def _candidate_merge_key(candidate: WriteCandidate) -> tuple[str, str, str, str, str] | None:
+    scenario = str(candidate.source_context.get("scenario") or "")
+    meeting_eval = str(candidate.source_context.get("meeting_eval") or "")
+    customer_id = str(candidate.source_context.get("customer_id") or "")
+    theme = str(candidate.match_basis.get("action_theme") or candidate.source_context.get("action_theme") or "")
+    if not candidate.source_context.get("same_meeting") or not scenario or not meeting_eval or not customer_id or not theme:
+        return None
+    return (
+        str(candidate.target_object or "todo"),
+        scenario,
+        meeting_eval,
+        customer_id,
+        theme,
+    )
+
+
+def _merge_candidate_description(base: WriteCandidate, merged_summaries: list[str]) -> str:
+    lines: list[str] = []
+    existing = str(base.payload.get("description") or "").strip()
+    if existing:
+        lines.append(existing)
+    if merged_summaries:
+        lines.append("同会同主题动作合并:")
+        lines.extend(f"- {summary}" for summary in merged_summaries)
+    return "\n".join(lines)
+
+
+def _normalize_action_theme(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "_", value.casefold()).strip("_")
+    return normalized or "general_follow_up"
 
 
 def run_confirmed_todo_write(
@@ -592,12 +755,25 @@ def _render_case_body(eval_name: str, transcript_text: str) -> list[str]:
 def _render_write_results(write_results: list[WriteExecutionResult]) -> list[str]:
     lines: list[str] = []
     for item in write_results:
-        blocked = ",".join(item.blocked_reasons) if item.blocked_reasons else "none"
-        lines.append(
-            f"- {item.target_object}: {item.executed_operation} "
-            f"(dedupe={item.dedupe_decision}; preflight={item.preflight_status}; "
-            f"guard={item.guard_status}; blocked={blocked})"
-        )
+        target_label = item.target_object or "write"
+        if item.executed_operation == "update" and item.dedupe_decision == "update_existing":
+            line = f"- {target_label}: 已更新已有待办"
+        elif item.executed_operation == "create" and item.dedupe_decision == "create_subtask":
+            line = f"- {target_label}: 已创建子任务"
+        elif item.executed_operation == "create":
+            line = f"- {target_label}: 已创建新待办"
+        elif item.executed_operation == "blocked":
+            line = f"- {target_label}: 未执行"
+        else:
+            line = f"- {target_label}: 保持建议态"
+
+        if item.blocked_reasons:
+            line += f"，原因：{'、'.join(item.blocked_reasons)}"
+        elif item.dedupe_decision == "update_existing":
+            line += "，命中重复后执行了更新"
+        elif item.dedupe_decision == "create_subtask":
+            line += "，按去重策略走子任务路径"
+        lines.append(line)
     return lines
 
 
