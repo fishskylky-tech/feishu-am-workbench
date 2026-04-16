@@ -193,7 +193,7 @@ python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_me
 
 ## 当前版本
 
-- 版本：0.2.13
+- 版本：0.2.14
 - 当前状态：v1.0 phases 1-11 已完成并归档，mainline、audit gap closure 与 cleanup phase 都已收口
 - 当前主线：可选 backlog 999.1，或进入下一轮 milestone / scene skill 实现
 
