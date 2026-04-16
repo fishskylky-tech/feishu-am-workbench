@@ -136,6 +136,13 @@ Strengthen write-candidate normalization, preflight, guard behavior, and Todo ex
 
 **UI hint**: no
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md - Lock the Phase 4 contract layer for normalized candidates and result envelopes
+- [ ] 04-02-PLAN.md - Implement conservative same-meeting candidate consolidation and concise default writeback summaries
+- [ ] 04-03-PLAN.md - Harden runtime gate enforcement and narrow customer-master write policy
+
 ### Phase 5: Expanded Account Model
 
 **Goal**
