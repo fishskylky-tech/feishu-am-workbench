@@ -24,6 +24,7 @@ from runtime.models import (  # noqa: E402
     GatewayResult,
     ResourceHint,
     ResourceResolution,
+    WriteCandidate,
     WriteExecutionResult,
     ContextRecoveryResult,
 )
@@ -128,6 +129,31 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(candidate.match_basis["customer"], "联合利华")
         self.assertEqual(candidate.match_basis["time_window"], "2026-04")
         self.assertNotIn("owner", candidate.payload)
+
+    def test_write_candidate_routing_metadata_returns_isolated_required_fields(self) -> None:
+        candidate = WriteCandidate(
+            object_name="待办",
+            target_object="todo",
+            layer="reminder",
+            operation="create",
+            semantic_fields=["summary", "owner", "customer"],
+            payload={"summary": "跟进联合利华续费", "customer": "联合利华"},
+            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            source_context={"scenario": "post_meeting", "customer_id": "C_002", "meeting_eval": "unilever-stage-review"},
+        )
+
+        metadata = candidate.routing_metadata()
+
+        self.assertEqual(metadata["operation"], "create")
+        self.assertEqual(metadata["target_object"], "todo")
+        self.assertEqual(metadata["match_basis"]["customer"], "联合利华")
+        self.assertEqual(metadata["source_context"]["customer_id"], "C_002")
+
+        metadata["match_basis"]["customer"] = "被篡改"
+        metadata["source_context"]["customer_id"] = "changed"
+
+        self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.source_context["customer_id"], "C_002")
 
     def test_run_confirmed_todo_write_uses_unified_todo_writer(self) -> None:
         class FakeTodoWriter:

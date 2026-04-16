@@ -113,6 +113,14 @@ class WriteCandidate:
     source_context: dict[str, Any] = field(default_factory=dict)
     target_object: str | None = None
 
+    def routing_metadata(self) -> dict[str, Any]:
+        return {
+            "operation": self.operation,
+            "match_basis": dict(self.match_basis),
+            "source_context": dict(self.source_context),
+            "target_object": self.target_object,
+        }
+
 
 @dataclass
 class FieldOptionResult:
@@ -162,12 +170,34 @@ class WriteExecutionResult:
     executed_operation: ExecutedOperation = "no_write"
     remote_object_id: str | None = None
     remote_url: str | None = None
+    remote_metadata: dict[str, Any] = field(default_factory=dict)
     blocked_reasons: list[str] = field(default_factory=list)
     drift_items: list[str] = field(default_factory=list)
     source_context: dict[str, Any] = field(default_factory=dict)
     preflight_report: PreflightReport | None = None
     guard_result: GuardResult | None = None
     request_payload: dict[str, Any] = field(default_factory=dict)
+
+    def structured_result(self) -> dict[str, Any]:
+        remote_metadata = dict(self.remote_metadata)
+        if self.remote_object_id is not None:
+            remote_metadata.setdefault("object_id", self.remote_object_id)
+        if self.remote_url is not None:
+            remote_metadata.setdefault("url", self.remote_url)
+        return {
+            "target_object": self.target_object,
+            "attempted": self.attempted,
+            "allowed": self.allowed,
+            "preflight_status": self.preflight_status,
+            "guard_status": self.guard_status,
+            "dedupe_decision": self.dedupe_decision,
+            "executed_operation": self.executed_operation,
+            "blocked_reasons": list(self.blocked_reasons),
+            "drift_items": list(self.drift_items),
+            "source_context": dict(self.source_context),
+            "remote_metadata": remote_metadata,
+            "request_payload": dict(self.request_payload),
+        }
 
 
 @dataclass
