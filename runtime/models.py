@@ -99,7 +99,10 @@ class ContextRecoveryResult:
     candidate_conflicts: list[str] = field(default_factory=list)
 
     def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
+        try:
+            return getattr(self, key)
+        except AttributeError as exc:
+            raise KeyError(key) from exc
 
 
 @dataclass

@@ -606,6 +606,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(context["status"], "completed")
         self.assertIn("客户主数据", context.used_sources)
 
+    def test_recover_live_context_dict_compat_raises_key_error_for_unknown_key(self) -> None:
+        context = ContextRecoveryResult(status="completed")
+
+        with self.assertRaises(KeyError):
+            _ = context["unknown_key"]
+
     def test_recover_live_context_marks_ambiguous_customer_as_recommendation_only(self) -> None:
         class EmptyQueryBackend:
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):

@@ -168,6 +168,9 @@ def _summary_next_actions(report: dict[str, Any]) -> list[str]:
     actions: list[str] = []
     for check in report.get("capability_report") or []:
         actions.extend(suggest_next_actions(_to_check(check)))
+    meaningful_actions = [action for action in actions if action != "no action required"]
+    if meaningful_actions:
+        actions = meaningful_actions
     deduped: list[str] = []
     for action in actions:
         if action not in deduped:

@@ -33,7 +33,7 @@ from runtime import (  # noqa: E402
     TABLE_PROFILES,
     get_required_base_tables,
 )
-from runtime.diagnostics import suggest_next_actions  # noqa: E402
+from runtime.diagnostics import _summary_next_actions, suggest_next_actions  # noqa: E402
 from runtime.models import WriteCandidate  # noqa: E402
 
 
@@ -2117,6 +2117,35 @@ class RuntimeSmokeTests(unittest.TestCase):
             )()
         )
         self.assertEqual(actions, ["task adapter is usable; keep this as the known-good baseline"])
+
+    def test_summary_next_actions_filters_no_action_required_when_real_actions_exist(self) -> None:
+        report = {
+            "resource_resolution": {
+                "status": "resolved",
+                "missing_keys": [],
+                "unconfirmed_keys": [],
+                "hints": [],
+            },
+            "capability_report": [
+                {
+                    "name": "base_access",
+                    "status": "blocked",
+                    "reasons": ["missing_base_token"],
+                    "details": {},
+                },
+                {
+                    "name": "archive_access",
+                    "status": "available",
+                    "reasons": [],
+                    "details": {},
+                },
+            ],
+        }
+
+        actions = _summary_next_actions(report)
+
+        self.assertIn("export FEISHU_AM_BASE_TOKEN into the current shell before live Base reads", actions)
+        self.assertNotIn("no action required", actions)
 
 
 if __name__ == "__main__":
