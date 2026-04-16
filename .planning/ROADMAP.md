@@ -9,7 +9,7 @@
 
 This roadmap turns the existing repository from a docs-heavy brownfield into a GSD-managed delivery program rooted in the real Feishu workbench, existing runtime, and validated meeting/Todo path.
 
-**6 phases** | **21 v1 requirements mapped** | All v1 requirements covered ✓
+**7 phases** | **25 v1 requirements mapped** | All v1 requirements covered ✓
 
 ## Phase Overview
 
@@ -21,6 +21,7 @@ This roadmap turns the existing repository from a docs-heavy brownfield into a G
 | 4 | Unified Safe Writes | Mature normalized write preparation and guarded Todo-centric execution | MEET-03, WRITE-01, WRITE-02, WRITE-03 | 4 |
 | 5 | Expanded Account Model | Bring contracts, key people, and competitor structures into targeted read/use paths safely | WORK-02 | 3 |
 | 6 | Validation And Portability | Preserve trust, regression discipline, and host portability as capability breadth grows | FOUND-03, VAL-01, VAL-02, PORT-01 | 4 |
+| 7 | Skill Architecture For Scene Expansion | Define the long-term main-skill plus scene-skill plus foundation architecture, bootstrap path, and cache strategy for expanding AM workflows safely | ARCH-01, ARCH-02, ARCH-03, ARCH-04 | 4 |
 
 ## Phase Details
 
@@ -106,8 +107,8 @@ Make core customer context recovery dependable across meeting-related scenes by 
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md - Lock the typed recovery contract and gateway-first three-core-table context path
-- [ ] 03-02-PLAN.md - Add constrained archive/meeting-note routing and confidence-aware audit output
+- [x] 03-01-PLAN.md - Lock the typed recovery contract and gateway-first three-core-table context path
+- [x] 03-02-PLAN.md - Add constrained archive/meeting-note routing and confidence-aware audit output
 
 ### Phase 4: Unified Safe Writes
 
@@ -185,6 +186,39 @@ Keep the project trustworthy and portable while capabilities expand, using repea
 
 **UI hint**: no
 
+### Phase 7: Skill Architecture For Scene Expansion
+
+**Goal**
+
+Define and lock a long-term extensible skill architecture so `feishu-am-workbench` can grow from one entry skill into a main-skill plus scene-skill system with on-demand expert agents, shared Feishu foundation capabilities, and safe bootstrap/cache extensions.
+
+**Requirements**
+
+- ARCH-01
+- ARCH-02
+- ARCH-03
+- ARCH-04
+
+**Success criteria**
+
+1. The repo has a clear architecture contract for four layers: main skill, scene skills, expert agents, and runtime foundation capabilities
+2. Scene-skill boundaries are defined by AM scenarios and workflows rather than raw Feishu tables
+3. The design covers bootstrap or install behavior, workspace compatibility checks, and required local config boundaries without weakening live-first rules
+4. The design defines how schema cache, manifest or index cache, and semantic or ontology cache can reduce API calls while remaining subordinate to live truth
+
+**Depends on**
+
+- Phase 6
+
+**UI hint**: no
+
+**Plans:** 3 plans
+
+Plans:
+- [x] 07-01-PLAN.md - Lock the four-layer architecture contract, first-wave scene boundaries, and expert-agent handoff model
+- [x] 07-02-PLAN.md - Define the separate bootstrap/admin contract and subordinate cache governance model
+- [x] 07-03-PLAN.md - Wire the Phase 7 packaging model into README, loading strategy, and reference indexing
+
 ## Dependency Notes
 
 - Phase 1 is foundational and already completed by this initialization pass.
@@ -192,10 +226,21 @@ Keep the project trustworthy and portable while capabilities expand, using repea
 - Phase 3 and Phase 4 form the core trust loop: recover context correctly, then write safely.
 - Phase 5 should not outrun the protections established in Phases 2-4.
 - Phase 6 runs throughout, but its formal completion depends on the earlier phases maturing.
+- Phase 7 should consolidate the next-generation skill packaging and bootstrap model only after the current trust loop and portability baseline are explicit enough to support it.
+
+## Backlog
+
+### Phase 999.1: Follow-up — Phase 1 incomplete discussion artifacts (BACKLOG)
+
+**Goal:** Resolve Phase 1 discussion artifacts that never went through formal phase planning
+**Source phase:** 1
+**Deferred at:** 2026-04-16 during /gsd-next advancement to Phase 4
+**Plans:**
+- [ ] 01: Brownfield Baseline discussion/context exists without PLAN.md
 
 ## Recommended Next Step
 
-Proceed with `/gsd-discuss-phase 1` to confirm whether Phase 1 should be treated as fully done and immediately transition into planning/executing Phase 2, or whether any initialization refinements should be folded back into the brownfield baseline.
+Proceed with `/gsd-execute-phase 7` once Phase 6 dependencies are in a state you are comfortable planning against, or resume `/gsd-discuss-phase 4` if you want to continue roadmap order strictly.
 
 ---
 *Roadmap created: 2026-04-14 after brownfield GSD initialization*
