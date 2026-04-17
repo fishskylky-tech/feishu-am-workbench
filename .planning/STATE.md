@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Executable Scene Runtimes
-status: "Milestone v1.1 shipped — PR #37"
+status: v1.1 archived; closeout artifacts are complete and the next mainline milestone is not yet defined
 stopped_at: v1.1 closeout complete; define the next milestone or optionally execute backlog Phase 999.1
-last_updated: "2026-04-17T00:42:20.129Z"
+last_updated: "2026-04-17T15:45:00Z"
 last_activity: 2026-04-17
 progress:
-  total_phases: 16
-  completed_phases: 15
-  total_plans: 24
-  completed_plans: 23
-  percent: 96
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 7
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
