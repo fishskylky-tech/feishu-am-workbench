@@ -18,6 +18,7 @@ from .expert_analysis_helper import EvidenceContainer, EvidenceSource, ExpertAna
 from .confirmation_checklist import (
     build_archive_refresh_checklist,
     build_meeting_prep_checklist,
+    build_proposal_checklist,
     render_confirmation_checklist,
 )
 
@@ -41,6 +42,22 @@ _ARCH_LENS_SOURCE_MAP: dict[str, list[str]] = {
     "risk": ["customer_master", "action_plan"],
     "opportunity": ["meeting_notes", "action_plan"],
     "operating_posture": ["customer_master", "action_plan", "meeting_notes"],
+}
+
+# PROP-01: Five-dimension keyword sets for proposal/report/resource-coordination derivation (per D-06)
+_PROPOSAL_OBJECTIVE_KEYWORDS = {"目标", "目的", "意图", "期望", "想要达成", "规划"}
+_PROPOSAL_JUDGMENT_KEYWORDS = {"判断", "评估", "结论", "认为", "核心是", "关键点", "重点"}
+_PROPOSAL_NARRATIVE_KEYWORDS = {"叙事", "说明", "阐述", "背景", "情况", "现状", "原因", "历程"}
+_PROPOSAL_RESOURCE_KEYWORDS = {"资源", "支持", "协助", "需要", "请求", "投入", "预算", "人力", "时间", "资源需求"}
+_PROPOSAL_QUESTION_KEYWORDS = {"待确认", "待定", "不确定", "需确认", "疑问", "问题", "待解决"}
+
+# PROP-01: Source mapping per dimension (per D-05)
+_PROPOSAL_LENS_SOURCE_MAP: dict[str, list[str]] = {
+    "objective": ["customer_master", "meeting_notes"],
+    "core_judgment": ["customer_master", "action_plan", "meeting_notes"],
+    "main_narrative": ["meeting_notes", "customer_archive", "action_plan"],
+    "resource_asks": ["action_plan", "meeting_notes"],
+    "open_questions": ["customer_archive", "contact_records"],
 }
 
 
@@ -88,6 +105,123 @@ def _derive_account_posture_lenses(
         "relationship": _extract(combined.get("relationship", ""), _STAT_RELATIONSHIP_KEYWORDS),
         "project_progress": _extract(combined.get("project_progress", ""), _STAT_PROJECT_PROGRESS_KEYWORDS),
     }
+
+
+def _derive_proposal_lenses(
+    evidence_container: Any,
+) -> dict[str, list[str]]:
+    """Derive five proposal lenses from evidence container.
+
+    Returns dict with keys: objective, core_judgment, main_narrative, resource_asks, open_questions.
+    Each value is 1-3 scannable conclusions (keywords found in source text).
+    Uses keyword-based extraction (no LLM inference).
+
+    Per D-10: lens conclusions are traceable to EvidenceContainer sources.
+    Per D-09: independent judgment logic at proposal scene layer — not shared with Phase 17/18/19.
+    """
+    if evidence_container is None:
+        return {k: [] for k in _PROPOSAL_LENS_SOURCE_MAP.keys()}
+
+    lens_texts: dict[str, list[str]] = {k: [] for k in _PROPOSAL_LENS_SOURCE_MAP.keys()}
+    for lens_name, source_names in _PROPOSAL_LENS_SOURCE_MAP.items():
+        for name in source_names:
+            src = evidence_container.sources.get(name)
+            if src and src.available and src.content:
+                lens_texts[lens_name].extend(src.content)
+
+    combined = {lens: " ".join(texts) for lens, texts in lens_texts.items()}
+
+    def _extract(text: str, keywords: set[str], max_items: int = 3) -> list[str]:
+        seen: set[str] = set()
+        items: list[str] = []
+        for kw in keywords:
+            if kw in text and kw not in seen:
+                seen.add(kw)
+                items.append(kw)
+                if len(items) >= max_items:
+                    break
+        return items
+
+    return {
+        "objective": _extract(combined.get("objective", ""), _PROPOSAL_OBJECTIVE_KEYWORDS),
+        "core_judgment": _extract(combined.get("core_judgment", ""), _PROPOSAL_JUDGMENT_KEYWORDS),
+        "main_narrative": _extract(combined.get("main_narrative", ""), _PROPOSAL_NARRATIVE_KEYWORDS),
+        "resource_asks": _extract(combined.get("resource_asks", ""), _PROPOSAL_RESOURCE_KEYWORDS),
+        "open_questions": _extract(combined.get("open_questions", ""), _PROPOSAL_QUESTION_KEYWORDS),
+    }
+
+
+def _render_proposal_output(
+    lens_results: dict[str, list[str]],
+    proposal_type: str,
+) -> list[str]:
+    """Render five-dimension proposal output per D-06, D-07.
+
+    Type-specific emphasis per D-07:
+      - proposal: emphasizes core_judgment + main_narrative
+      - report: emphasizes main_narrative
+      - resource-coordination: emphasizes resource_asks
+    """
+    lines = ["--- 提案/报告/资源协调草案 ---"]
+
+    # Objective (1-2 sentences, max 2 items per D-06)
+    lines.append("目的:")
+    obj_items = lens_results.get("objective", [])
+    if obj_items:
+        for item in obj_items[:2]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无目的信息")
+
+    # Core Judgment (emphasized for proposal type, max 4 items per D-06)
+    lines.append("核心判断:")
+    judgment_items = lens_results.get("core_judgment", [])
+    if proposal_type == "proposal":
+        max_judgments = 4
+    else:
+        max_judgments = 3
+    if judgment_items:
+        for item in judgment_items[:max_judgments]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无核心判断")
+
+    # Main Narrative (emphasized for report type, max 3 items per D-06)
+    lines.append("主要叙事:")
+    narrative_items = lens_results.get("main_narrative", [])
+    if proposal_type == "report":
+        max_narrative = 3
+    else:
+        max_narrative = 2
+    if narrative_items:
+        for item in narrative_items[:max_narrative]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无叙事内容")
+
+    # Resource Asks (emphasized for resource-coordination type, max 3 items per D-06)
+    lines.append("资源请求:")
+    resource_items = lens_results.get("resource_asks", [])
+    if proposal_type == "resource-coordination":
+        max_resource = 4
+    else:
+        max_resource = 2
+    if resource_items:
+        for item in resource_items[:max_resource]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无资源请求")
+
+    # Open Questions (max 3 items per D-06)
+    lines.append("待确认问题:")
+    question_items = lens_results.get("open_questions", [])
+    if question_items:
+        for item in question_items[:3]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无待确认问题")
+
+    return lines
 
 
 def _render_four_lens_judgments(lens_results: dict[str, list[str]]) -> list[str]:
@@ -838,6 +972,109 @@ def run_meeting_prep_scene(request: SceneRequest) -> SceneResult:
                 "candidate_conflicts": list(recovery.candidate_conflicts),
                 "confirmation_checklist_output": checklist_output,  # D-10
                 "confirmed_answers": checklist.confirmed_answers(),  # D-10
+            }
+        },
+    )
+
+
+def run_proposal_scene(request: SceneRequest) -> SceneResult:
+    """Proposal/report/resource-coordination scene — produces five-dimension structured brief.
+
+    Per D-01: Single unified scene with three types differentiated by `proposal_type` parameter.
+    Per D-02: Three types share same input structure and five-section output format.
+    Per D-03: Scene handler registered as `proposal` in scene_registry.py.
+    Per D-04: User explicitly names primary reference materials; system auto-supplements via EvidenceContainer.
+    Per D-05: EvidenceContainer presents "I found these materials" before scene execution.
+    Per D-06: Fixed five-section output — objective, core judgment, main narrative, resource asks, open questions.
+    Per D-07: Type-specific emphasis — proposal emphasizes core judgment + narrative; report emphasizes narrative; resource-coordination emphasizes resource asks.
+    Per D-09: Independent judgment logic — not shared with Phase 17/18/19 judgment frameworks.
+    Per D-10: Confirmation checklist shown BEFORE scene output.
+    Per D-19: No agency/autonomous behavior — remains recommendation-first and human-in-the-loop.
+    """
+    topic_text = str(request.inputs.get("topic_text") or "")
+    gateway_result, recovery = _build_live_scene_context(request, topic_text=topic_text)
+    facts = list(recovery.key_context)
+
+    # Per D-04, D-05: evidence assembly via EvidenceContainer
+    evidence_container = getattr(recovery, 'evidence_container', None)
+
+    # Per D-10: Render confirmation checklist BEFORE scene output
+    checklist = build_proposal_checklist(evidence_container, recovery)
+    checklist_output = render_confirmation_checklist(checklist)
+
+    # Per D-06: Derive five-dimension lenses from evidence
+    lens_results = _derive_proposal_lenses(evidence_container)
+
+    # Per D-01, D-02: proposal_type from user input (default proposal)
+    proposal_type = str(request.inputs.get("proposal_type") or "proposal")
+    if proposal_type not in ("proposal", "report", "resource-coordination"):
+        proposal_type = "proposal"
+
+    # Per D-07: Type-specific emphasis in output rendering
+    output_lines = _render_proposal_output(lens_results, proposal_type)
+
+    # Build judgments per D-09 (independent judgment logic)
+    judgments: list[str] = []
+    if recovery.status == "completed":
+        judgments.append("当前提案准备已有足够 live 证据，可继续输出判断建议。")
+    else:
+        judgments.append("当前提案准备仍有上下文缺口，判断应保持 recommendation-first。")
+    if evidence_container and evidence_container.critical_source_missing:
+        judgments.append("关键证据来源缺失，建议优先补齐后再进行提案准备。")
+
+    # Per D-06: Build open questions from missing sources and gaps
+    open_questions = list(recovery.open_questions)
+    if recovery.missing_sources:
+        open_questions.extend([f"待补齐: {s}" for s in list(recovery.missing_sources)[:2]])
+
+    # Build recommendations
+    recommendations: list[str] = []
+    if not lens_results.get("objective"):
+        recommendations.append("建议补充客户目标和意图信息后再生成提案。")
+    if not lens_results.get("core_judgment") and not lens_results.get("main_narrative"):
+        recommendations.append("建议先确认客户近期动态和历史合作背景。")
+    if proposal_type == "resource-coordination" and not lens_results.get("resource_asks"):
+        recommendations.append("资源协调类型建议明确资源需求和投入计划。")
+
+    # Build output: checklist shown first per D-10, then five-dimension brief
+    lines = checklist_output + output_lines + [
+        f"资源解析状态: {gateway_result.resource_resolution.status}",
+        f"客户解析状态: {_render_customer_status(gateway_result)}",
+        f"场景上下文状态: {recovery.status}",
+        f"写回上限: {recovery.write_ceiling}",
+    ]
+    if facts:
+        lines.append("事实:")
+        lines.extend(f"- {item}" for item in facts)
+    if judgments:
+        lines.append("判断:")
+        lines.extend(f"- {item}" for item in judgments)
+    if open_questions:
+        lines.append("开放问题:")
+        lines.extend(f"- {item}" for item in open_questions)
+    if recommendations:
+        lines.append("建议:")
+        lines.extend(f"- {item}" for item in recommendations)
+
+    return _build_context_result(
+        request=request,
+        gateway_result=gateway_result,
+        recovery=recovery,
+        facts=facts,
+        judgments=judgments,
+        open_questions=open_questions,
+        recommendations=recommendations,
+        output_text="\n".join(lines),
+        payload={
+            "scene_payload": {
+                "topic_text": topic_text,
+                "proposal_type": proposal_type,
+                "proposal_lenses": lens_results,
+                "confirmation_checklist_output": checklist_output,
+                "confirmed_answers": checklist.confirmed_answers(),
+                "evidence_container": evidence_container,
+                "missing_sources": list(recovery.missing_sources),
+                "candidate_conflicts": list(recovery.candidate_conflicts),
             }
         },
     )

@@ -265,3 +265,60 @@ def render_confirmation_checklist(checklist: ConfirmationChecklist) -> list[str]
 
     lines.append("[输入 q 退出，输入任意键继续执行场景]")
     return lines
+
+
+def build_proposal_checklist(
+    evidence_container: Any | None,
+    recovery: Any | None,
+) -> ConfirmationChecklist:
+    """Build proposal scene confirmation checklist per D-13, D-14, D-15.
+
+    D-13: Includes WRITE-02 universal items: audience, purpose, internal/external, resource-coordination.
+    D-14: Scene-specific items — proposal_type (proposal/report/resource-coordination), output_destination.
+    D-15: System-inferred suggestions from EvidenceContainer; minimal-questions principle.
+    """
+    checklist = ConfirmationChecklist(scene_name="proposal")
+
+    # WRITE-02 universal items (D-13)
+    checklist.audience = ChecklistItem(
+        key="audience",
+        label="受众",
+        system_suggestion="客户内部",
+    )
+    checklist.purpose = ChecklistItem(
+        key="purpose",
+        label="目的",
+        system_suggestion="提案参考",
+    )
+    checklist.internal_external = ChecklistItem(
+        key="internal_external",
+        label="内部/外部",
+        system_suggestion="内部使用",
+    )
+    checklist.resource_coordination = ChecklistItem(
+        key="resource_coordination",
+        label="资源协调需要",
+        system_suggestion="不涉及",
+    )
+
+    # D-14: Scene-specific items
+    checklist.items.append(ChecklistItem(
+        key="proposal_type",
+        label="提案类型",
+        system_suggestion="proposal",
+    ))
+
+    # D-15: output_destination inferred from evidence
+    arch_dest = "Drive 客户档案文件夹"
+    if evidence_container:
+        arch_src = evidence_container.sources.get("customer_archive")
+        if arch_src and arch_src.available:
+            arch_dest = f"Drive 已有档案: {arch_src.raw_data.get('name', '客户档案文件夹')}"
+
+    checklist.items.append(ChecklistItem(
+        key="output_destination",
+        label="输出目的地",
+        system_suggestion=arch_dest,
+    ))
+
+    return checklist
