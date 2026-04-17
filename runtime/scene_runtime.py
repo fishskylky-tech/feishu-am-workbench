@@ -105,6 +105,84 @@ def _render_four_lens_judgments(lens_results: dict[str, list[str]]) -> list[str]
     return judgments
 
 
+def _derive_archive_refresh_lenses(
+    evidence_container: Any,
+) -> dict[str, list[str]]:
+    """Derive five archive-refresh lenses from evidence container.
+
+    Returns dict with keys: historical_arc, key_people, risk, opportunity, operating_posture.
+    Each value is 1-3 scannable conclusions (keywords found in source text).
+    Uses keyword-based extraction (no LLM inference).
+
+    Per D-01, D-02: each dimension produces 1-3 scannable conclusions.
+    """
+    if evidence_container is None:
+        return {k: [] for k in _ARCH_LENS_SOURCE_MAP.keys()}
+
+    lens_texts: dict[str, list[str]] = {k: [] for k in _ARCH_LENS_SOURCE_MAP.keys()}
+    for lens_name, source_names in _ARCH_LENS_SOURCE_MAP.items():
+        for name in source_names:
+            src = evidence_container.sources.get(name)
+            if src and src.available and src.content:
+                lens_texts[lens_name].extend(src.content)
+
+    combined = {lens: " ".join(texts) for lens, texts in lens_texts.items()}
+
+    def _extract(text: str, keywords: set[str], max_items: int = 3) -> list[str]:
+        seen: set[str] = set()
+        items: list[str] = []
+        for kw in keywords:
+            if kw in text and kw not in seen:
+                seen.add(kw)
+                items.append(kw)
+                if len(items) >= max_items:
+                    break
+        return items
+
+    return {
+        "historical_arc": _extract(combined.get("historical_arc", ""), _ARCH_HISTORY_KEYWORDS),
+        "key_people": _extract(combined.get("key_people", ""), _ARCH_PEOPLE_KEYWORDS),
+        "risk": _extract(combined.get("risk", ""), _ARCH_RISK_KEYWORDS),
+        "opportunity": _extract(combined.get("opportunity", ""), _ARCH_OPPORTUNITY_KEYWORDS),
+        "operating_posture": _extract(combined.get("operating_posture", ""), _ARCH_POSTURE_KEYWORDS),
+    }
+
+
+def _render_archive_refresh_output(lens_results: dict[str, list[str]]) -> list[str]:
+    """Render five-dimension archive refresh output per D-01, D-02.
+
+    Format:
+    --- 档案更新建议 ---
+    历史弧线:
+    - {1-3 items}
+    关键人物:
+    - {1-3 items}
+    风险:
+    - {1-3 items}
+    机会:
+    - {1-3 items}
+    运营姿态:
+    - {1-3 items}
+
+    Per D-02: each dimension produces 1-3 scannable conclusions, labeled and readable.
+    """
+    dimension_labels = {
+        "historical_arc": "历史弧线",
+        "key_people": "关键人物",
+        "risk": "风险",
+        "opportunity": "机会",
+        "operating_posture": "运营姿态",
+    }
+    lines = ["--- 档案更新建议 ---"]
+    for key, label in dimension_labels.items():
+        conclusions = lens_results.get(key, [])
+        if conclusions:
+            lines.append(f"{label}: {', '.join(conclusions[:3])}")
+        else:
+            lines.append(f"{label}: 暂无结论")
+    return lines
+
+
 SceneFallbackCategory = Literal[
     "none",
     "customer",
