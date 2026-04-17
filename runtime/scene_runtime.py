@@ -16,6 +16,79 @@ from .runtime_sources import RuntimeSourceLoader
 from .todo_writer import TodoWriter
 from .expert_analysis_helper import ExpertAnalysisHelper
 
+# STAT-01: Four-lens keyword sets for account posture derivation
+_STAT_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "收紧", "压力", "危机", "逾期", "负向"}
+_STAT_OPPORTUNITY_KEYWORDS = {"机会", "扩张", "增加", "扩容", "新客", "开拓", "增长", "潜力", "空间", "上行", "突破", "拓展", "增量", "机会点"}
+_STAT_RELATIONSHIP_KEYWORDS = {"关系", "信任", "合作", "沟通", "对接", "联系", "配合", "协同", "维护", "深化"}
+_STAT_PROJECT_PROGRESS_KEYWORDS = {"进展", "进度", "完成", "交付", "里程碑", "阶段", "推进", "落地", "执行", "状态"}
+
+
+def _derive_account_posture_lenses(
+    evidence_container: Any,
+) -> dict[str, list[str]]:
+    """Derive four account-posture lenses from evidence container.
+
+    Returns dict with keys: risk, opportunity, relationship, project_progress.
+    Each value is 1-3 scannable conclusions (keywords found in source text).
+    Uses keyword-based extraction (no LLM inference).
+
+    Per D-10: lens conclusions are traceable to EvidenceContainer sources.
+    """
+    from runtime.expert_analysis_helper import LENS_SOURCE_MAP
+
+    if evidence_container is None:
+        return {"risk": [], "opportunity": [], "relationship": [], "project_progress": []}
+
+    lens_texts: dict[str, list[str]] = {
+        "risk": [], "opportunity": [], "relationship": [], "project_progress": []
+    }
+    for lens_name, source_names in LENS_SOURCE_MAP.items():
+        for name in source_names:
+            src = evidence_container.sources.get(name)
+            if src and src.available and src.content:
+                lens_texts[lens_name].extend(src.content)
+
+    combined = {lens: " ".join(texts) for lens, texts in lens_texts.items()}
+
+    def _extract(text: str, keywords: set[str], max_items: int = 3) -> list[str]:
+        seen: set[str] = set()
+        items: list[str] = []
+        for kw in keywords:
+            if kw in text and kw not in seen:
+                seen.add(kw)
+                items.append(kw)
+                if len(items) >= max_items:
+                    break
+        return items
+
+    return {
+        "risk": _extract(combined.get("risk", ""), _STAT_RISK_KEYWORDS),
+        "opportunity": _extract(combined.get("opportunity", ""), _STAT_OPPORTUNITY_KEYWORDS),
+        "relationship": _extract(combined.get("relationship", ""), _STAT_RELATIONSHIP_KEYWORDS),
+        "project_progress": _extract(combined.get("project_progress", ""), _STAT_PROJECT_PROGRESS_KEYWORDS),
+    }
+
+
+def _render_four_lens_judgments(lens_results: dict[str, list[str]]) -> list[str]:
+    """Render four-lens results as labeled sub-items within judgments field.
+
+    Format per D-01: "风险: <conclusion1>; <conclusion2>" etc.
+    Returns list of judgment strings, one per lens that has conclusions.
+    """
+    labels = {
+        "risk": "风险",
+        "opportunity": "机会",
+        "relationship": "关系",
+        "project_progress": "进展",
+    }
+    judgments: list[str] = []
+    for lens_key, label in labels.items():
+        conclusions = lens_results.get(lens_key, [])
+        if conclusions:
+            judgments.append(f"{label}: {'; '.join(conclusions)}")
+    return judgments
+
+
 SceneFallbackCategory = Literal[
     "none",
     "customer",
@@ -285,6 +358,8 @@ def _serialize_candidate(candidate: Any) -> dict[str, Any]:
 
 
 def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
+    from runtime.expert_analysis_helper import build_lens_attributions
+
     topic_text = str(request.inputs.get("topic_text") or "")
     gateway_result, recovery = _build_live_scene_context(request, topic_text=topic_text)
     facts = list(recovery.key_context)
@@ -298,6 +373,12 @@ def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
     elif recovery.write_ceiling == "normal":
         judgments.append("当前证据链没有触发额外 safety downgrade。")
 
+    # STAT-01: Derive four-lens account posture judgments from evidence container
+    evidence_container = getattr(recovery, 'evidence_container', None)
+    lens_results = _derive_account_posture_lenses(evidence_container)
+    four_lens_judgments = _render_four_lens_judgments(lens_results)
+    judgments.extend(four_lens_judgments)
+
     open_questions = [*recovery.open_questions, *recovery.candidate_conflicts]
     recommendations: list[str] = []
     if recovery.missing_sources:
@@ -308,6 +389,9 @@ def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
         recommendations.append("先确认档案或会议纪要候选，再决定是否沉淀为正式客户状态结论。")
     if not recommendations:
         recommendations.append("基于当前 live 上下文整理一版客户最近状态结论，供后续会前/会后复用。")
+
+    # Build lens attributions for traceability per D-10
+    lens_attributions = build_lens_attributions(evidence_container, lens_results) if evidence_container else []
 
     lines = [
         f"资源解析状态: {gateway_result.resource_resolution.status}",
@@ -342,7 +426,8 @@ def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
                 "topic_text": topic_text,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
-                "evidence_container": getattr(recovery, 'evidence_container', None),
+                "evidence_container": evidence_container,
+                "lens_attributions": lens_attributions,
             }
         },
     )
