@@ -21,13 +21,12 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 - ✓ Repository already contains real-case eval assets and regression tests for the current meeting/Todo path — v1.0
 - ✓ Root guidance, milestone audit evidence, and runtime operator surface are aligned with shipped state — v1.0
 
-### Active
-
-- [ ] Introduce scene-skill runtime surfaces beyond the single root skill entrypoint
-- [ ] Land bootstrap/admin flows as executable operator paths rather than architecture-only contracts
-- [ ] Reduce live-only verification dependence for fallback quality and safe-write edge cases
-- [ ] Build proactive AM outputs such as risk reminders and weekly operating summaries
-- [ ] Deepen archive and historical meeting-note understanding beyond link-level recovery
+- ✓ Add expert analysis and multi-source evidence fusion — Phase 16
+- ✓ Upgrade post-meeting and Todo outputs with four-section customer-operating format (CORE-02) and structured 意图 + 判定理由 fields (TODO-01/02) — Phase 17
+- [ ] Expand customer recent status from a single-account summary into account-posture analysis plus cohort-level risk/opportunity/common-issue scanning
+- [ ] Add recommendation-first meeting prep and proposal/report/resource-coordination scenes with explicit write-back paths
+- [ ] Standardize durable output routing, confirmation checklists, and archive/document update targets for expert-led scene outputs
+- [ ] Preserve live-first, recommendation-first, guarded-write, and host-portable boundaries while scene intelligence expands
 
 ### Out of Scope
 
@@ -80,11 +79,22 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 - Kept scene execution aligned with the existing live-first gateway and write-guard boundaries
 - Preserved clear integration seams for later bootstrap/admin operator paths
 
-## Next Milestone Goals
+## Current Milestone: v1.2 Expert Customer Operating Scenes
 
-- Turn bootstrap/admin architecture contracts into executable operator paths.
-- Continue reducing live-only validation dependence where scene runtime fallback quality still depends on the current workspace.
-- Decide whether backlog Phase 999.1 should be executed as standalone historical cleanup or left deferred.
+**Goal:** Upgrade the shipped executable scenes into expert-guided customer-operating workflows and add the next high-value recommendation-first AM scenes without weakening safety boundaries.
+
+**Target features:**
+- Expert-augmented post-meeting synthesis with multi-source evidence fusion, operating judgment, and explicit next-step paths
+- Expert-routed Todo follow-on that distinguishes risk intervention, expansion, relationship maintenance, and project progression actions
+- Account-posture recent-status analysis plus cohort-level risk/opportunity/common-issue scanning
+- Structured archive refresh with canonical write-back targets and richer customer-history synthesis
+- Recommendation-first meeting prep briefs
+- Recommendation-first proposal, reporting, and resource-coordination drafts that default to Feishu-native output routing
+
+**Key constraints for v1.2:**
+- Do not introduce automatic writes without confirmation
+- Do not default durable outputs to the local workspace when a Feishu-native destination should exist
+- Do not turn the foundation layer into a giant hidden business-context assembler; keep expert logic explicit at the scene layer
 
 ## Evolution
 
@@ -104,4 +114,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-17 after v1.1 milestone closeout*
+*Last updated: 2026-04-17 after v1.2 milestone initialization*
