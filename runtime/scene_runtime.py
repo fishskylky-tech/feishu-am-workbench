@@ -15,6 +15,10 @@ from .models import WriteCandidate, WriteExecutionResult
 from .runtime_sources import RuntimeSourceLoader
 from .todo_writer import TodoWriter
 from .expert_analysis_helper import EvidenceContainer, EvidenceSource, ExpertAnalysisHelper
+from .confirmation_checklist import (
+    build_archive_refresh_checklist,
+    render_confirmation_checklist,
+)
 
 # STAT-01: Four-lens keyword sets for account posture derivation
 _STAT_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "收紧", "压力", "危机", "逾期", "负向"}
@@ -543,6 +547,11 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
     # ARCH-01: Derive five-dimension lenses from evidence container
     evidence_container = getattr(recovery, 'evidence_container', None)
     lens_results = _derive_archive_refresh_lenses(evidence_container)
+
+    # D-10: Build and render confirmation checklist BEFORE scene output
+    checklist = build_archive_refresh_checklist(evidence_container, recovery)
+    checklist_output = render_confirmation_checklist(checklist)
+
     archive_refresh_lines = _render_archive_refresh_output(lens_results)
 
     open_questions = [*recovery.open_questions, *recovery.candidate_conflicts]
@@ -556,8 +565,8 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
     if not recommendations:
         recommendations.append("当前 archive 视角已足够作为 refresh 建议输入，但后续写回仍需走现有共享安全路径。")
 
-    # Build output: prepend archive refresh five-dimension output to scene context
-    lines = archive_refresh_lines + [
+    # Build output: checklist shown first per D-10, then five-dimension archive refresh
+    lines = checklist_output + archive_refresh_lines + [
         f"资源解析状态: {gateway_result.resource_resolution.status}",
         f"客户解析状态: {_render_customer_status(gateway_result)}",
         f"场景上下文状态: {recovery.status}",
@@ -589,6 +598,8 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
             "scene_payload": {
                 "topic_text": topic_text,
                 "archive_refresh_lenses": lens_results,
+                "confirmation_checklist_output": checklist_output,
+                "confirmed_answers": checklist.confirmed_answers(),
                 "archive_anchor_ready": has_archive_anchor,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
