@@ -1,4 +1,10 @@
-"""Stable scene-name registry and dispatch helpers."""
+"""Stable scene-name registry and dispatch helpers.
+
+Note: This module is unaffected by Phase 16 expert-analysis additions.
+EvidenceContainer is carried through SceneResult.payload, not as a
+separate dispatch channel. The registry continues to dispatch by
+scene_name only.
+"""
 
 from __future__ import annotations
 
