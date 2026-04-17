@@ -13,9 +13,9 @@ Turn the current executable scene runtime surface into a more professional custo
 ### Expert-Augmented Core Scenes
 
 - [x] **CORE-01**: User can run post-meeting synthesis on transcript plus recovered history, customer archive, and optional external materials as one evidence bundle before judgment is generated
-- [ ] **CORE-02**: User receives post-meeting output with fixed customer-operating sections for risks, opportunities, stakeholder changes, and next-round推进 path instead of a generic summary only
-- [ ] **TODO-01**: User receives follow-on Todo recommendations classified by customer-operating intent, including risk intervention, expansion push, relationship maintenance, and project progression
-- [ ] **TODO-02**: User can review expert rationale before any Todo candidate is proposed for write-back
+- [x] **CORE-02**: User receives post-meeting output with fixed customer-operating sections for risks, opportunities, stakeholder changes, and next-round推进 path instead of a generic summary only
+- [x] **TODO-01**: User receives follow-on Todo recommendations classified by customer-operating intent, including risk intervention, expansion push, relationship maintenance, and project progression
+- [x] **TODO-02**: User can review expert rationale before any Todo candidate is proposed for write-back
 - [ ] **STAT-01**: User can query one customer and receive a current account-posture readout structured into risk, opportunity, relationship, and project-progress lenses
 - [ ] **ARCH-01**: User receives archive refresh recommendations as a structured customer-history synthesis covering historical arc, key people, risks, opportunities, and operating posture instead of a loose refresh note
 
