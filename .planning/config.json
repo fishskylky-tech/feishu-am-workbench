@@ -38,5 +38,8 @@
   "agent_skills": {},
   "resolve_model_ids": "omit",
   "mode": "interactive",
-  "granularity": "standard"
+  "granularity": "standard",
+  "graphify": {
+    "enabled": true
+  }
 }

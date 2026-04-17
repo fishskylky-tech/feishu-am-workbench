@@ -1,56 +1,34 @@
 # Research: Architecture
 
-## Recommended Component Model
+## Core Direction
 
-### 1. Skill rule layer
+The safest v1.1 path is to extract a canonical scene runtime contract from the existing meeting write-loop path, then expand scene by scene. The project already has the right foundation; what is missing is an explicit runtime layer for scene orchestration.
 
-- SKILL.md and references/
-- Defines operating principles, scenario rules, and loading boundaries
+## Stable Foundation
 
-### 2. Runtime foundation layer
+- runtime/gateway.py remains the live access and safety boundary
+- runtime/live_adapter.py remains the thin targeted-read layer
+- runtime/schema_preflight.py and runtime/write_guard.py remain non-bypassable write gates
+- runtime/todo_writer.py remains the concrete writer implementation for current safe writes
 
-- Resource source loading
-- live capability probing
-- customer resolution
-- targeted read backends
-- schema preflight
-- write guard
+## New Orchestration Layer
 
-### 3. Scene orchestration layer
+- Add a scene runtime module for scene input, execution, and result contracts
+- Add a scene registry/router that maps scene names to implementations
+- Keep rendering separate from scene logic so structured results stay stable
 
-- meeting-prep
-- post-meeting
-- account-analysis
-- archive-refresh
-- future proactive reporting scenes
+## Build Order
 
-### 4. Writer layer
+1. Define minimal scene runtime contracts and routing.
+2. Convert meeting-write-loop into the canonical post-meeting scene runtime.
+3. Add customer-recent-status as the second validating scene.
+4. Extract shared renderer and scene registry once two scenes exist.
+5. Add archive-refresh and then todo-capture-update.
 
-- Todo writer now
-- later: broader Base/doc write surfaces when safe enough
+## Architectural Risks
 
-### 5. Validation layer
-
-- eval runner
-- bridge output normalization
-- scenario fixtures
-- regression tests
-
-## Data Flow
-
-1. Input arrives from user prompt or transcript.
-2. Runtime resolves resources and customer context.
-3. Scene requests only the next needed reads.
-4. Scene produces structured observations, judgments, and candidate writes.
-5. Runtime preflights and guards candidates.
-6. Confirmed writes execute through normalized writer surfaces.
-7. Eval/test layer verifies expected behavior.
-
-## Suggested Build Order
-
-1. Brownfield operating system and codebase map
-2. Runtime/resource hardening
-3. Context recovery across core customer tables and archive links
-4. Unified safe write surface maturation
-5. Expanded account model coverage (contracts, key people, competitors)
-6. Proactive account intelligence outputs
+- Reusing eval bridge logic as production architecture without extracting contracts
+- Letting gateway grow back into a full business-context assembler
+- Creating a second write path beside the existing guarded path
+- Regressing from workflow-driven scenes to table-driven modules
+- Letting semantic contracts bloat to mirror live schema

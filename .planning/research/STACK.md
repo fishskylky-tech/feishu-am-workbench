@@ -2,48 +2,34 @@
 
 ## Recommendation
 
-For this project, the right stack is not a heavier application framework. It is a focused combination of:
-
-- Markdown-based skill operating model
-- Python runtime for deterministic orchestration and safety
-- lark-cli as the Feishu execution adapter
-- unittest + eval assets for regression proof
-- GSD planning artifacts for incremental brownfield delivery
-
-## Why This Stack Fits
-
-### Prompt/rules layer
-
-- The domain is highly policy-driven.
-- references/ and SKILL.md already encode substantial operating knowledge.
-- Replacing this with a conventional app UI would not solve the core problem.
-
-### Python runtime layer
-
-- Resource discovery, schema validation, write guard, and normalized write results all benefit from code rather than prompt prose.
-- The existing runtime is already the right place for thin deterministic logic.
-
-### lark-cli integration layer
-
-- Directly matches the personal AM workflow.
-- Gives access to Base, Drive, and Task without embedding private credentials into repo code.
-
-### Planning/execution layer
-
-- The missing piece was not more design docs; it was phase-based brownfield execution control.
-- GSD fills that gap without changing the runtime architecture.
+v1.1 should keep the current stack: Python runtime, lark-cli adapters, markdown-first skill docs, and unittest/eval assets. The milestone needs an executable scene runtime layer, not a new framework.
 
 ## Keep
 
-- Python 3.10+ runtime
-- lark-cli as the live adapter
-- env-based private configuration
-- markdown references as domain source material
-- unittest + eval runner hybrid validation
+- Python 3.10+ runtime as the deterministic execution surface
+- lark-cli as the live Feishu adapter
+- markdown-first skill and references as policy/routing context
+- unittest plus existing eval assets for regression proof
 
-## Avoid
+## Do Not Add
 
-- Full webapp rewrite before the operating model is mature
-- Full field mirroring of Feishu schemas
-- Auto-write behavior that bypasses runtime checks
-- Platform-specific business logic that locks the skill to one agent host
+- No plugin framework
+- No workflow engine
+- No web service or database layer
+- No host-specific SDK abstractions in core runtime
+- No generic scene DSL
+
+## Integration Points
+
+- Reuse runtime/gateway.py for resource resolution, customer resolution, preflight, and guard boundaries
+- Reuse runtime/live_adapter.py for thin targeted reads
+- Extend runtime/__main__.py as the operator surface for scene execution
+- Reuse runtime/models.py contracts rather than inventing parallel result models
+
+## Implementation Guidance
+
+1. Keep the runtime thin and let scenes own business reasoning.
+2. Add scene orchestration modules before adding any dependency.
+3. Keep outputs host-agnostic so portability remains testable.
+4. Treat cache or schema snapshots as hints, never as live truth.
+5. Add contract tests whenever a scene gains a new executable surface.

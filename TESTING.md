@@ -86,3 +86,102 @@ python3 -m unittest tests.test_runtime_smoke tests.test_meeting_output_bridge te
 - human UAT 4/4 passed
 
 这说明当前 meeting 场景的核心上下文恢复闭环可信，但不代表所有写回路径都已完全成熟。
+
+## Test framework and setup
+
+当前仓库提交到版本库中的自动化测试以 Python 标准库 `unittest` 为主，没有发现仓库内的 `pytest`、coverage 或 CI 测试配置文件。
+
+运行前准备：
+
+- 在仓库根目录执行测试
+- 激活本地虚拟环境，当前仓库默认使用 `.venv`
+- 如果要做 live 验证或跑依赖飞书资源的命令，先按 `.env.example` 准备本地 `.env`
+
+已验证可直接工作的全量命令是：
+
+```bash
+source .venv/bin/activate
+python -m unittest discover -s tests -q
+```
+
+该命令当前会执行 `tests/` 下的 115 个测试用例。
+
+## Running tests
+
+运行全量测试：
+
+```bash
+source .venv/bin/activate
+python -m unittest discover -s tests -q
+```
+
+运行当前最常用的核心回归切片：
+
+```bash
+source .venv/bin/activate
+python -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_validation_assets -q
+```
+
+只运行单个测试文件：
+
+```bash
+source .venv/bin/activate
+python -m unittest tests.test_meeting_output_bridge -q
+```
+
+只运行单个测试方法：
+
+```bash
+source .venv/bin/activate
+python -m unittest tests.test_eval_runner.EvalRunnerTests.test_cli_returns_json_and_exit_code -q
+```
+
+仓库里没有定义 watch mode；需要重复回归时，直接重复执行上面的切片命令即可。
+
+## Writing new tests
+
+当前测试命名约定是：
+
+- 文件名放在 `tests/` 目录下，使用 `test_*.py`
+- 测试类继承 `unittest.TestCase`
+- 测试方法使用 `test_*` 命名
+
+现有测试里最常见的写法有三类：
+
+- 纯函数或配置加载测试直接在测试文件里构造输入，例如 `tests/test_env_loader.py`
+- CLI 或桥接层测试使用 `subprocess.run`、`redirect_stdout`、`unittest.mock.patch` 做切片验证，例如 `tests/test_eval_runner.py` 和 `tests/test_meeting_output_bridge.py`
+- 真实会议样本回归使用 `tests/fixtures/transcripts/` 下的固定转写文件，避免把样本直接写死在断言里
+
+当前仓库没有独立的共享测试 helper 模块；常量、fixture 路径和 mock 组装主要放在各自的测试文件中，就近维护。
+
+新增测试时，优先沿用现有模式：
+
+- 如果验证环境变量或文件加载，优先使用 `tempfile.TemporaryDirectory()` 创建临时输入
+- 如果验证命令行入口，优先通过 `subprocess.run` 断言退出码和标准输出
+- 如果验证 runtime 或 scene 行为，优先用 `unittest.mock.patch` 隔离 live 依赖，再用固定 transcript fixture 做回归
+
+## Coverage requirements
+
+仓库当前没有配置数值化覆盖率门槛。
+
+未发现以下任一覆盖率配置来源：
+
+- `.github/workflows/` 下的 coverage job
+- `pytest` / `pytest-cov` 仓库级配置
+- `coverage.py`、`.coveragerc`、`c8`、`nyc` 等阈值文件
+
+因此当前口径是：`No coverage threshold configured.`
+
+现阶段更实际的约束来自关键切片是否通过，以及 `tests.test_validation_assets` 对版本、验证资产和里程碑文档的一致性检查。
+
+## CI integration
+
+仓库中未检测到 `.github/workflows/` 下的测试工作流文件，因此没有可引用的 CI job、触发条件或平台内测试命令。
+
+当前测试执行方式以本地运行为主：
+
+- 使用 `python -m unittest` 直接运行 `tests/` 目录
+- 用 `evals/runner.py` 和 `evals/meeting_output_bridge.py` 做结构化案例复核
+- 用 `VALIDATION.md` 约束 baseline、green 和 regression 的执行口径
+
+如果后续补上 CI，建议优先把本节里的全量命令作为最小自动化入口，而不是重新定义另一套测试命令。

@@ -12,9 +12,12 @@ from .live_adapter import (
     LiveCapabilityReporter,
     LiveWorkbenchConfig,
 )
+from .models import WriteCandidate, WriteExecutionResult
 from .resource_resolver import ResourceResolver
 from .runtime_sources import RuntimeSourceLoader
 from .schema_preflight import SchemaPreflightRunner
+from .scene_registry import SceneRegistry, UnknownSceneError, dispatch_scene
+from .scene_runtime import SceneRequest, SceneResult
 from .semantic_registry import (
     TABLE_PROFILES,
     get_integrated_base_tables,
@@ -22,7 +25,6 @@ from .semantic_registry import (
 )
 from .todo_writer import TodoWriter
 from .write_guard import WriteGuard
-from .models import WriteCandidate, WriteExecutionResult
 
 __all__ = [
     "CustomerResolver",
@@ -38,12 +40,17 @@ __all__ = [
     "ResourceResolver",
     "RuntimeSourceLoader",
     "SchemaPreflightRunner",
+    "SceneRegistry",
+    "SceneRequest",
+    "SceneResult",
     "TABLE_PROFILES",
     "TodoWriter",
+    "UnknownSceneError",
     "WriteCandidate",
     "WriteExecutionResult",
     "WriteGuard",
     "build_live_diagnostic",
+    "dispatch_scene",
     "get_integrated_base_tables",
     "get_required_base_tables",
     "render_live_diagnostic",

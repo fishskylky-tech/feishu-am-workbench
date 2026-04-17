@@ -8,7 +8,7 @@ The skill follows a three-tier progressive disclosure model based on Google ADK 
 
 - **L1 (Metadata)**: ~150 tokens - Always loaded
 - **L2 (Core Instructions)**: ~2,000 tokens - Loaded when skill activates
-- **L3 (Extended References)**: ~17,327 tokens total - Loaded on-demand
+- **L3 (Extended References)**: ~15,346 tokens total for the curated loading set - Loaded on-demand
 
 This design minimizes agent context window usage while preserving full functionality.
 
@@ -39,7 +39,7 @@ Loaded when the skill is activated by the agent.
 
 **Location**: Main body of `SKILL.md` (excluding detailed reference links)
 
-## L3: Extended References (~17,327 tokens)
+## L3: Extended References (~15,346 tokens)
 
 Reference documents in `references/` loaded on-demand based on task context.
 
@@ -55,7 +55,7 @@ Reference documents in `references/` loaded on-demand based on task context.
 
 #### L3-Scenario: Meeting Tasks
 
-**Total**: ~3,600 tokens
+**Total**: ~2,914 tokens
 
 | Document | Tokens | When to Load |
 |----------|--------|--------------|
@@ -104,7 +104,7 @@ Reference documents in `references/` loaded on-demand based on task context.
 
 #### L3-On-Demand
 
-**Total**: ~3,576 tokens
+**Total**: ~3,281 tokens
 
 | Document | Tokens | When to Load |
 |----------|--------|--------------|
@@ -117,7 +117,7 @@ Reference documents in `references/` loaded on-demand based on task context.
 
 ## Loading Metadata
 
-Each reference document includes YAML frontmatter with loading metadata:
+Each document in the curated progressive-disclosure reference set includes YAML frontmatter with loading metadata. The references directory may also contain auxiliary documents outside that set.
 
 ```yaml
 ---
@@ -153,8 +153,8 @@ tier: L3-always | L3-scenario-meeting | L3-scenario-write | L3-scenario-extracti
 
 - L1: ~150 tokens
 - L2: ~2,000 tokens
-- L3: ~17,327 tokens
-- **Total**: ~19,477 tokens
+- L3: ~15,346 tokens
+- **Total**: ~17,496 tokens
 
 ### Typical Scenario Loads
 
@@ -162,15 +162,15 @@ tier: L3-always | L3-scenario-meeting | L3-scenario-write | L3-scenario-extracti
 - L1: 150
 - L2: 2,000
 - Gateway: 1,004
-- Meeting refs: 3,600
-- **Total**: ~6,754 tokens (35% of max)
+- Meeting refs: 2,914
+- **Total**: ~6,068 tokens (35% of max)
 
 #### Write Scenario
 - L1: 150
 - L2: 2,000
 - Gateway: 1,004
 - Write refs: 4,647
-- **Total**: ~7,801 tokens (40% of max)
+- **Total**: ~7,801 tokens (45% of max)
 
 #### Customer Update
 - L1: 150
@@ -178,7 +178,7 @@ tier: L3-always | L3-scenario-meeting | L3-scenario-write | L3-scenario-extracti
 - Gateway: 1,004
 - Customer refs: 1,307
 - Extraction refs: 849
-- **Total**: ~5,310 tokens (27% of max)
+- **Total**: ~5,310 tokens (30% of max)
 
 ## Implementation Strategy
 
@@ -187,7 +187,7 @@ tier: L3-always | L3-scenario-meeting | L3-scenario-write | L3-scenario-extracti
 The current implementation relies on:
 
 1. **Documentation conventions**: Clear "when to load" guidance in SKILL.md
-2. **Frontmatter metadata**: Machine-readable loading hints in each reference
+2. **Frontmatter metadata**: Machine-readable loading hints in each reference that participates in the curated loading set
 3. **Agent discipline**: Agents follow loading guidance
 
 This approach works on all agent platforms immediately, though it depends on agent behavior.
@@ -213,11 +213,11 @@ This approach works on all agent platforms immediately, though it depends on age
 
 To verify the progressive disclosure implementation:
 
-1. **Check frontmatter**: All 21 reference files have loading metadata
+1. **Check frontmatter**: The curated 21-file progressive-disclosure reference set has loading metadata. Newer auxiliary reference docs may exist outside that original set and do not need to be retrofitted unless they are brought into the loading model.
 2. **Check SKILL.md**: Includes "Skill Loading Tiers" section with L1/L2/L3 breakdown
 3. **Check INDEX.md**: Includes loading strategy table with priorities and token estimates
 4. **Check ARCHITECTURE.md**: Includes progressive disclosure design section
-5. **Token budget**: Total L3 budget is reasonable (~17K tokens, loads 27-40% in typical scenarios)
+5. **Token budget**: Total L3 budget for the curated set is reasonable (~15K tokens, loads 30-45% in typical scenarios)
 
 ## Benefits
 
@@ -254,4 +254,4 @@ To verify the progressive disclosure implementation:
 
 - Quarterly: Verify token estimates match actual counts
 - After major changes: Validate typical scenario loads stay reasonable
-- Before releases: Ensure all references have frontmatter metadata
+- Before releases: Ensure every document that is part of the curated progressive-disclosure set still has frontmatter metadata, and explicitly decide whether any newly added reference should join that set
