@@ -8,7 +8,7 @@
 
 ## Summary
 
-v1.2 shifts the project from “scene surfaces are executable” to “scene outputs feel like a customer-operating expert workbench”. The milestone deepens four shipped scenes and adds three new recommendation-first scenes without weakening live-first and guarded-write boundaries.
+v1.2 shifts the project from "scene surfaces are executable" to "scene outputs feel like a customer-operating expert workbench". The milestone deepens four shipped scenes and adds three new recommendation-first scenes without weakening live-first and guarded-write boundaries.
 
 **5 active phases** | **13 requirements mapped** | **2 archived milestones** | **1 optional backlog item outside mainline**
 
@@ -22,8 +22,8 @@ v1.2 shifts the project from “scene surfaces are executable” to “scene out
 
 ### Phase 16: Expert Analysis Foundation And Multi-Source Evidence
 
-**Goal:** Add the reusable expert-analysis and evidence-fusion substrate that upgraded scenes will depend on.  
-**Depends on:** v1.1 archived milestone outputs  
+**Goal:** Add the reusable expert-analysis and evidence-fusion substrate that upgraded scenes will depend on.
+**Depends on:** v1.1 archived milestone outputs
 **Requirements:** CORE-01, SAFE-02
 
 **Success criteria:**
@@ -41,8 +41,8 @@ Plans:
 
 ### Phase 17: Post-Meeting And Todo Expert Upgrade
 
-**Goal:** Upgrade post-meeting synthesis and Todo follow-on from structured summaries into customer-operating judgments with typed action recommendations.  
-**Depends on:** Phase 16  
+**Goal:** Upgrade post-meeting synthesis and Todo follow-on from structured summaries into customer-operating judgments with typed action recommendations.
+**Depends on:** Phase 16
 **Requirements:** CORE-02, TODO-01, TODO-02
 
 **Success criteria:**
@@ -53,8 +53,8 @@ Plans:
 
 ### Phase 18: Account Posture And Cohort Scanning
 
-**Goal:** Make recent-status analysis more decision-ready for a single account and add the first user-triggered cohort analysis scene.  
-**Depends on:** Phase 16  
+**Goal:** Make recent-status analysis more decision-ready for a single account and add the first user-triggered cohort analysis scene.
+**Depends on:** Phase 16
 **Requirements:** STAT-01, SCAN-01
 
 **Success criteria:**
@@ -64,19 +64,22 @@ Plans:
 
 ### Phase 19: Archive Refresh And Meeting Prep Paths
 
-**Goal:** Turn archive refresh into a structured archive-update path and add the first recommendation-first meeting prep scene.  
-**Depends on:** Phase 16, Phase 18  
+**Goal:** Turn archive refresh into a structured archive-update path and add the first recommendation-first meeting prep scene.
+**Depends on:** Phase 16, Phase 18
 **Requirements:** ARCH-01, PREP-01, WRITE-02
+**Status:** shipped 2026-04-17
 
 **Success criteria:**
 1. Archive refresh output proposes canonical archive updates around customer history, key people, risk, opportunity, and operating posture.
 2. Meeting prep produces a reusable brief with current status, key people, objectives, risks, opportunities, suggested questions, and suggested next steps.
 3. Durable outputs in these scenes present an explicit confirmation checklist before any write plan is executed.
 
+**Plans:** 3/3 plans complete
+
 ### Phase 20: Proposal, Reporting, And Resource Coordination
 
-**Goal:** Add a structured scene for proposal/report generation and resource-coordination support with Feishu-native output routing.  
-**Depends on:** Phase 16, Phase 19  
+**Goal:** Add a structured scene for proposal/report generation and resource-coordination support with Feishu-native output routing.
+**Depends on:** Phase 16, Phase 19
 **Requirements:** PROP-01, WRITE-01
 
 **Success criteria:**
@@ -84,10 +87,17 @@ Plans:
 2. Outputs include objective, core judgment, main narrative, resource asks, and open questions rather than summary text only.
 3. Default durable-output routing points to Feishu-native destinations and can be linked back into customer-operating context.
 
+**Plans:** 3/3 plans
+
+Plans:
+- [ ] 20-01-PLAN.md — Core proposal scene infrastructure: build_proposal_checklist(), run_proposal_scene(), scene registry
+- [ ] 20-02-PLAN.md — Feishu-native output routing: type-based routing, routing payload, destination inference
+- [ ] 20-03-PLAN.md — Testing: test_proposal_scene.py with five-dimension, type-emphasis, checklist, and routing tests
+
 ### Phase 21: Validation And Milestone Closure
 
-**Goal:** Lock the upgraded and new scenes with regression evidence, documentation alignment, and milestone closeout readiness.  
-**Depends on:** Phase 17, Phase 18, Phase 19, Phase 20  
+**Goal:** Lock the upgraded and new scenes with regression evidence, documentation alignment, and milestone closeout readiness.
+**Depends on:** Phase 17, Phase 18, Phase 19, Phase 20
 **Requirements:** VAL-05
 
 **Success criteria:**
@@ -123,8 +133,8 @@ Plans:
 **Deferred at:** 2026-04-16 during /gsd-next advancement to Phase 4
 **Status:** Non-blocking and outside v1.1 closeout scope
 **Plans:**
-2/3 plans executed
+3/3 plans complete
 
 ## Recommended Next Step
 
-Start execution with `/gsd-plan-phase 16`, or optionally execute backlog cleanup via `/gsd-plan-phase 999.1` outside the v1.2 mainline.
+Start execution with `/gsd-execute-phase 20`, or optionally execute backlog cleanup via `/gsd-plan-phase 999.1` outside the v1.2 mainline.
