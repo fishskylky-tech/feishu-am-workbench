@@ -249,6 +249,7 @@ def build_meeting_todo_candidates(
             eval_name=eval_name,
             customer=customer,
             action_items=action_items,
+            evidence_container=None,
         )
         if candidates:
             return _consolidate_same_meeting_candidates(candidates)
@@ -284,6 +285,7 @@ def _build_action_item_candidates(
     eval_name: str,
     customer: CustomerMatch,
     action_items: list[dict[str, object]],
+    evidence_container: EvidenceContainer | None = None,
 ) -> list[WriteCandidate]:
     candidates: list[WriteCandidate] = []
     for item in action_items:
@@ -297,6 +299,8 @@ def _build_action_item_candidates(
             "customer": customer.short_name,
             "priority": str(item.get("priority") or "高"),
             "description": description or "来自会议场景的建议态跟进动作；负责人待确认后才能真正写入。",
+            "意图": _classify_action_intent(item, evidence_container),
+            "判定理由": _generate_action_rationale(item, evidence_container),
         }
         due_at = item.get("due_at")
         if due_at is not None:
@@ -394,6 +398,50 @@ def _merge_candidate_description(base: WriteCandidate, merged_summaries: list[st
         lines.append("同会同主题动作合并:")
         lines.extend(f"- {summary}" for summary in merged_summaries)
     return "\n".join(lines)
+
+
+def _classify_action_intent(
+    item: dict[str, object],
+    evidence_container: EvidenceContainer | None = None,
+) -> str:
+    """Classify an action item into one of four fixed intent categories.
+
+    Returns one of: "风险干预", "扩张推进", "关系维护", "项目进展"
+    Uses keyword-based matching against summary/theme text.
+    """
+    text = " ".join(
+        str(v)
+        for v in [item.get("summary", ""), item.get("theme", "")]
+        if v
+    )
+
+    if any(kw in text for kw in {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "收紧", "压力", "危机", "逾期", "负向"}):
+        return "风险干预"
+    if any(kw in text for kw in {"扩张", "增加", "扩容", "新客", "开拓", "增长", "潜力", "空间", "上行", "突破", "拓展", "增量", "机会点"}):
+        return "扩张推进"
+    if any(kw in text for kw in {"关系", "维护", "拜访", "沟通", "联系"}):
+        return "关系维护"
+    return "项目进展"
+
+
+def _generate_action_rationale(
+    item: dict[str, object],
+    evidence_container: EvidenceContainer | None = None,
+) -> str:
+    """Generate a Chinese rationale string explaining why an action item matters.
+
+    Template-based generation using item summary and theme.
+    """
+    intent = _classify_action_intent(item, evidence_container)
+    summary = str(item.get("summary") or item.get("theme") or "")
+
+    if intent == "风险干预":
+        return f"该事项涉及客户经营风险，需及时跟进以防止情况恶化"
+    if intent == "扩张推进":
+        return f"该事项涉及客户扩张机会，及时确认有助于推进合作规模"
+    if intent == "关系维护":
+        return f"该事项涉及客户关系维护，定期沟通有助于持续建立信任"
+    return f"该事项涉及项目进展，确认后可确保项目按计划推进"
 
 
 def _normalize_action_theme(value: str) -> str:
