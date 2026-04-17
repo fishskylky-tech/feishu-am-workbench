@@ -1,22 +1,99 @@
 # Roadmap: Feishu AM Workbench
 
-**Created:** 2026-04-16
-**Milestone:** No active mainline milestone
+**Created:** 2026-04-17
+**Milestone:** v1.2 Expert Customer Operating Scenes
 **Mode:** Interactive
 **Granularity:** Standard
 **Execution:** Parallel where dependencies allow
 
 ## Summary
 
-v1.0 and v1.1 are now formally archived. The root roadmap is back to a lightweight planning surface until the next mainline milestone is defined.
+v1.2 shifts the project from “scene surfaces are executable” to “scene outputs feel like a customer-operating expert workbench”. The milestone deepens four shipped scenes and adds three new recommendation-first scenes without weakening live-first and guarded-write boundaries.
 
-**0 active phases** | **2 archived milestones** | **1 optional backlog item outside mainline**
+**5 active phases** | **13 requirements mapped** | **2 archived milestones** | **1 optional backlog item outside mainline**
 
 ## Current Planning State
 
-- No active mainline milestone is open in the root roadmap.
+- Active mainline milestone: v1.2 Expert Customer Operating Scenes
 - The most recent shipped milestone is v1.1 Executable Scene Runtimes.
-- Backlog Phase 999.1 remains optional historical cleanup and does not block v1.1 closeout.
+- Backlog Phase 999.1 remains optional historical cleanup and does not block v1.2 mainline execution.
+
+## Active Milestone
+
+### Phase 16: Expert Analysis Foundation And Multi-Source Evidence
+
+**Goal:** Add the reusable expert-analysis and evidence-fusion substrate that upgraded scenes will depend on.  
+**Depends on:** v1.1 archived milestone outputs  
+**Requirements:** CORE-01, SAFE-02
+
+**Success criteria:**
+1. Scene runtime can assemble multi-source evidence bundles from transcript, recovered context, archive materials, and optional external inputs without bypassing current gateway and guard boundaries.
+2. Expert-analysis orchestration is explicit at the scene layer rather than hidden inside foundation defaults.
+3. Scene results preserve fallback visibility when one or more evidence sources are unavailable.
+4. Safety rules remain live-first, recommendation-first, and guarded-write after the expert-analysis layer is introduced.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — EvidenceContainer model and ExpertAnalysisHelper utility module
+- [ ] 16-02-PLAN.md — Refactor scene implementations to use EvidenceContainer and ExpertAnalysisHelper
+- [ ] 16-03-PLAN.md — Verify registry dispatch and add tests for evidence assembly and fallback behavior
+
+### Phase 17: Post-Meeting And Todo Expert Upgrade
+
+**Goal:** Upgrade post-meeting synthesis and Todo follow-on from structured summaries into customer-operating judgments with typed action recommendations.  
+**Depends on:** Phase 16  
+**Requirements:** CORE-02, TODO-01, TODO-02
+
+**Success criteria:**
+1. Post-meeting output contains explicit sections for risks, opportunities, stakeholder changes, and next-round推进 path.
+2. Todo follow-on recommendations are classified by customer-operating intent rather than emitted as generic tasks.
+3. Todo candidates are preceded by expert rationale that explains why each action matters.
+4. Confirmed Todo writes still run through the existing unified writer path.
+
+### Phase 18: Account Posture And Cohort Scanning
+
+**Goal:** Make recent-status analysis more decision-ready for a single account and add the first user-triggered cohort analysis scene.  
+**Depends on:** Phase 16  
+**Requirements:** STAT-01, SCAN-01
+
+**Success criteria:**
+1. Single-customer recent-status output uses fixed lenses for risk, opportunity, relationship, and project progress.
+2. User can request a class of customers and receive grouped signals, common issues, and suggested actions without invoking a full auto-scanner.
+3. Cohort analysis remains recommendation-first and clearly scoped to analytical output.
+
+### Phase 19: Archive Refresh And Meeting Prep Paths
+
+**Goal:** Turn archive refresh into a structured archive-update path and add the first recommendation-first meeting prep scene.  
+**Depends on:** Phase 16, Phase 18  
+**Requirements:** ARCH-01, PREP-01, WRITE-02
+
+**Success criteria:**
+1. Archive refresh output proposes canonical archive updates around customer history, key people, risk, opportunity, and operating posture.
+2. Meeting prep produces a reusable brief with current status, key people, objectives, risks, opportunities, suggested questions, and suggested next steps.
+3. Durable outputs in these scenes present an explicit confirmation checklist before any write plan is executed.
+
+### Phase 20: Proposal, Reporting, And Resource Coordination
+
+**Goal:** Add a structured scene for proposal/report generation and resource-coordination support with Feishu-native output routing.  
+**Depends on:** Phase 16, Phase 19  
+**Requirements:** PROP-01, WRITE-01
+
+**Success criteria:**
+1. User can provide customer, goal, and multiple materials and receive a structured proposal/report/resource-coordination draft.
+2. Outputs include objective, core judgment, main narrative, resource asks, and open questions rather than summary text only.
+3. Default durable-output routing points to Feishu-native destinations and can be linked back into customer-operating context.
+
+### Phase 21: Validation And Milestone Closure
+
+**Goal:** Lock the upgraded and new scenes with regression evidence, documentation alignment, and milestone closeout readiness.  
+**Depends on:** Phase 17, Phase 18, Phase 19, Phase 20  
+**Requirements:** VAL-05
+
+**Success criteria:**
+1. Regression coverage exists for happy-path, limited-context, unresolved-customer, and blocked-write cases across the upgraded and new scenes at the scene-contract level.
+2. Root docs and validation guidance describe the new scene surfaces, expert-output boundaries, and durable-output routing rules accurately.
+3. Requirements traceability is complete and milestone closeout can be audited without relying on undocumented behavior.
 
 ## Archived Milestones
 
@@ -50,4 +127,4 @@ v1.0 and v1.1 are now formally archived. The root roadmap is back to a lightweig
 
 ## Recommended Next Step
 
-Define the next mainline milestone with `/gsd-new-milestone`, or optionally execute backlog cleanup via `/gsd-plan-phase 999.1`.
+Start execution with `/gsd-plan-phase 16`, or optionally execute backlog cleanup via `/gsd-plan-phase 999.1` outside the v1.2 mainline.
