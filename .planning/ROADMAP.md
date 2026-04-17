@@ -123,7 +123,7 @@ Plans:
 **Deferred at:** 2026-04-16 during /gsd-next advancement to Phase 4
 **Status:** Non-blocking and outside v1.1 closeout scope
 **Plans:**
-4/4 plans complete
+2/3 plans executed
 
 ## Recommended Next Step
 
