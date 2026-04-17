@@ -139,3 +139,17 @@ This architecture changes packaging, not truth hierarchy.
 - live truth still outranks cached or inferred context
 - recommendation-first still applies before writes
 - every write path still depends on live preflight and guard behavior
+
+## Boundary Freeze Rules
+
+Phase 12 turns these first-wave decisions into a medium-strength runtime boundary freeze.
+
+That means later work must preserve all of the following unless a future phase explicitly reopens them:
+
+- the first-wave scene list
+- the first-group / second-group priority split
+- the workflow-first split rule instead of table-first scene carving
+- deferred scenes staying out of the first wave
+- gateway, schema preflight, write guard, and writer as the non-bypass shared path
+
+This is intentionally stronger than a loose architecture preference, but weaker than hard-coding every later implementation detail.

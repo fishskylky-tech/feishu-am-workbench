@@ -12,12 +12,12 @@ Feishu AM Workbench 是一个面向客户经营工作的飞书技能仓库。它
 
 ## 当前能力边界
 
-当前最成熟、验证最完整的是会议相关主路径：
+当前最成熟、验证最完整的是 scene runtime 主路径：
 
 1. 通过 runtime 做资源探测、客户解析和 capability diagnostics
-2. 在会议场景里恢复最小必要客户上下文
+2. 在 `post-meeting-synthesis`、`customer-recent-status`、`archive-refresh`、`todo-capture-and-update` 里按共享 contract 恢复最小必要 live context
 3. 输出审计化结果，包括资源状态、客户结果、上下文恢复状态、已使用资料、写回上限和开放问题
-4. 在确认后走统一 Todo writer 的 preflight、guard、dedupe 和执行结果归一
+4. 在确认后让需要写回的场景继续走统一 Todo writer 的 preflight、guard、dedupe 和执行结果归一
 
 这意味着当前仓库已经不是“会议总结器”，而是一个带飞书工作台底座的 AM operating workflow。
 
@@ -79,7 +79,7 @@ Phase 7 的 canonical architecture references：
 - `archive-refresh`
 - `todo-capture-and-update`
 
-其中优先级最高的是 `post-meeting-synthesis` 和 `customer-recent-status`。
+其中第一组 `post-meeting-synthesis` 和 `customer-recent-status` 已完成可执行 runtime 落地；第二组 `archive-refresh` 和 `todo-capture-and-update` 已按同一 contract 定义并接入 runtime surface。
 
 ## 快速开始
 
@@ -140,25 +140,56 @@ python3 -m evals.meeting_output_bridge \
 - `写回上限`
 - `开放问题`
 
-### 4.5 需要操作级写回时，走 runtime operator surface
+### 4.5 优先走 canonical scene runtime 入口
 
-先预览 meeting write loop：
+最近完成并已归档的主线 milestone：v1.1 Executable Scene Runtimes。
+
+Phase 12 开始，runtime 的长期主入口是稳定 `scene` 名称，而不是继续增加一串一次性 operator 命令。
+
+先预览 canonical post-meeting scene：
 
 ```bash
-python3 -m runtime meeting-write-loop \
-  --eval-name unilever-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
-  --customer-query 联合利华
+python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华
 ```
 
 如果你已经确认要执行当前建议态 Todo 写回，再显式加 `--confirm-write`。如果需要把结果接到脚本或别的 agent，再加 `--json`：
 
 ```bash
-python3 -m runtime meeting-write-loop \
-  --eval-name unilever-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华   --confirm-write   --json
+```
+
+旧的 `meeting-write-loop` 仍保留，但现在只作为 `post-meeting-synthesis` 的 compatibility wrapper，而不是长期 contract 本体：
+
+```bash
+python3 -m runtime meeting-write-loop   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华
+```
+
+再看客户近期状态：
+
+```bash
+python3 -m runtime scene customer-recent-status \
   --customer-query 联合利华 \
-  --confirm-write \
+  --repo-root . \
+  --json
+```
+
+如果你要先整理 archive refresh 的建议态输入：
+
+```bash
+python3 -m runtime scene archive-refresh \
+  --customer-query 联合利华 \
+  --topic-text 客户档案 \
+  --repo-root . \
+  --json
+```
+
+如果你已经有 follow-on 项，想先走统一 Todo contract 的候选整理：
+
+```bash
+python3 -m runtime scene todo-capture-and-update \
+  --customer-query 联合利华 \
+  --todo-item-json '{"summary":"确认联合利华复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}' \
+  --repo-root . \
   --json
 ```
 
@@ -174,6 +205,8 @@ python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_me
   - 当前实现边界与 phase 7 锁定的目标架构口径
 - [references/scene-skill-architecture.md](references/scene-skill-architecture.md)
   - scene skills、expert agents 与 first-wave boundary 的 canonical contract
+- [references/scene-runtime-contract.md](references/scene-runtime-contract.md)
+  - shared scene contract、fallback visibility、write ceiling 与 non-bypass runtime boundary
 - [references/workspace-bootstrap.md](references/workspace-bootstrap.md)
   - admin/bootstrap path 的最小交付物、compatibility 与强确认边界
 - [references/cache-governance.md](references/cache-governance.md)
@@ -194,13 +227,53 @@ python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_me
 ## 当前版本
 
 - 版本：0.2.14
-- 当前状态：v1.0 phases 1-11 已完成并归档，mainline、audit gap closure 与 cleanup phase 都已收口
-- 当前主线：可选 backlog 999.1，或进入下一轮 milestone / scene skill 实现
+- 当前状态：v1.0 phases 1-11 与 v1.1 phases 12-15 都已完成并归档；v1.1 closeout artifacts 已补齐
+- 当前主线：暂无新的 mainline milestone；下一步是定义新里程碑，或可选处理 backlog 999.1
 
 ## 后续建议
 
 如果你现在要继续推进仓库：
 
-1. 可选处理 backlog 999.1，把 Phase 1 的历史讨论痕迹进一步整理干净
-2. 开启下一轮 milestone，把 scene skills 或 bootstrap/admin 真正落地为运行面
-3. 如果要继续压缩人工验证面，再把剩余 live-only 检查转成更多可执行验证
+1. 定义新的 mainline milestone，把 bootstrap/admin operator path 或下一轮 validation 收口目标正式写进 requirements / roadmap
+2. 可选处理 backlog 999.1，但它只是 historical metadata cleanup，不阻塞主线推进
+3. 在新 milestone 开始前，继续沿 canonical scene runtime 入口做日常验证与 live workspace 使用
+
+
+## 安装
+
+当前仓库没有 `pyproject.toml`、`requirements.txt` 或 `package.json` 这类声明式依赖清单；Python 侧实现以标准库为主，live 集成通过本机 `lark-cli` 可执行文件完成。因此安装路径是先准备本地仓库副本、Python 虚拟环境和 `.env`，再确认 `lark-cli` 已完成授权。
+
+```bash
+cd /path/to/feishu-am-workbench
+python3 -m venv .venv
+source .venv/bin/activate
+cp .env.example .env
+```
+
+完成后再补齐 `.env` 中对应的 `FEISHU_AM_*` 变量，并确保 `lark-cli` 已在当前 shell 的 `PATH` 中可用。
+
+## 使用示例
+
+### 1. 输出当前 live capability 诊断
+
+```bash
+python3 -m runtime diagnose . --json
+```
+
+适合先确认 Base、Drive/Docs、Task 三类资源是否可用。返回结果里重点看 `base_access`、`docs_access`、`task_access`。
+
+### 2. 跑一条 post-meeting scene 主路径
+
+```bash
+python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华   --json
+```
+
+这个入口会走共享 scene runtime contract，输出结构化审计结果，包括资源状态、客户解析、上下文恢复、写回上限和开放问题。
+
+### 3. 先生成 Todo 候选而不直接写回
+
+```bash
+python3 -m runtime scene todo-capture-and-update   --customer-query 联合利华   --todo-item-json '{"summary":"确认联合利华复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}'   --repo-root .   --json
+```
+
+默认行为是建议态候选整理，不会绕过 preflight 和 guard 直接落写；只有显式加 `--confirm-write` 时才会进入统一 Todo writer 执行路径。

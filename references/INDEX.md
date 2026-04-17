@@ -1,6 +1,6 @@
 # References Index
 
-Quick reference for all 21 documents in this directory. Read SKILL.md for the full "when to read" guidance per file.
+Quick reference for the curated 21-document progressive-disclosure reference set in this directory. The directory may also contain newer auxiliary reference docs outside this curated loading set. Read SKILL.md for the full "when to read" guidance per file.
 
 ## Loading Strategy Summary
 

@@ -15,14 +15,14 @@
 
 ## 当前结论
 
-当前仓库的 v1.0 phases 1-11 已经全部收口并完成归档。当前不再存在主线 phase blocker，mainline capability、verification closure、safe-write validation、meeting write loop E2E 证据以及最后的 cleanup debt 都已经补齐到 milestone-grade。
+当前仓库的 v1.0 phases 1-11 与 v1.1 phases 12-15 都已经全部收口并完成归档。canonical post-meeting scene、customer recent status、archive refresh 和 Todo follow-on 现在都属于已归档的 v1.1 shared-contract milestone 能力。
 
 - Base: 已可 live 读取
 - Todo: 已可 live 读取
 - Docs / Drive folder: 已可 live 读取
 - Meeting 场景: 已完成真实 `gateway -> typed context recovery -> constrained fallback -> audit output` 验证
 - 当前核心上下文恢复阶段状态: code review clean、`threats_open: 0`、validation verified、human UAT 4/4 passed
-- 当前主线状态: v1.0 archived；剩余仅有 backlog 和下一轮 milestone 选择
+- 当前主线状态: v1.1 已正式归档；当前没有新的 mainline phase blocker，也还没有新的 mainline milestone
 
 ## 模块状态
 
@@ -167,7 +167,8 @@
   - 生成最小 Todo candidate
   - 在确认后调用统一 Todo writer
   - 在输出中展示统一写回结果
-- `python3 -m runtime meeting-write-loop` 已作为一等 operator surface 暴露 meeting write loop 的预览与 confirmed write 入口
+- `python3 -m runtime scene post-meeting-synthesis` 已作为 canonical runtime 入口暴露首个稳定 scene 名称
+- `python3 -m runtime meeting-write-loop` 继续保留，但只作为 `post-meeting-synthesis` 的 compatibility wrapper
 
 当前限制：
 
@@ -175,6 +176,22 @@
 - duplicate 命中后默认走 `update_existing` 自动 patch
 - step-level duplicate 会优先返回 `create_subtask` 建议；仅当 `source_context.confirm_create_subtask=true` 时执行真实子任务创建
 - meeting 入口当前只接了最小 Todo candidate 生成，不代表所有场景都已迁移
+
+### 5.2 Scene Runtime Mainline
+
+状态：`v1.1 已完成并归档`
+
+已完成：
+
+- `post-meeting-synthesis` 已是 canonical shared-contract scene runtime
+- `customer-recent-status` 已作为第二个 read-heavy scene 落地，并显式区分 facts / judgments / open questions / recommendations
+- `archive-refresh` 已按共享 contract 暴露 recommendation-first 的 refresh 行为，不引入第二套写路径
+- `todo-capture-and-update` 已按共享 contract 暴露 follow-on Todo 候选整理，并在确认后继续走现有 Todo writer
+
+当前限制：
+
+- archive-refresh 目前仍只定义 recommendation-first refresh 行为，没有新增文档写回 surface
+- 下一轮 milestone 还未定义；bootstrap/admin runtime 落地仍属于后续 mainline 议题
 
 ### 6. Base Integration Model
 
@@ -230,22 +247,22 @@ python3 -m runtime .
 
 ## 当前阻点
 
-当前没有新的运行前权限阻点，也没有主线 phase 阻断项。
+当前没有新的运行前权限阻点，也没有新的 mainline phase 阻断项。
 
 当前剩余事项主要是非阻断型：
 
 - backlog Phase 999.1 仍是可选清理项，不属于 mainline milestone blocker
 - 部分 live-only 验证仍需要真实 workspace 和个人权限环境，不适合直接固化为仓库内 fixture
-- scene skill / bootstrap-admin / cache artifact 的运行时落地仍属于下一轮里程碑，而不是当前 v1.0 未完成项
+- scene skill / bootstrap-admin / cache artifact 的运行时落地仍属于下一轮里程碑，而不是当前已归档里程碑的未完成项
 
 ## 下一步
 
 当前最自然的下一步是：
 
-1. 如果要继续清理 planning 历史，可选处理 backlog Phase 999.1
-2. 如果要继续产品化，开启下一轮 milestone，把 scene skill 和 bootstrap/admin 从架构合同推进到可运行实现
-3. 如果要进一步压缩人工验证面，继续把 live-only safe-write 和 fallback 检查转成自动化或半自动验证
+1. 定义新的 mainline milestone，把 bootstrap/admin operator path 或下一轮 validation 收口目标写进 planning
+2. 决定是否单独执行 backlog Phase 999.1；它只是历史 metadata cleanup，不阻塞主线
+3. 继续用 canonical scene runtime 入口做 live 验证，并把新增能力收束到下一轮 milestone
 
 ## 更新时间
 
-- 2026-04-16
+- 2026-04-17

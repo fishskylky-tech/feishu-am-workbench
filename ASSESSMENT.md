@@ -2,6 +2,12 @@
 
 **Date of Evaluation:** 2026-04-11 06:07:09 (UTC)
 
+## Scope Note
+
+This report is a historical point-in-time assessment captured on 2026-04-11.
+It should not be read as the current repository status after the later v1.0/v1.1 milestone closeout, documentation expansion, and scene runtime rollout.
+For current implementation state, use README.md, STATUS.md, and the milestone/validation artifacts under `.planning/`.
+
 ## Evaluation Dimensions
 
 ### 1. Architecture

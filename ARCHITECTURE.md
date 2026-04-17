@@ -583,3 +583,117 @@ tier: L3-scenario-meeting
 - 架构先落到单独新文件
 - 暂时不大改已有主文档
 - 等会议场景分支稳定后，再做 README / roadmap 的统一收口
+
+
+## 系统概览
+
+`feishu-am-workbench` 当前是一个以场景驱动的本地 Python runtime：输入可以来自操作命令、会议 transcript 或客户问题，系统先经过 scene dispatch，再进入飞书资源解析、客户解析、上下文恢复、写前校验与受保护写回，最后输出 recommendation-first 的分析结果或受控写入结果。架构风格上，它不是通用平台，也不是单一脚本集合，而是“scene runtime + gateway orchestration + live adapter + eval bridge”的分层组合，主输出为结构化文本结论、审计字段以及 Todo 写回结果。
+
+## 组件关系图
+
+```mermaid
+graph TD
+    A[operator input] --> B[runtime/__main__.py]
+    B --> C[runtime/scene_registry.py]
+    C --> D[runtime/scene_runtime.py]
+    D --> E[runtime/gateway.py]
+    D --> F[evals/meeting_output_bridge.py]
+    E --> G[runtime/runtime_sources.py]
+    E --> H[runtime/live_adapter.py]
+    E --> I[runtime/schema_preflight.py]
+    E --> J[runtime/write_guard.py]
+    D --> K[runtime/todo_writer.py]
+    H --> L[lark-cli / Feishu Base Drive Task]
+    K --> L
+```
+
+上图对应当前已经落地的主执行链：`runtime/__main__.py` 提供 operator CLI，`scene_registry.py` 负责稳定场景名到 handler 的映射，`scene_runtime.py` 负责组装单次场景执行所需的 gateway、query backend 和 writer，`gateway.py` 再把资源解析、客户解析、schema preflight 与 guard 串起来；会议类场景通过 `evals/meeting_output_bridge.py` 恢复 live context 并生成输出工件，确认写回时再通过 `todo_writer.py` 执行真实 Todo 写入。
+
+## 数据流
+
+典型请求目前有两条主路径，其中“会议后总结/写回 Todo”是最完整的一条：
+
+1. 操作入口从 `python -m runtime` 或兼容包装命令进入 `runtime/__main__.py`，解析 `scene`、`meeting-write-loop` 或 `diagnose` 子命令。
+2. `runtime/scene_registry.py` 根据 `scene_name` 将请求分发到具体 handler，例如 `post-meeting-synthesis`、`customer-recent-status`、`archive-refresh`、`todo-capture-and-update`。
+3. `runtime/scene_runtime.py` 构造 `SceneRequest`，并在场景运行前初始化 `FeishuWorkbenchGateway`、`RuntimeSourceLoader`、`LarkCliBaseQueryBackend` 等依赖。
+4. `runtime/gateway.py` 先加载 runtime sources，再通过 `ResourceResolver` 和 `LarkCliResourceProbe` 检查 Base、Drive folder、Tasklist 等 live 资源是否可达。
+5. 资源状态允许继续时，`CustomerResolver` 通过 `LarkCliCustomerBackend` 查找客户；若客户未解析成功，gateway 提前返回 recommendation-only 所需的最低结果。
+6. 对会议场景，`evals/meeting_output_bridge.py` 的 `recover_live_context` 继续用 query backend 按客户 ID 读取客户主数据、联系记录、行动计划和候选档案材料，组装 `ContextRecoveryResult`。
+7. 场景逻辑基于恢复出的上下文生成事实、判断、开放问题与建议项，并在需要时构造 `WriteCandidate`。
+8. 用户确认写回后，`TodoWriter` 会再次执行 `SchemaPreflightRunner` 与 `WriteGuard`，随后做重复项判定、create/update/subtask 决策，再调用 `lark-cli` 完成真实任务写入。
+9. 最终输出回到 scene result：既包含给用户看的文本，也包含 `resource_status`、`customer_status`、`context_status`、`write_ceiling` 以及写回明细等结构化字段。
+
+诊断路径更短：`runtime/__main__.py` 的 `diagnose` 子命令直接调用 `runtime/diagnostics.py`，复用同一套 live 资源探测和能力报告逻辑，但不进入具体 scene 判断或写回分支。
+
+## 关键抽象
+
+当前实现里，下面这些抽象决定了系统的稳定边界：
+
+- `FeishuWorkbenchGateway` in `runtime/gateway.py`
+  - 统一编排 runtime source 加载、资源探测、客户解析、schema preflight 与 write guard，是所有 live scene 的核心入口。
+- `SceneRequest` / `SceneResult` in `runtime/scene_runtime.py`
+  - 定义场景运行的共享输入输出契约，让不同 scene 可以复用一套状态字段、输出文本与结构化 payload。
+- `SceneRegistry` in `runtime/scene_registry.py`
+  - 把稳定 scene name 与 handler 绑定，避免 CLI、测试和业务逻辑分别维护一套分发规则。
+- `RuntimeSources` / `ResourceHint` in `runtime/models.py`
+  - 将 `.env` 和引用资料中恢复出来的 live 资源线索收敛成统一模型，供后续资源探测与 capability reporting 使用。
+- `ResourceResolver` in `runtime/resource_resolver.py`
+  - 负责判定 Base、档案目录、会议纪要目录和 Todo tasklist 是否齐备，是整个 live-first 链路的最前置 gate。
+- `LiveWorkbenchConfig` and `LarkCli*Backend` classes in `runtime/live_adapter.py`
+  - 负责把 runtime 语义对象映射到 `lark-cli` 命令表面，隔离对飞书资源、表结构、查询和能力检查的真实调用细节。
+- `TableProfile` and `SEMANTIC_FIELD_REGISTRY` in `runtime/semantic_registry.py`
+  - 定义当前支持写入/读取的业务对象、语义字段、保护字段和严格枚举字段，是 schema preflight 与 routing 的语义基线。
+- `WriteCandidate` / `WriteExecutionResult` in `runtime/models.py`
+  - 把“建议写什么”和“最终写成什么”分开建模，支撑 recommendation-first 与审计可追溯性。
+- `SchemaPreflightRunner` in `runtime/schema_preflight.py`
+  - 在真实写入前核对 live 表、字段、字段类型和选项漂移，防止依赖过期 schema 快照直接写坏数据。
+- `WriteGuard` in `runtime/write_guard.py`
+  - 执行 protected field、owner requirement、幂等与 no-write fallback 等最后一道安全边界。
+- `TodoWriter` in `runtime/todo_writer.py`
+  - 当前唯一成熟的统一 writer，实现 Todo create、update、subtask 与重复项处理，是写回层已完成的第一条生产化出口。
+- `recover_live_context` and `build_meeting_output_artifact` in `evals/meeting_output_bridge.py`
+  - 把会议 transcript、gateway 结果、上下文恢复和输出文本桥接到一起，是会议场景目前最重要的集成面。
+
+## 目录结构说明
+
+当前目录组织体现的是“文档规则在外、runtime 在中、验证资产并列”的思路，而不是把所有逻辑塞进单个 skill 文件：
+
+```text
+.
+|-- AGENTS.md
+|-- SKILL.md
+|-- runtime/
+|-- evals/
+|-- tests/
+|-- references/
+|-- config/
+|-- scripts/
+|-- docs/
+|-- agents/
+|-- external-skills/
+|-- archive/
+`-- .github/
+```
+
+- `runtime/`
+  - 本地执行层，包含 gateway、scene runtime、live adapter、schema preflight、guard 和 writer 等核心实现。
+- `evals/`
+  - 场景桥接与验证工件生成层，当前重点是会议输出桥与评测 runner。
+- `tests/`
+  - 回归测试与便携性约束，覆盖 runtime smoke、meeting bridge、validation assets 和 portability contract。
+- `references/`
+  - skill 使用的业务规则、飞书工作台语义约束和场景说明文档，主要服务上下文恢复与操作边界定义。
+- `config/`
+  - 运行期模板与配置样例所在位置，用于支撑本地环境初始化和私有资源接入。
+- `scripts/`
+  - 辅助脚本入口，承载仓库内需要重复执行的非核心运行命令。
+- `docs/`
+  - 面向阅读者的补充文档目录，与根目录的主文档分工配合。
+- `agents/` 与 `external-skills/`
+  - 承载本 skill 依赖或关联的 agent/skill 资产，保持主 runtime 与外部能力说明解耦。
+- `archive/`
+  - 存放归档材料或历史输出，避免污染当前主执行面。
+- `.github/`
+  - 仓库级指令与协作元数据所在位置，不参与运行时数据流，但约束协作方式和文档校验边界。
+
+这种结构的好处是：一方面，`runtime/` 可以保持一个足够薄、可测试、可替换宿主的执行核心；另一方面，`references/`、`evals/` 和 `tests/` 又把业务规则、验证协议和实现代码清晰拆开，避免把飞书语义、场景输出和底层调用耦成一层。
