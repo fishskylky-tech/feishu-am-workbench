@@ -87,12 +87,13 @@ Plans:
 2. Outputs include objective, core judgment, main narrative, resource asks, and open questions rather than summary text only.
 3. Default durable-output routing points to Feishu-native destinations and can be linked back into customer-operating context.
 
-**Plans:** 3/3 plans
+**Plans:** 3/3 plans complete
+**Status:** shipped 2026-04-18
 
 Plans:
-- [ ] 20-01-PLAN.md — Core proposal scene infrastructure: build_proposal_checklist(), run_proposal_scene(), scene registry
-- [ ] 20-02-PLAN.md — Feishu-native output routing: type-based routing, routing payload, destination inference
-- [ ] 20-03-PLAN.md — Testing: test_proposal_scene.py with five-dimension, type-emphasis, checklist, and routing tests
+- [x] 20-01-PLAN.md — Core proposal scene infrastructure: build_proposal_checklist(), run_proposal_scene(), scene registry
+- [x] 20-02-PLAN.md — Feishu-native output routing: type-based routing, routing payload, destination inference
+- [x] 20-03-PLAN.md — Testing: test_proposal_scene.py with five-dimension, type-emphasis, checklist, and routing tests
 
 ### Phase 21: Validation And Milestone Closure
 
