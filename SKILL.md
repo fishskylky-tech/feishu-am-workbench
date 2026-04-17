@@ -87,7 +87,7 @@ Loaded when skill is activated.
 - Closed Loop
 - Scope
 
-### L3: Extended References (~17,327 tokens total, loaded on-demand)
+### L3: Extended References (~15,346 tokens total for the curated loading set, loaded on-demand)
 
 Reference documents in `references/` should be loaded only when needed based on task context.
 
@@ -174,7 +174,7 @@ For a complete index with loading guidance, see [references/INDEX.md](./referenc
 - All date output and write-back must use absolute time expressions — never relative ones like `近期`, `昨天`, `明天`, `今年`, or `明年`. If the source is vague, keep the highest-confidence absolute form available and flag the precision gap.
 - Do not mix public news into meeting notes, and do not mix meeting notes into `最新资讯`.
 - Store full meeting notes as Feishu docs and keep only the document link in tables. Treat those docs as cold memory that should be loaded only when needed.
-- Unless the user says otherwise, store meeting-note cold-memory docs in the dedicated Feishu folder `fld_meeting_notes_example`.
+- Unless the user says otherwise, store meeting-note cold-memory docs in the dedicated meeting-note folder resolved from the current runtime sources or local `FEISHU_AM_MEETING_NOTES_FOLDER` configuration. Example tokens in reference docs are illustrative only, not default write targets.
 - For meeting-note handling, do not treat the transcript as self-sufficient if recoverable context exists in Feishu records or customer archive materials.
 - For meeting-note handling, default to a live-first attempt. Do not stay on single-file analysis if gateway Stage 1-3 can run.
 - For meeting-note handling, run the meeting live-first execution gate before formal analysis. Do not output a formal context-recovery result, meeting type, or write ceiling before the gate result is known.

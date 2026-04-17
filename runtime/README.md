@@ -86,3 +86,54 @@ python3 -m runtime . --json
 ```
 
 Runtime entrypoints now explicitly load `.env` from the repository root before reading `FEISHU_AM_*` variables. If the same key is already exported in your shell, the exported value wins.
+
+## Scene runtime entrypoint
+
+Phase 12 introduces a canonical scene-oriented entry surface:
+
+```bash
+python3 -m runtime scene post-meeting-synthesis \
+  --eval-name unilever-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --customer-query 联合利华
+```
+
+Current rule:
+
+- stable scene names are the long-term runtime entry contract
+- compatibility commands may remain, but they should wrap scene dispatch
+- gateway, schema preflight, write guard, and writer remain the non-bypass safety path
+
+Additional scene entrypoints on the same shared contract:
+
+```bash
+python3 -m runtime scene customer-recent-status \
+  --customer-query 联合利华 \
+  --repo-root . \
+  --json
+```
+
+```bash
+python3 -m runtime scene archive-refresh \
+  --customer-query 联合利华 \
+  --topic-text 客户档案 \
+  --repo-root . \
+  --json
+```
+
+```bash
+python3 -m runtime scene todo-capture-and-update \
+  --customer-query 联合利华 \
+  --todo-item-json '{"summary":"确认联合利华复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}' \
+  --repo-root . \
+  --json
+```
+
+Legacy compatibility entry:
+
+```bash
+python3 -m runtime meeting-write-loop \
+  --eval-name unilever-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --customer-query 联合利华
+```

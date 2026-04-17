@@ -39,6 +39,13 @@ from runtime import (  # noqa: E402
 )
 from runtime.diagnostics import suggest_next_actions  # noqa: E402
 from runtime.models import TodoWriteResult, WriteCandidate, WriteExecutionResult  # noqa: E402
+from runtime.scene_registry import (  # noqa: E402
+    UnknownSceneError,
+    build_default_scene_registry,
+    dispatch_scene,
+)
+from runtime.scene_runtime import SceneRequest, SceneResult  # noqa: E402
+import runtime.scene_runtime as scene_runtime  # noqa: E402
 import runtime.__main__ as runtime_main  # noqa: E402
 
 
@@ -2248,7 +2255,92 @@ class RuntimeSmokeTests(unittest.TestCase):
         )
         self.assertEqual(actions, ["task adapter is usable; keep this as the known-good baseline"])
 
-    def test_runtime_cli_meeting_write_loop_outputs_candidate_preview_json(self) -> None:
+    def test_scene_result_structured_result_preserves_standard_fields(self) -> None:
+        result = SceneResult(
+            scene_name="post-meeting-synthesis",
+            resource_status="resolved",
+            customer_status="resolved",
+            context_status="completed",
+            used_sources=["客户主数据"],
+            facts=["客户已完成阶段复盘"],
+            judgments=["当前更适合继续跟进"],
+            open_questions=["负责人是否仍为销售总监"],
+            recommendations=["确认联合利华后续动作"],
+            fallback_category="none",
+            fallback_reason=None,
+            fallback_message=None,
+            write_ceiling="normal",
+            output_text="artifact output",
+            payload={"candidate_count": 1, "write_result_details": []},
+        )
+
+        structured = result.structured_result()
+
+        self.assertEqual(structured["scene_name"], "post-meeting-synthesis")
+        self.assertEqual(structured["facts"], ["客户已完成阶段复盘"])
+        self.assertEqual(structured["judgments"], ["当前更适合继续跟进"])
+        self.assertEqual(structured["candidate_count"], 1)
+        structured["facts"].append("changed")
+        self.assertEqual(result.facts, ["客户已完成阶段复盘"])
+
+    def test_scene_result_structured_result_does_not_allow_payload_to_override_standard_fields(self) -> None:
+        result = SceneResult(
+            scene_name="post-meeting-synthesis",
+            resource_status="resolved",
+            customer_status="resolved",
+            context_status="completed",
+            write_ceiling="normal",
+            payload={
+                "scene_name": "archive-refresh",
+                "resource_status": "blocked",
+                "scene_payload": {"topic_text": "weekly review"},
+            },
+        )
+
+        structured = result.structured_result()
+
+        self.assertEqual(structured["scene_name"], "post-meeting-synthesis")
+        self.assertEqual(structured["resource_status"], "resolved")
+        self.assertEqual(
+            structured["scene_payload"]["reserved_payload_fields"],
+            {"scene_name": "archive-refresh", "resource_status": "blocked"},
+        )
+
+    def test_normalize_scene_path_expands_user_and_repo_relative_paths(self) -> None:
+        repo_root = Path("/tmp/repo-root")
+
+        with patch.object(scene_runtime.Path, "expanduser", return_value=Path("/Users/tester/demo.txt")):
+            expanded = scene_runtime._normalize_scene_path("~/demo.txt", repo_root)
+
+        relative = scene_runtime._normalize_scene_path("fixtures/demo.txt", repo_root)
+
+        self.assertEqual(expanded, Path("/Users/tester/demo.txt"))
+        self.assertEqual(relative, repo_root / "fixtures/demo.txt")
+
+    def test_dispatch_scene_rejects_unknown_scene_name(self) -> None:
+        request = SceneRequest(
+            scene_name="unknown-scene",
+            repo_root=REPO_ROOT,
+            customer_query="联合利华",
+        )
+
+        with self.assertRaises(UnknownSceneError):
+            dispatch_scene(request)
+
+    def test_default_scene_registry_exposes_first_wave_scene_names(self) -> None:
+        registry = build_default_scene_registry()
+
+        self.assertEqual(
+            registry.available_scenes(),
+            [
+                "archive-refresh",
+                "customer-recent-status",
+                "post-meeting-synthesis",
+                "todo-capture-and-update",
+            ],
+        )
+
+    def test_post_meeting_scene_result_uses_existing_gateway_bridge_surfaces(self) -> None:
         gateway_result = type(
             "FakeGatewayResult",
             (),
@@ -2260,7 +2352,15 @@ class RuntimeSmokeTests(unittest.TestCase):
         recovery = type(
             "FakeRecovery",
             (),
-            {"status": "completed", "write_ceiling": "normal"},
+            {
+                "status": "completed",
+                "write_ceiling": "normal",
+                "used_sources": ["客户主数据", "客户联系记录"],
+                "key_context": ["客户近期处于阶段复盘窗口"],
+                "open_questions": ["下次跟进负责人是否变化"],
+                "candidate_conflicts": [],
+                "fallback_reason": None,
+            },
         )()
         candidate = WriteCandidate(
             object_name="待办",
@@ -2273,28 +2373,319 @@ class RuntimeSmokeTests(unittest.TestCase):
             source_context={"scenario": "post_meeting"},
         )
 
-        with patch.object(runtime_main.FeishuWorkbenchGateway, "for_live_lark_cli") as gateway_factory, patch.object(
-            runtime_main, "RuntimeSourceLoader"
-        ) as source_loader_cls, patch.object(runtime_main.LiveWorkbenchConfig, "from_sources", return_value=object()), patch.object(
-            runtime_main, "LarkCliBaseQueryBackend", return_value=object()
-        ), patch.object(runtime_main, "recover_live_context", return_value=recovery), patch.object(
-            runtime_main, "build_meeting_todo_candidates", return_value=[candidate]
+        with patch.object(scene_runtime.FeishuWorkbenchGateway, "for_live_lark_cli") as gateway_factory, patch.object(
+            scene_runtime, "RuntimeSourceLoader"
+        ) as source_loader_cls, patch.object(scene_runtime.LiveWorkbenchConfig, "from_sources", return_value=object()), patch.object(
+            scene_runtime, "LarkCliBaseQueryBackend", return_value=object()
+        ), patch.object(scene_runtime, "recover_live_context", return_value=recovery), patch.object(
+            scene_runtime, "build_meeting_todo_candidates", return_value=[candidate]
         ), patch.object(
-            runtime_main,
+            scene_runtime,
             "build_meeting_output_artifact",
             return_value={"output_text": "artifact output", "write_result_details": []},
         ):
             gateway_factory.return_value.run.return_value = gateway_result
             source_loader_cls.return_value.load.return_value = object()
+            result = scene_runtime.run_post_meeting_scene(
+                SceneRequest(
+                    scene_name="post-meeting-synthesis",
+                    repo_root=REPO_ROOT,
+                    customer_query="联合利华",
+                    inputs={
+                        "eval_name": "unilever-stage-review",
+                        "transcript_file": str(
+                            REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
+                        ),
+                        "action_items": [],
+                    },
+                    options={"confirm_write": False},
+                )
+            )
+
+        payload = result.structured_result()
+        self.assertEqual(payload["scene_name"], "post-meeting-synthesis")
+        self.assertEqual(payload["used_sources"], ["客户主数据", "客户联系记录"])
+        self.assertEqual(payload["recommendations"], ["确认联合利华后续动作"])
+        self.assertEqual(payload["candidate_count"], 1)
+        self.assertEqual(payload["context_status"], "completed")
+
+    def test_customer_recent_status_scene_returns_structured_sections(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
+                "customer_resolution": type(
+                    "CustomerResolution",
+                    (),
+                    {
+                        "status": "resolved",
+                        "candidates": [
+                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                        ],
+                    },
+                )(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {
+                "status": "partial",
+                "write_ceiling": "recommendation-only",
+                "used_sources": ["客户主数据", "客户联系记录"],
+                "key_context": ["客户主数据快照: 联合利华｜客户ID C_002"],
+                "open_questions": ["缺少当前行动计划"],
+                "candidate_conflicts": ["客户档案候选缺少显式客户证据"],
+                "missing_sources": ["行动计划"],
+                "fallback_reason": "some targeted live reads are still missing",
+            },
+        )()
+
+        with patch.object(scene_runtime, "_build_live_scene_context", return_value=(gateway_result, recovery)):
+            result = scene_runtime.run_customer_recent_status_scene(
+                SceneRequest(
+                    scene_name="customer-recent-status",
+                    repo_root=REPO_ROOT,
+                    customer_query="联合利华",
+                    inputs={"topic_text": "最近经营状态"},
+                )
+            )
+
+        payload = result.structured_result()
+        self.assertEqual(payload["scene_name"], "customer-recent-status")
+        self.assertEqual(payload["facts"], ["客户主数据快照: 联合利华｜客户ID C_002"])
+        self.assertTrue(any("recommendation-first" in item for item in payload["judgments"]))
+        self.assertTrue(any("行动计划" in item for item in payload["recommendations"]))
+        self.assertEqual(payload["fallback_category"], "context")
+
+    def test_customer_recent_status_scene_classifies_permission_fallback(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "degraded"})(),
+                "customer_resolution": type(
+                    "CustomerResolution",
+                    (),
+                    {
+                        "status": "resolved",
+                        "candidates": [
+                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                        ],
+                    },
+                )(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {
+                "status": "context-limited",
+                "write_ceiling": "recommendation-only",
+                "used_sources": [],
+                "key_context": [],
+                "open_questions": [],
+                "candidate_conflicts": [],
+                "missing_sources": ["客户档案"],
+                "fallback_reason": "permission denied while reading drive folder",
+            },
+        )()
+
+        with patch.object(scene_runtime, "_build_live_scene_context", return_value=(gateway_result, recovery)):
+            result = scene_runtime.run_customer_recent_status_scene(
+                SceneRequest(
+                    scene_name="customer-recent-status",
+                    repo_root=REPO_ROOT,
+                    customer_query="联合利华",
+                )
+            )
+
+        self.assertEqual(result.fallback_category, "permission")
+
+    def test_archive_refresh_scene_surfaces_archive_refresh_guidance(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
+                "customer_resolution": type(
+                    "CustomerResolution",
+                    (),
+                    {
+                        "status": "resolved",
+                        "candidates": [
+                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                        ],
+                    },
+                )(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {
+                "status": "partial",
+                "write_ceiling": "recommendation-only",
+                "used_sources": ["客户主数据", "客户档案候选"],
+                "key_context": ["客户档案候选: 联合利华客户档案｜https://doc.example/archive"],
+                "open_questions": ["需确认 canonical archive"],
+                "candidate_conflicts": ["客户档案候选缺少显式客户证据"],
+                "missing_sources": [],
+                "fallback_reason": "some targeted live reads are still missing",
+            },
+        )()
+
+        with patch.object(scene_runtime, "_build_live_scene_context", return_value=(gateway_result, recovery)):
+            result = scene_runtime.run_archive_refresh_scene(
+                SceneRequest(
+                    scene_name="archive-refresh",
+                    repo_root=REPO_ROOT,
+                    customer_query="联合利华",
+                )
+            )
+
+        payload = result.structured_result()
+        self.assertEqual(payload["scene_name"], "archive-refresh")
+        self.assertTrue(any("archive" in item for item in payload["judgments"]))
+        self.assertTrue(any("canonical archive" in item for item in payload["recommendations"]))
+
+    def test_todo_capture_and_update_scene_builds_candidates_and_writes_through_shared_path(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
+                "customer_resolution": type(
+                    "CustomerResolution",
+                    (),
+                    {
+                        "status": "resolved",
+                        "candidates": [
+                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                        ],
+                    },
+                )(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {
+                "status": "completed",
+                "write_ceiling": "normal",
+                "used_sources": ["客户主数据", "行动计划"],
+                "key_context": ["当前行动计划: 跟进联合利华复盘｜2026-04-20"],
+                "open_questions": [],
+                "candidate_conflicts": [],
+                "missing_sources": [],
+                "fallback_reason": None,
+            },
+        )()
+        write_result = WriteExecutionResult(
+            target_object="todo",
+            attempted=True,
+            allowed=True,
+            preflight_status="safe",
+            guard_status="allowed",
+            dedupe_decision="create_new",
+            executed_operation="create",
+            remote_object_id="task_guid_22",
+            source_context={"scenario": "todo_follow_on"},
+        )
+
+        with patch.object(scene_runtime, "_build_live_scene_context", return_value=(gateway_result, recovery)), patch.object(
+            scene_runtime.TodoWriter, "for_live_lark_cli", return_value=object()
+        ), patch.object(scene_runtime, "run_confirmed_todo_write", return_value=[write_result]):
+            result = scene_runtime.run_todo_capture_and_update_scene(
+                SceneRequest(
+                    scene_name="todo-capture-and-update",
+                    repo_root=REPO_ROOT,
+                    customer_query="联合利华",
+                    inputs={
+                        "todo_items": [
+                            {
+                                "summary": "确认联合利华复盘结论",
+                                "owner": "ou_owner",
+                                "priority": "高",
+                                "due_at": "2026-04-20",
+                            }
+                        ]
+                    },
+                    options={"confirm_write": True},
+                )
+            )
+
+        payload = result.structured_result()
+        self.assertEqual(payload["scene_name"], "todo-capture-and-update")
+        self.assertEqual(payload["candidate_count"], 1)
+        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认联合利华复盘结论")
+        self.assertEqual(payload["write_result_details"][0]["executed_operation"], "create")
+
+    def test_todo_capture_and_update_scene_unresolved_customer_stays_recommendation_only(self) -> None:
+        gateway_result = type(
+            "FakeGatewayResult",
+            (),
+            {
+                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
+                "customer_resolution": type("CustomerResolution", (), {"status": "missing", "candidates": []})(),
+            },
+        )()
+        recovery = type(
+            "FakeRecovery",
+            (),
+            {
+                "status": "context-limited",
+                "write_ceiling": "recommendation-only",
+                "used_sources": [],
+                "key_context": [],
+                "open_questions": [],
+                "candidate_conflicts": [],
+                "missing_sources": ["客户主数据"],
+                "fallback_reason": "customer cannot be resolved (missing) from current live customer master",
+            },
+        )()
+
+        with patch.object(scene_runtime, "_build_live_scene_context", return_value=(gateway_result, recovery)):
+            result = scene_runtime.run_todo_capture_and_update_scene(
+                SceneRequest(
+                    scene_name="todo-capture-and-update",
+                    repo_root=REPO_ROOT,
+                    customer_query="联合利华",
+                    inputs={"todo_items": [{"summary": "补一条待办"}]},
+                )
+            )
+
+        payload = result.structured_result()
+        self.assertEqual(payload["candidate_count"], 0)
+        self.assertEqual(payload["fallback_category"], "customer")
+
+    def test_runtime_cli_scene_command_supports_customer_recent_status_without_meeting_args(self) -> None:
+        result = SceneResult(
+            scene_name="customer-recent-status",
+            resource_status="resolved",
+            customer_status="resolved",
+            context_status="completed",
+            used_sources=["客户主数据"],
+            facts=["客户主数据快照: 联合利华｜客户ID C_002"],
+            judgments=["当前客户近期状态已有足够 live 证据，可继续输出经营判断。"],
+            open_questions=[],
+            recommendations=["基于当前 live 上下文整理一版客户最近状态结论，供后续会前/会后复用。"],
+            fallback_category="none",
+            fallback_reason=None,
+            fallback_message=None,
+            write_ceiling="normal",
+            output_text="recent status output",
+            payload={"scene_payload": {"topic_text": ""}},
+        )
+
+        with patch.object(runtime_main, "dispatch_scene", return_value=result) as dispatch:
             stdout = StringIO()
             with redirect_stdout(stdout):
                 exit_code = runtime_main.main(
                     [
-                        "meeting-write-loop",
-                        "--eval-name",
-                        "unilever-stage-review",
-                        "--transcript-file",
-                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"),
+                        "scene",
+                        "customer-recent-status",
                         "--customer-query",
                         "联合利华",
                         "--repo-root",
@@ -2304,36 +2695,60 @@ class RuntimeSmokeTests(unittest.TestCase):
                 )
 
         payload = json.loads(stdout.getvalue())
+        request = dispatch.call_args.args[0]
         self.assertEqual(exit_code, 0)
-        self.assertEqual(payload["candidate_count"], 1)
-        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认联合利华后续动作")
-        self.assertEqual(payload["context_status"], "completed")
-        self.assertEqual(payload["write_result_details"], [])
+        self.assertEqual(request.scene_name, "customer-recent-status")
+        self.assertEqual(request.inputs["eval_name"], None)
+        self.assertEqual(payload["scene_name"], "customer-recent-status")
 
-    def test_runtime_cli_meeting_write_loop_runs_confirmed_write_when_requested(self) -> None:
-        gateway_result = type(
-            "FakeGatewayResult",
-            (),
-            {
-                "resource_resolution": type("ResourceResolution", (), {"status": "resolved"})(),
-                "customer_resolution": type("CustomerResolution", (), {"status": "resolved"})(),
-            },
-        )()
-        recovery = type(
-            "FakeRecovery",
-            (),
-            {"status": "completed", "write_ceiling": "normal"},
-        )()
-        candidate = WriteCandidate(
-            object_name="待办",
-            target_object="todo",
-            layer="reminder",
-            operation="create",
-            semantic_fields=["summary", "customer"],
-            payload={"summary": "确认联合利华后续动作", "customer": "联合利华"},
-            match_basis={"customer": "联合利华"},
-            source_context={"scenario": "post_meeting"},
+    def test_runtime_cli_scene_command_uses_canonical_scene_dispatch(self) -> None:
+        result = SceneResult(
+            scene_name="post-meeting-synthesis",
+            resource_status="resolved",
+            customer_status="resolved",
+            context_status="completed",
+            used_sources=["客户主数据"],
+            facts=[],
+            judgments=[],
+            open_questions=[],
+            recommendations=["确认联合利华后续动作"],
+            fallback_category="none",
+            fallback_reason=None,
+            fallback_message=None,
+            write_ceiling="normal",
+            output_text="artifact output",
+            payload={"candidate_count": 1, "candidates": [], "write_result_details": []},
         )
+
+        with patch.object(runtime_main, "dispatch_scene", return_value=result) as dispatch:
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                exit_code = runtime_main.main(
+                    [
+                        "scene",
+                        "post-meeting-synthesis",
+                        "--eval-name",
+                        "unilever-stage-review",
+                        "--transcript-file",
+                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"),
+                        "--customer-query",
+                        "联合利华",
+                        "--repo-root",
+                        str(REPO_ROOT),
+                        "--confirm-write",
+                        "--json",
+                    ]
+                )
+
+        payload = json.loads(stdout.getvalue())
+        request = dispatch.call_args.args[0]
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(request.scene_name, "post-meeting-synthesis")
+        self.assertTrue(request.options["confirm_write"])
+        self.assertEqual(payload["scene_name"], "post-meeting-synthesis")
+        self.assertEqual(payload["candidate_count"], 1)
+
+    def test_runtime_cli_meeting_write_loop_routes_through_post_meeting_scene(self) -> None:
         write_result = WriteExecutionResult(
             target_object="todo",
             attempted=True,
@@ -2345,25 +2760,29 @@ class RuntimeSmokeTests(unittest.TestCase):
             remote_object_id="task_guid_11",
             source_context={"scenario": "post_meeting"},
         )
-
-        with patch.object(runtime_main.FeishuWorkbenchGateway, "for_live_lark_cli") as gateway_factory, patch.object(
-            runtime_main, "RuntimeSourceLoader"
-        ) as source_loader_cls, patch.object(runtime_main.LiveWorkbenchConfig, "from_sources", return_value=object()), patch.object(
-            runtime_main, "LarkCliBaseQueryBackend", return_value=object()
-        ), patch.object(runtime_main, "recover_live_context", return_value=recovery), patch.object(
-            runtime_main, "build_meeting_todo_candidates", return_value=[candidate]
-        ), patch.object(runtime_main.TodoWriter, "for_live_lark_cli", return_value=object()) as todo_writer_factory, patch.object(
-            runtime_main, "run_confirmed_todo_write", return_value=[write_result]
-        ) as confirmed_write, patch.object(
-            runtime_main,
-            "build_meeting_output_artifact",
-            return_value={
-                "output_text": "artifact output\n统一写回结果:\n- todo: 已创建新待办",
+        result = SceneResult(
+            scene_name="post-meeting-synthesis",
+            resource_status="resolved",
+            customer_status="resolved",
+            context_status="completed",
+            used_sources=["客户主数据"],
+            facts=[],
+            judgments=[],
+            open_questions=[],
+            recommendations=["确认联合利华后续动作"],
+            fallback_category="none",
+            fallback_reason=None,
+            fallback_message=None,
+            write_ceiling="normal",
+            output_text="artifact output",
+            payload={
+                "candidate_count": 1,
+                "candidates": [{"payload": {"summary": "确认联合利华后续动作"}}],
                 "write_result_details": [write_result.structured_result()],
             },
-        ):
-            gateway_factory.return_value.run.return_value = gateway_result
-            source_loader_cls.return_value.load.return_value = object()
+        )
+
+        with patch.object(runtime_main, "dispatch_scene", return_value=result) as dispatch:
             stdout = StringIO()
             with redirect_stdout(stdout):
                 exit_code = runtime_main.main(
@@ -2383,9 +2802,11 @@ class RuntimeSmokeTests(unittest.TestCase):
                 )
 
         payload = json.loads(stdout.getvalue())
+        request = dispatch.call_args.args[0]
         self.assertEqual(exit_code, 0)
-        todo_writer_factory.assert_called_once_with(str(REPO_ROOT))
-        confirmed_write.assert_called_once()
+        self.assertEqual(request.scene_name, "post-meeting-synthesis")
+        self.assertTrue(request.options["confirm_write"])
+        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认联合利华后续动作")
         self.assertEqual(payload["write_result_details"][0]["executed_operation"], "create")
         self.assertEqual(payload["write_result_details"][0]["remote_metadata"]["object_id"], "task_guid_11")
 
