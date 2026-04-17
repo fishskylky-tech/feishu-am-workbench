@@ -30,6 +30,25 @@ SceneFallbackCategory = Literal[
     "safety",
 ]
 
+STANDARD_SCENE_RESULT_FIELDS = frozenset(
+    {
+        "scene_name",
+        "resource_status",
+        "customer_status",
+        "context_status",
+        "used_sources",
+        "facts",
+        "judgments",
+        "open_questions",
+        "recommendations",
+        "fallback_category",
+        "fallback_reason",
+        "fallback_message",
+        "write_ceiling",
+        "output_text",
+    }
+)
+
 
 @dataclass
 class SceneRequest:
@@ -75,8 +94,18 @@ class SceneResult:
             "write_ceiling": self.write_ceiling,
             "output_text": self.output_text,
         }
+        collision_payload: dict[str, Any] = {}
         for key, value in self.payload.items():
+            if key in STANDARD_SCENE_RESULT_FIELDS:
+                collision_payload[key] = deepcopy(value)
+                continue
             result[key] = deepcopy(value)
+        if collision_payload:
+            scene_payload = result.get("scene_payload")
+            if not isinstance(scene_payload, dict):
+                scene_payload = {} if scene_payload is None else {"value": deepcopy(scene_payload)}
+            scene_payload["reserved_payload_fields"] = collision_payload
+            result["scene_payload"] = scene_payload
         return result
 
     def render_text(self) -> str:
@@ -102,6 +131,13 @@ def _build_live_scene_context(
         topic_text=topic_text,
     )
     return gateway_result, recovery
+
+
+def _normalize_scene_path(raw_path: Any, repo_root: Path) -> Path:
+    path = Path(str(raw_path)).expanduser()
+    if not path.is_absolute():
+        path = repo_root / path
+    return path
 
 
 def _build_context_result(
@@ -148,7 +184,7 @@ def _build_context_result(
 
 def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
     repo_root = request.repo_root.expanduser()
-    transcript_file = Path(str(request.inputs["transcript_file"]))
+    transcript_file = _normalize_scene_path(request.inputs["transcript_file"], repo_root)
     eval_name = str(request.inputs["eval_name"])
     action_items = list(request.inputs.get("action_items") or [])
     confirm_write = bool(request.options.get("confirm_write", False))
