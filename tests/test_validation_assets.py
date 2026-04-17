@@ -52,10 +52,10 @@ class ValidationAssetTests(unittest.TestCase):
         evals = json.loads(EVALS_PATH.read_text())
         readme_text = README_PATH.read_text(encoding="utf-8")
 
-        self.assertEqual(version, "0.2.14")
+        self.assertEqual(version, "1.1.0")
         self.assertEqual(evals["version"], version)
-        self.assertIn("## [0.2.14] - 2026-04-16", CHANGELOG_PATH.read_text())
-        self.assertIn("版本：0.2.14", readme_text)
+        self.assertIn("## [1.1.0] - 2026-04-17", CHANGELOG_PATH.read_text())
+        self.assertIn("版本：1.1.0（对应 milestone v1.1）", readme_text)
 
     def test_evals_cover_three_real_transcript_cases(self) -> None:
         evals = json.loads(EVALS_PATH.read_text())["evals"]
@@ -177,12 +177,13 @@ class ValidationAssetTests(unittest.TestCase):
         requirements_text = REQUIREMENTS_PATH.read_text(encoding="utf-8")
         state_text = STATE_PATH.read_text(encoding="utf-8")
 
-        self.assertIn("No active mainline milestone", roadmap_text)
+        self.assertIn("Active mainline milestone: v1.2 Expert Customer Operating Scenes", roadmap_text)
         self.assertIn("v1.1-ROADMAP.md", roadmap_text)
         self.assertIn("optional historical cleanup", roadmap_text)
-        self.assertIn("No active mainline milestone", requirements_text)
+        self.assertIn("**Milestone:** v1.2 Expert Customer Operating Scenes", requirements_text)
         self.assertIn("v1.1-REQUIREMENTS.md", requirements_text)
-        self.assertIn("v1.1 archived", state_text)
+        self.assertIn("milestone: v1.2", state_text)
+        self.assertIn("v1.1 is now fully archived", state_text)
         self.assertIn("Optional: /gsd-plan-phase 999.1", state_text)
         self.assertTrue(PHASE_12_CONTEXT_PATH.exists())
 

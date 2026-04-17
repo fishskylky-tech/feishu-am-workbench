@@ -9,7 +9,7 @@
 - `修复`：问题修正
 - `移除`：废弃能力
 
-## [0.2.14] - 2026-04-16
+## [1.1.0] - 2026-04-17
 
 ### 新增
 
@@ -34,7 +34,7 @@
 - `tests/test_runtime_smoke.py`
   - 清理会被真实环境变量污染的 smoke fixture，确保 clean checkout 下的 runtime 回归可以稳定验证 env-backed source contract
 - `CHANGELOG.md`、`VERSION`、`evals/evals.json`、`SKILL.md`
-  - 发布元数据统一到 v1.0 closeout 已发布主线的真实版本口径
+  - 发布元数据统一到单轨 `1.1.0`，并明确该版本对应已归档的 v1.1 mainline milestone
 
 ## [0.2.13] - 2026-04-15
 

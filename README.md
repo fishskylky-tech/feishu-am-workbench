@@ -226,17 +226,9 @@ python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_me
 
 ## 当前版本
 
-- 版本：0.2.14
+- 版本：1.1.0（对应 milestone v1.1）
 - 当前状态：v1.0 phases 1-11 与 v1.1 phases 12-15 都已完成并归档；v1.1 closeout artifacts 已补齐
-- 当前主线：暂无新的 mainline milestone；下一步是定义新里程碑，或可选处理 backlog 999.1
-
-## 后续建议
-
-如果你现在要继续推进仓库：
-
-1. 定义新的 mainline milestone，把 bootstrap/admin operator path 或下一轮 validation 收口目标正式写进 requirements / roadmap
-2. 可选处理 backlog 999.1，但它只是 historical metadata cleanup，不阻塞主线推进
-3. 在新 milestone 开始前，继续沿 canonical scene runtime 入口做日常验证与 live workspace 使用
+- 当前主线：v1.2 Expert Customer Operating Scenes；下一步是规划并执行 Phase 16，或可选处理 backlog 999.1
 
 
 ## 安装

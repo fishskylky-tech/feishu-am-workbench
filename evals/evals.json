@@ -1,6 +1,6 @@
 {
   "skill_name": "feishu-am-workbench",
-  "version": "0.2.14",
+  "version": "1.1.0",
   "description": "真实场景多案例回归集，覆盖探索型阶段汇报、产品/方案沟通、广告追踪答疑三类高风险会议场景",
   "evals": [
     {
