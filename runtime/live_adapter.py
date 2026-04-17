@@ -479,6 +479,50 @@ class LarkCliCustomerBackend:
             return self._stringify(value.get("value"))
         return self._stringify(value)
 
+    def list_all_customers(self, limit: int = 200) -> list[dict[str, str]]:
+        """List all customers from customer master for cohort scanning.
+
+        Per D-12: cohort scan is user-triggered analytical entry, not scheduled.
+        Uses _list_records with limit=200 to fetch customer master records.
+        Returns list of customer record dicts with fields like 简称, 客户名称, 客户ID, 状态.
+        """
+        if not self.config.base_token:
+            return []
+        return self._list_records(self.config.table_target("客户主数据"), limit=limit)
+
+    def filter_customers(
+        self,
+        customers: list[dict[str, str]],
+        criteria: dict[str, Any],
+    ) -> list[dict[str, str]]:
+        """Apply filter criteria to customer list.
+
+        Supports:
+          - name_contains: text match against 简称 and 客户名称 (case-insensitive)
+          - status: list of status values to match against 状态 field
+          - activity_within_days: filter by last activity date if field present (placeholder)
+
+        Per D-03: user defines cohort via dynamic condition query interpreted into filter criteria.
+        """
+        filtered = list(customers)
+        if "name_contains" in criteria:
+            term = str(criteria["name_contains"]).lower()
+            filtered = [
+                c for c in filtered
+                if term in str(c.get("简称") or "").lower()
+                or term in str(c.get("客户名称") or "").lower()
+            ]
+        if "status" in criteria:
+            statuses = criteria["status"]
+            filtered = [c for c in filtered if c.get("状态") in statuses]
+        # activity_within_days: check if last_activity field exists and is within window
+        if "activity_within_days" in criteria:
+            days = int(criteria["activity_within_days"])
+            # Placeholder: requires actual last_activity field in customer master
+            # Filter is a no-op if field is not present
+            pass
+        return filtered
+
 
 class LarkCliBaseQueryBackend:
     """Thin Base query adapter.

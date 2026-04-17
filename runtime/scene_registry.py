@@ -15,6 +15,7 @@ from .scene_runtime import (
     SceneRequest,
     SceneResult,
     run_archive_refresh_scene,
+    run_cohort_scan_scene,
     run_customer_recent_status_scene,
     run_post_meeting_scene,
     run_todo_capture_and_update_scene,
@@ -53,6 +54,7 @@ def build_default_scene_registry() -> SceneRegistry:
     registry.register("customer-recent-status", run_customer_recent_status_scene)
     registry.register("archive-refresh", run_archive_refresh_scene)
     registry.register("todo-capture-and-update", run_todo_capture_and_update_scene)
+    registry.register("cohort-scan", run_cohort_scan_scene)
     return registry
 
 

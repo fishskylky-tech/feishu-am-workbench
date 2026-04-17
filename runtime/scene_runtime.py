@@ -10,11 +10,11 @@ from typing import Any, Literal
 
 from .gateway import FeishuWorkbenchGateway
 from .lark_cli import LarkCliClient
-from .live_adapter import LarkCliBaseQueryBackend, LiveWorkbenchConfig
+from .live_adapter import LarkCliBaseQueryBackend, LarkCliCustomerBackend, LiveWorkbenchConfig
 from .models import WriteCandidate, WriteExecutionResult
 from .runtime_sources import RuntimeSourceLoader
 from .todo_writer import TodoWriter
-from .expert_analysis_helper import ExpertAnalysisHelper
+from .expert_analysis_helper import EvidenceContainer, EvidenceSource, ExpertAnalysisHelper
 
 # STAT-01: Four-lens keyword sets for account posture derivation
 _STAT_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "收紧", "压力", "危机", "逾期", "负向"}
@@ -681,3 +681,356 @@ def _classify_fallback(
     if context_status != "completed" or write_ceiling == "recommendation-only":
         return "context", "现场资料还不够完整，当前结果只能作为建议参考。"
     return "context", "当前结果存在受限条件，请先按 fallback 原因补足信息后再继续。"
+
+
+def _parse_condition_query(condition_query: str) -> dict[str, Any]:
+    """Parse natural language condition into filter criteria.
+
+    Per D-03: user defines cohort via dynamic condition query interpreted into filter criteria.
+
+    Returns dict like:
+      {"name_contains": "text"}  or
+      {"status": ["active"]}    or
+      {"activity_within_days": 90}
+
+    If no specific pattern recognized, returns {"name_contains": condition_query}.
+    """
+    criteria: dict[str, Any] = {}
+    query_lower = condition_query.lower()
+
+    # Activity-based filters
+    if "最近" in condition_query or "近" in condition_query:
+        import re
+        days_match = re.search(r"(\d+)\s*(天|周|个月?)", condition_query)
+        if days_match:
+            amount, unit = days_match.groups()
+            days = int(amount) * {"天": 1, "周": 7, "月": 30, "个月": 30}.get(unit, 1)
+            criteria["activity_within_days"] = days
+
+    # Status-based filters
+    if "活跃" in condition_query or "active" in query_lower:
+        criteria.setdefault("status", []).append("active")
+    if "风险" in condition_query or "risk" in query_lower:
+        criteria.setdefault("status", []).append("at_risk")
+    if "机会" in condition_query or "opportunity" in query_lower:
+        criteria.setdefault("status", []).append("opportunity")
+    if "扩张" in condition_query or "expanding" in query_lower:
+        criteria.setdefault("status", []).append("expanding")
+
+    # Fallback: use full text as text-match filter on customer names
+    if not criteria:
+        criteria["name_contains"] = condition_query
+
+    return criteria
+
+
+def _build_cohort_limit_result(
+    request: SceneRequest,
+    cohort_size: int,
+    cohort_limit: int,
+    all_customers: list[dict[str, str]],
+    condition_query: str,
+) -> SceneResult:
+    """Return result when cohort size exceeds limit.
+
+    Per D-04: when result set exceeds limit, user is prompted to narrow scope.
+    """
+    suggestions = [
+        f"当前筛选结果包含 {cohort_size} 个客户，已超过单次分析上限 {cohort_limit}。",
+        "请缩小范围后重试，例如：",
+        "- 指定客户名称关键词（如 'XX 公司'）",
+        "- 指定客户状态（如 '风险客户' 或 '机会客户'）",
+        f"- 指定时间范围（如 '近 3 个月有活动的客户'）",
+    ]
+    return SceneResult(
+        scene_name=request.scene_name,
+        resource_status="resolved",
+        customer_status="cohort",
+        context_status="completed",
+        used_sources=["customer_master"],
+        facts=[f"筛选条件: {condition_query}", f"命中客户数: {cohort_size}"],
+        judgments=[f"当前Cohort规模 {cohort_size} 超过分析上限 {cohort_limit}，建议缩小范围。"],
+        open_questions=[],
+        recommendations=[f"请缩小筛选条件后重新发起Cohort扫描（当前上限 {cohort_limit} 客户）"],
+        fallback_category="none",
+        fallback_reason=None,
+        fallback_message=None,
+        write_ceiling="recommendation-only",
+        output_text="\n".join(suggestions),
+        payload={
+            "cohort_size": cohort_size,
+            "cohort_limit": cohort_limit,
+            "condition_query": condition_query,
+            "limiting_applied": True,
+        },
+    )
+
+
+def _build_empty_cohort_result(request: SceneRequest, condition_query: str) -> SceneResult:
+    return SceneResult(
+        scene_name=request.scene_name,
+        resource_status="resolved",
+        customer_status="cohort",
+        context_status="completed",
+        used_sources=["customer_master"],
+        facts=[f"筛选条件: {condition_query}"],
+        judgments=["未从客户主数据中获取到任何客户记录。"],
+        open_questions=["请检查客户主数据表是否可访问。"],
+        recommendations=["确认客户主数据表链接正确且有数据后重试。"],
+        fallback_category="none",
+        fallback_reason=None,
+        fallback_message=None,
+        write_ceiling="recommendation-only",
+        output_text=f"未找到符合条件的客户记录。筛选条件: {condition_query}",
+        payload={"cohort_size": 0, "condition_query": condition_query},
+    )
+
+
+def _aggregate_cohort_signals(customer_lens_results: list[dict[str, Any]]) -> list[str]:
+    """Aggregate common positive signals across cohort.
+
+    D-05: 2-3 common signals across the cohort.
+    """
+    signal_counts: dict[str, int] = {}
+    for item in customer_lens_results:
+        lens_results = item.get("lens_results", {})
+        for lens_key in ["opportunity", "relationship", "project_progress"]:
+            for conclusion in lens_results.get(lens_key, []):
+                signal_counts[conclusion] = signal_counts.get(conclusion, 0) + 1
+
+    # Return top 3 most common signals appearing in >= 2 customers
+    top_signals = sorted(
+        [(s, c) for s, c in signal_counts.items() if c >= 2],
+        key=lambda x: -x[1]
+    )[:3]
+    return [s for s, _ in top_signals]
+
+
+def _aggregate_cohort_issues(customer_lens_results: list[dict[str, Any]]) -> list[str]:
+    """Aggregate common issues/risk signals across cohort.
+
+    D-05: 2-3 common issues across the cohort.
+    """
+    issue_counts: dict[str, int] = {}
+    for item in customer_lens_results:
+        lens_results = item.get("lens_results", {})
+        for conclusion in lens_results.get("risk", []):
+            issue_counts[conclusion] = issue_counts.get(conclusion, 0) + 1
+
+    # Return top 3 most common issues appearing in >= 2 customers
+    top_issues = sorted(
+        [(i, c) for i, c in issue_counts.items() if c >= 2],
+        key=lambda x: -x[1]
+    )[:3]
+    return [i for i, _ in top_issues]
+
+
+def _select_key_customers(customer_lens_results: list[dict[str, Any]], max_key: int = 5) -> list[dict[str, Any]]:
+    """Select top 3-5 customers flagged as highest risk or biggest opportunity.
+
+    D-05: 3-5 customers flagged as highest risk or biggest opportunity.
+    Returns list of dicts with customer_record and lens_results.
+    """
+    scored: list[tuple[int, dict[str, Any]]] = []
+    for item in customer_lens_results:
+        lens_results = item.get("lens_results", {})
+        risk_count = len(lens_results.get("risk", []))
+        opp_count = len(lens_results.get("opportunity", []))
+        # Score: risk weight 2x opportunity weight
+        score = risk_count * 2 + opp_count
+        scored.append((score, item))
+
+    scored.sort(key=lambda x: -x[0])
+    return [item for _, item in scored[:max_key]]
+
+
+def _build_cohort_recommendations(
+    cohort_signals: list[str],
+    cohort_issues: list[str],
+    key_customers: list[dict[str, Any]],
+) -> list[str]:
+    """Build two-tier recommendations capped at ~10 total.
+
+    D-07: cohort-level 1-3 + per-customer 1-2 each (max ~10 total).
+    """
+    recommendations: list[str] = []
+
+    # Cohort-level recommendations (1-3 items)
+    if cohort_issues:
+        recommendations.append(f"关注Cohort整体风险: {'; '.join(cohort_issues[:3])}")
+    if cohort_signals:
+        recommendations.append(f"把握Cohort共同机会: {'; '.join(cohort_signals[:3])}")
+    if len(cohort_signals) + len(cohort_issues) < 2:
+        recommendations.append("建议深入分析各客户差异以制定差异化策略。")
+
+    # Per-customer recommendations (1-2 per key customer)
+    for item in key_customers[:5]:
+        customer_record = item.get("customer_record", {})
+        name = customer_record.get("简称") or customer_record.get("客户名称", "未知客户")
+        lens_results = item.get("lens_results", {})
+        risk_items = lens_results.get("risk", [])
+        opp_items = lens_results.get("opportunity", [])
+
+        customer_recs: list[str] = []
+        if risk_items:
+            customer_recs.append(f"风险关注: {'; '.join(risk_items[:2])}")
+        if opp_items:
+            customer_recs.append(f"机会把握: {'; '.join(opp_items[:2])}")
+        if not customer_recs:
+            customer_recs.append("维持当前关系维护节奏")
+
+        recommendations.append(f"【{name}】{' | '.join(customer_recs)}")
+
+    # D-08: cap at ~10 total
+    return recommendations[:10]
+
+
+def _render_cohort_output(
+    cohort_size: int,
+    cohort_signals: list[str],
+    cohort_issues: list[str],
+    key_customers: list[dict[str, Any]],
+    recommendations: list[str],
+) -> str:
+    """Render cohort scan output as readable text."""
+    lines = [
+        f"Cohort 扫描结果（命中 {cohort_size} 个客户）",
+        "",
+    ]
+    if cohort_signals:
+        lines.append("共同信号:")
+        for signal in cohort_signals:
+            lines.append(f"  - {signal}")
+    if cohort_issues:
+        lines.append("共同问题:")
+        for issue in cohort_issues:
+            lines.append(f"  - {issue}")
+    if key_customers:
+        lines.append("")
+        lines.append("重点关注客户:")
+        for item in key_customers:
+            record = item.get("customer_record", {})
+            name = record.get("简称") or record.get("客户名称", "未知")
+            lens_results = item.get("lens_results", {})
+            lines.append(f"  ■ {name}")
+            for lens_key, label in [("risk", "风险"), ("opportunity", "机会"), ("relationship", "关系"), ("project_progress", "进展")]:
+                conclusions = lens_results.get(lens_key, [])
+                if conclusions:
+                    lines.append(f"    {label}: {'; '.join(conclusions)}")
+    if recommendations:
+        lines.append("")
+        lines.append("建议行动:")
+        for rec in recommendations:
+            lines.append(f"  - {rec}")
+    return "\n".join(lines)
+
+
+def run_cohort_scan_scene(request: SceneRequest) -> SceneResult:
+    """Cohort scan scene — user-triggered analytical entry point.
+
+    Per D-03 (dynamic condition query), D-04 (limit default 10),
+    D-05 (aggregated summary + key customers), D-06-D-08 (output structure),
+    D-12 (user-triggered, NOT scheduled).
+
+    Uses LarkCliCustomerBackend.list_all_customers() for customer fetch,
+    _parse_condition_query() for filter criteria,
+    and _derive_account_posture_lenses() for per-customer four-lens analysis.
+    """
+    from runtime.live_adapter import LarkCliCustomerBackend
+
+    cohort_limit = int(request.options.get("cohort_limit", 10))
+    condition_query = str(request.inputs.get("condition_query", ""))
+
+    repo_root = request.repo_root.expanduser()
+    gateway = FeishuWorkbenchGateway.for_live_lark_cli(str(repo_root))
+    sources = RuntimeSourceLoader(repo_root).load()
+    query_backend = LarkCliBaseQueryBackend(
+        LarkCliClient(),
+        LiveWorkbenchConfig.from_sources(sources),
+    )
+
+    # 1. Fetch all customers from customer master
+    customer_backend = LarkCliCustomerBackend(
+        LarkCliClient(),
+        LiveWorkbenchConfig.from_sources(sources),
+    )
+    all_customers = customer_backend.list_all_customers(limit=200)
+    if not all_customers:
+        return _build_empty_cohort_result(request, condition_query)
+
+    # 2. Parse dynamic condition into filter criteria
+    filter_criteria = _parse_condition_query(condition_query)
+
+    # 3. Apply filter to get cohort
+    cohort = customer_backend.filter_customers(all_customers, filter_criteria)
+
+    # 4. Check limit — if exceeded, return prompt to narrow (D-04)
+    if len(cohort) > cohort_limit:
+        return _build_cohort_limit_result(request, len(cohort), cohort_limit, all_customers, condition_query)
+
+    # 5. Per-customer four-lens analysis (reuses STAT-01 pattern)
+    customer_lens_results: list[dict[str, Any]] = []
+    for customer_record in cohort:
+        customer_id = customer_record.get("客户ID") or customer_record.get("customer_id") or ""
+        # Build a minimal EvidenceContainer for this customer
+        # Sources are drawn from the customer record itself
+        customer_container = EvidenceContainer()
+        customer_container.sources["customer_master"] = EvidenceSource(
+            name="customer_master",
+            quality="live",
+            available=True,
+            content=[
+                f"客户名称: {customer_record.get('客户名称', '')}",
+                f"简称: {customer_record.get('简称', '')}",
+                f"状态: {customer_record.get('状态', '')}",
+            ],
+        )
+        lens_results = _derive_account_posture_lenses(customer_container)
+        customer_lens_results.append({
+            "customer_record": customer_record,
+            "lens_results": lens_results,
+        })
+
+    # 6. Aggregate cohort-level signals and issues
+    cohort_signals = _aggregate_cohort_signals(customer_lens_results)
+    cohort_issues = _aggregate_cohort_issues(customer_lens_results)
+    key_customers = _select_key_customers(customer_lens_results)  # top 3-5 by risk/opportunity
+
+    # 7. Build two-tier recommendations (D-07, D-08)
+    recommendations = _build_cohort_recommendations(
+        cohort_signals=cohort_signals,
+        cohort_issues=cohort_issues,
+        key_customers=key_customers,
+    )
+
+    # 8. Render output
+    output_text = _render_cohort_output(
+        cohort_size=len(cohort),
+        cohort_signals=cohort_signals,
+        cohort_issues=cohort_issues,
+        key_customers=key_customers,
+        recommendations=recommendations,
+    )
+
+    return SceneResult(
+        scene_name=request.scene_name,
+        resource_status="resolved",
+        customer_status="cohort",
+        context_status="completed",
+        used_sources=["customer_master"],
+        facts=[f"筛选条件: {condition_query}", f"命中客户数: {len(cohort)}"],
+        judgments=[],
+        open_questions=[],
+        recommendations=recommendations,
+        fallback_category="none",
+        fallback_reason=None,
+        fallback_message=None,
+        write_ceiling="recommendation-only",
+        output_text=output_text,
+        payload={
+            "cohort_size": len(cohort),
+            "key_customers": key_customers,
+            "cohort_signals": cohort_signals,
+            "cohort_issues": cohort_issues,
+        },
+    )
