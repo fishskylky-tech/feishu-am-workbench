@@ -540,6 +540,11 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
     if recovery.candidate_conflicts:
         judgments.append("档案候选存在冲突或弱证据，refresh 不能直接进入正式沉淀。")
 
+    # ARCH-01: Derive five-dimension lenses from evidence container
+    evidence_container = getattr(recovery, 'evidence_container', None)
+    lens_results = _derive_archive_refresh_lenses(evidence_container)
+    archive_refresh_lines = _render_archive_refresh_output(lens_results)
+
     open_questions = [*recovery.open_questions, *recovery.candidate_conflicts]
     recommendations: list[str] = []
     if has_archive_anchor and not recovery.candidate_conflicts:
@@ -551,7 +556,8 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
     if not recommendations:
         recommendations.append("当前 archive 视角已足够作为 refresh 建议输入，但后续写回仍需走现有共享安全路径。")
 
-    lines = [
+    # Build output: prepend archive refresh five-dimension output to scene context
+    lines = archive_refresh_lines + [
         f"资源解析状态: {gateway_result.resource_resolution.status}",
         f"客户解析状态: {_render_customer_status(gateway_result)}",
         f"场景上下文状态: {recovery.status}",
@@ -582,10 +588,11 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
         payload={
             "scene_payload": {
                 "topic_text": topic_text,
+                "archive_refresh_lenses": lens_results,
                 "archive_anchor_ready": has_archive_anchor,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
-                "evidence_container": getattr(recovery, 'evidence_container', None),
+                "evidence_container": evidence_container,
             }
         },
     )
