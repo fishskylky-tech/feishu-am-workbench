@@ -1,31 +1,24 @@
 # Research Summary
 
-## Stack
+## v1.1 Focus
 
-The project should continue with a docs-first skill + Python runtime + lark-cli integration approach. The real missing leverage was brownfield execution discipline, not a new application framework.
+Turn the Phase 7 scene-skill architecture contract into executable scene runtimes without weakening live-first, guarded-write, or portability boundaries.
 
-## Table Stakes
+## Main Conclusions
 
-- live resource resolution
-- customer resolution from Base
-- targeted context recovery
-- schema preflight and write guard
-- normalized Todo write results
-- realistic regression/eval coverage
+- No new framework is needed; the existing Python runtime and lark-cli foundation are sufficient.
+- The core missing piece is a scene orchestration layer with a stable execution contract.
+- Post-meeting synthesis should become the canonical first scene runtime.
+- Customer recent status should be the second scene to validate generality.
+- Archive refresh and todo capture/update should follow after the contract is proven.
 
-## Differentiators
+## Non-Negotiable Boundaries
 
-- customer operating intelligence across Base/doc/task layers
-- portable operating model for multiple agent hosts
-- proactive AM outputs like risk digests and weekly reports
+- Foundation stays thin.
+- Scenes own business reasoning and targeted hydration.
+- Writes remain recommendation-first and pass through shared preflight and guard.
+- Core runtime stays host-agnostic.
 
-## Watch Outs
+## Roadmap Implication
 
-- do not overgeneralize before personal AM loops are stable
-- do not expand prompt-time schema blindly
-- do not allow scenes to bypass gateway or guard rails
-- treat archive duplication and stale document links as real data quality risks
-
-## Implication For Roadmap
-
-Roadmap phases should start with brownfield operating control and runtime hardening, then expand into richer customer context, safer writes, broader table coverage, and finally proactive account intelligence and portability.
+The next roadmap should start by defining the shared scene runtime contract and first-wave scene boundaries, then land executable post-meeting and customer-status scenes, and only after that expand to archive and Todo follow-on scenes.

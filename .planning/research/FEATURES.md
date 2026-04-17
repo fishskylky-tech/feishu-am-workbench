@@ -2,52 +2,39 @@
 
 ## Table Stakes
 
-### Live workspace access
+- Root entrypoint routes to scene runtimes instead of absorbing more scene logic
+- Each scene exposes a consistent executable contract with structured output
+- Each scene decides what live context to hydrate instead of relying on a prebuilt full customer bundle
+- All scenes support recommendation-only fallback when live context is incomplete
+- All write paths continue through shared preflight, guard, and writer surfaces
+- Each scene has its own scenario-level regression coverage
 
-- Resolve Base, Drive, and Task resources from private runtime sources
-- Diagnose capability availability before business reasoning
-- Resolve customer identity from live master data
+## First-Wave Value
 
-### Safe context assembly
-
-- Read only the minimum tables/docs needed for the scenario
-- Distinguish facts, judgments, open questions, and write ceilings
-- Keep uncertain cases in recommendation mode
-
-### Safe write preparation
-
-- Normalize write candidates across objects
-- Run schema preflight and guard rails before writes
-- Deduplicate Todo-like actions before creating new tasks
-
-### Evidence-driven validation
-
-- Keep representative real-case transcripts
-- Assert live-first behavior and blocked/fallback semantics
+- Post-meeting synthesis as a first-class scene runtime
+- Customer recent status for operator-grade account understanding
+- Archive refresh as a structured follow-on scene
+- Todo capture and update as a later scene on top of the shared execution contract
 
 ## Differentiators
 
-### Customer operating intelligence
-
-- Turn meeting material into reusable account context
-- Detect stale strategy, missing actions, and risk/opportunity signals
-- Connect contracts, key people, competitors, and account history in one reasoning loop
-
-### Reusable AM operating model
-
-- Keep the method portable across Codex, Hermes, OpenClaw, and future agent hosts
-- Reuse the same workbench structure without copying private data
-
-### Proactive outputs
-
-- Weekly reports
-- opportunity/risk digests
-- action gap reminders
-- archive refresh suggestions
+- Workflow-driven scenes rather than table-driven helpers
+- Shared customer grounding with scene-specific judgment
+- Recommendation-first outputs that remain useful before confirmation
+- Reusable structured artifacts that can support multiple AM workflows
 
 ## Anti-Features
 
-- Fully automatic writes to high-risk fields
-- Full-schema prompt loading
-- Turning the project into a generic CRM product too early
-- One giant prompt that hides scene differences and bypasses runtime safety
+- No generic CRM runtime
+- No free-form table browser as a milestone goal
+- No bootstrap/admin logic mixed into daily scene flows
+- No expansion of high-risk write surfaces beyond current guard model
+- No fixed global expert pipeline across all scenes
+
+## Suggested Order
+
+1. Define the shared scene runtime contract.
+2. Runtime-ize post-meeting synthesis.
+3. Add customer recent status.
+4. Add archive refresh.
+5. Add todo capture and update.

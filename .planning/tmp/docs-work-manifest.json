@@ -3,48 +3,48 @@
     {
       "type": "readme",
       "resolved_path": "README.md",
-      "mode": "create",
-      "preservation_mode": "regenerate",
+      "mode": "supplement",
+      "preservation_mode": "supplement",
       "wave": 1,
       "status": "completed"
     },
     {
       "type": "architecture",
       "resolved_path": "ARCHITECTURE.md",
-      "mode": "create",
-      "preservation_mode": "regenerate",
+      "mode": "supplement",
+      "preservation_mode": "supplement",
       "wave": 1,
       "status": "completed"
     },
     {
       "type": "configuration",
       "resolved_path": "CONFIGURATION.md",
-      "mode": "create",
-      "preservation_mode": "regenerate",
+      "mode": "supplement",
+      "preservation_mode": "supplement",
       "wave": 1,
       "status": "completed"
     },
     {
       "type": "getting_started",
       "resolved_path": "GETTING-STARTED.md",
-      "mode": "create",
-      "preservation_mode": "regenerate",
+      "mode": "supplement",
+      "preservation_mode": "supplement",
       "wave": 2,
       "status": "completed"
     },
     {
       "type": "development",
       "resolved_path": "DEVELOPMENT.md",
-      "mode": "create",
-      "preservation_mode": "regenerate",
+      "mode": "supplement",
+      "preservation_mode": "supplement",
       "wave": 2,
       "status": "completed"
     },
     {
       "type": "testing",
       "resolved_path": "TESTING.md",
-      "mode": "create",
-      "preservation_mode": "regenerate",
+      "mode": "supplement",
+      "preservation_mode": "supplement",
       "wave": 2,
       "status": "completed"
     }
@@ -61,22 +61,7 @@
       "status": "verified"
     },
     {
-      "path": "CHANGELOG.md",
-      "type": "hand-written",
-      "status": "verified"
-    },
-    {
       "path": "CONFIG-MODEL.md",
-      "type": "hand-written",
-      "status": "verified"
-    },
-    {
-      "path": "docs/assessment-checklist.md",
-      "type": "hand-written",
-      "status": "verified"
-    },
-    {
-      "path": "docs/loading-strategy.md",
       "type": "hand-written",
       "status": "verified"
     },
@@ -109,8 +94,18 @@
       "path": "WORKFLOW.md",
       "type": "hand-written",
       "status": "verified"
+    },
+    {
+      "path": "docs/assessment-checklist.md",
+      "type": "hand-written",
+      "status": "verified"
+    },
+    {
+      "path": "docs/loading-strategy.md",
+      "type": "hand-written",
+      "status": "verified"
     }
   ],
   "gap_queue": [],
-  "created_at": "2026-04-16T12:00:00Z"
+  "created_at": "2026-04-17T16:00:00Z"
 }

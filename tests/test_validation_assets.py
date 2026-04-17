@@ -25,8 +25,25 @@ PHASE_5_VERIFICATION = REPO_ROOT / ".planning" / "phases" / "05-expanded-account
 ROADMAP_PATH = REPO_ROOT / ".planning" / "ROADMAP.md"
 REQUIREMENTS_PATH = REPO_ROOT / ".planning" / "REQUIREMENTS.md"
 MILESTONES_PATH = REPO_ROOT / ".planning" / "MILESTONES.md"
-ARCHIVE_ROADMAP_PATH = REPO_ROOT / ".planning" / "milestones" / "v1.0-ROADMAP.md"
-ARCHIVE_REQUIREMENTS_PATH = REPO_ROOT / ".planning" / "milestones" / "v1.0-REQUIREMENTS.md"
+V1_0_ARCHIVE_ROADMAP_PATH = REPO_ROOT / ".planning" / "milestones" / "v1.0-ROADMAP.md"
+V1_0_ARCHIVE_REQUIREMENTS_PATH = REPO_ROOT / ".planning" / "milestones" / "v1.0-REQUIREMENTS.md"
+V1_1_ARCHIVE_ROADMAP_PATH = REPO_ROOT / ".planning" / "milestones" / "v1.1-ROADMAP.md"
+V1_1_ARCHIVE_REQUIREMENTS_PATH = REPO_ROOT / ".planning" / "milestones" / "v1.1-REQUIREMENTS.md"
+V1_1_AUDIT_PATH = REPO_ROOT / ".planning" / "v1.1-MILESTONE-AUDIT.md"
+SCENE_RUNTIME_CONTRACT_PATH = REPO_ROOT / "references" / "scene-runtime-contract.md"
+SCENE_SKILL_ARCHITECTURE_PATH = REPO_ROOT / "references" / "scene-skill-architecture.md"
+PHASE_12_CONTEXT_PATH = REPO_ROOT / ".planning" / "phases" / "12-scene-runtime-contract-and-boundary-freeze" / "12-CONTEXT.md"
+PHASE_12_VERIFICATION_PATH = REPO_ROOT / ".planning" / "phases" / "12-scene-runtime-contract-and-boundary-freeze" / "12-VERIFICATION.md"
+PHASE_13_CONTEXT_PATH = REPO_ROOT / ".planning" / "phases" / "13-canonical-post-meeting-scene-runtime" / "13-CONTEXT.md"
+PHASE_13_SUMMARY_PATH = REPO_ROOT / ".planning" / "phases" / "13-canonical-post-meeting-scene-runtime" / "13-01-SUMMARY.md"
+PHASE_13_VERIFICATION_PATH = REPO_ROOT / ".planning" / "phases" / "13-canonical-post-meeting-scene-runtime" / "13-VERIFICATION.md"
+PHASE_14_CONTEXT_PATH = REPO_ROOT / ".planning" / "phases" / "14-customer-recent-status-scene-runtime" / "14-CONTEXT.md"
+PHASE_14_SUMMARY_PATH = REPO_ROOT / ".planning" / "phases" / "14-customer-recent-status-scene-runtime" / "14-01-SUMMARY.md"
+PHASE_14_VERIFICATION_PATH = REPO_ROOT / ".planning" / "phases" / "14-customer-recent-status-scene-runtime" / "14-VERIFICATION.md"
+PHASE_15_CONTEXT_PATH = REPO_ROOT / ".planning" / "phases" / "15-archive-and-todo-scene-expansion-closure" / "15-CONTEXT.md"
+PHASE_15_SUMMARY_PATH = REPO_ROOT / ".planning" / "phases" / "15-archive-and-todo-scene-expansion-closure" / "15-02-SUMMARY.md"
+PHASE_15_VERIFICATION_PATH = REPO_ROOT / ".planning" / "phases" / "15-archive-and-todo-scene-expansion-closure" / "15-VERIFICATION.md"
+STATE_PATH = REPO_ROOT / ".planning" / "STATE.md"
 
 
 class ValidationAssetTests(unittest.TestCase):
@@ -109,37 +126,91 @@ class ValidationAssetTests(unittest.TestCase):
         self.assertIn("FOUND-02", phase_2_summary)
         self.assertIn("LIVE-03", phase_2_summary)
 
-    def test_root_guidance_mentions_mainline_complete_state(self) -> None:
+    def test_root_guidance_mentions_archived_v1_0_and_v1_1(self) -> None:
         readme_text = README_PATH.read_text(encoding="utf-8")
         status_text = STATUS_PATH.read_text(encoding="utf-8")
 
-        self.assertIn("v1.0 phases 1-11 已完成并归档", readme_text)
-        self.assertIn("v1.0 phases 1-11 已经全部收口并完成归档", status_text)
-        self.assertNotIn("当前主线：Phase 4 unified-safe-writes", readme_text)
-        self.assertNotIn("下一步进入 unified-safe-writes", status_text)
+        self.assertIn("v1.0 phases 1-11 与 v1.1 phases 12-15 都已完成并归档", readme_text)
+        self.assertIn("v1.1 phases 12-15 都已完成并归档", readme_text)
+        self.assertIn("v1.0 phases 1-11 与 v1.1 phases 12-15 都已经全部收口并完成归档", status_text)
+        self.assertIn("v1.1: Executable Scene Runtimes", ROADMAP_PATH.read_text(encoding="utf-8"))
 
     def test_runtime_operator_surface_is_documented(self) -> None:
         readme_text = README_PATH.read_text(encoding="utf-8")
         status_text = STATUS_PATH.read_text(encoding="utf-8")
+        runtime_readme = (REPO_ROOT / "runtime" / "README.md").read_text(encoding="utf-8")
 
+        self.assertIn("python3 -m runtime scene post-meeting-synthesis", readme_text)
+        self.assertIn("python3 -m runtime scene customer-recent-status", readme_text)
+        self.assertIn("python3 -m runtime scene archive-refresh", readme_text)
+        self.assertIn("python3 -m runtime scene todo-capture-and-update", readme_text)
         self.assertIn("python3 -m runtime meeting-write-loop", readme_text)
-        self.assertIn("python3 -m runtime meeting-write-loop", status_text)
+        self.assertIn("compatibility wrapper", readme_text)
+        self.assertIn("customer recent status", status_text)
+        self.assertIn("archive refresh", status_text)
+        self.assertIn("Todo follow-on", status_text)
+        self.assertIn("python3 -m runtime scene customer-recent-status", runtime_readme)
+        self.assertIn("python3 -m runtime scene todo-capture-and-update", runtime_readme)
 
-    def test_planning_state_alignment_is_closed(self) -> None:
+    def test_scene_runtime_contract_and_boundary_freeze_are_documented(self) -> None:
+        contract_text = SCENE_RUNTIME_CONTRACT_PATH.read_text(encoding="utf-8")
+        scene_arch_text = SCENE_SKILL_ARCHITECTURE_PATH.read_text(encoding="utf-8")
+        runtime_readme = (REPO_ROOT / "runtime" / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Standard Result Shape", contract_text)
+        self.assertIn("recommendation-first", contract_text)
+        self.assertIn("gateway", contract_text)
+        self.assertIn("schema preflight", contract_text)
+        self.assertIn("write guard", contract_text)
+        self.assertIn("writer", contract_text)
+        self.assertIn("post-meeting-synthesis", contract_text)
+        self.assertIn("customer-recent-status", contract_text)
+        self.assertIn("archive-refresh", contract_text)
+        self.assertIn("todo-capture-and-update", contract_text)
+        self.assertIn("first group: `post-meeting-synthesis`, `customer-recent-status`", contract_text)
+        self.assertIn("workflow-first split rule", scene_arch_text)
+        self.assertIn("non-bypass shared path", scene_arch_text)
+        self.assertIn("python3 -m runtime scene post-meeting-synthesis", runtime_readme)
+
+    def test_planning_state_alignment_tracks_v1_1_post_closeout_state(self) -> None:
         roadmap_text = ROADMAP_PATH.read_text(encoding="utf-8")
         requirements_text = REQUIREMENTS_PATH.read_text(encoding="utf-8")
+        state_text = STATE_PATH.read_text(encoding="utf-8")
 
-        self.assertIn("v1.0-ROADMAP.md", roadmap_text)
-        self.assertIn("Phase 999.1", roadmap_text)
-        self.assertIn("No active milestone requirements", requirements_text)
-        self.assertIn("v1.0-REQUIREMENTS.md", requirements_text)
+        self.assertIn("No active mainline milestone", roadmap_text)
+        self.assertIn("v1.1-ROADMAP.md", roadmap_text)
+        self.assertIn("optional historical cleanup", roadmap_text)
+        self.assertIn("No active mainline milestone", requirements_text)
+        self.assertIn("v1.1-REQUIREMENTS.md", requirements_text)
+        self.assertIn("v1.1 archived", state_text)
+        self.assertIn("Optional: /gsd-plan-phase 999.1", state_text)
+        self.assertTrue(PHASE_12_CONTEXT_PATH.exists())
+
+    def test_scene_runtime_mainline_phase_artifacts_exist(self) -> None:
+        self.assertTrue(PHASE_12_VERIFICATION_PATH.exists())
+        self.assertTrue(PHASE_13_CONTEXT_PATH.exists())
+        self.assertTrue(PHASE_13_SUMMARY_PATH.exists())
+        self.assertTrue(PHASE_13_VERIFICATION_PATH.exists())
+        self.assertTrue(PHASE_14_CONTEXT_PATH.exists())
+        self.assertTrue(PHASE_14_SUMMARY_PATH.exists())
+        self.assertTrue(PHASE_14_VERIFICATION_PATH.exists())
+        self.assertTrue(PHASE_15_CONTEXT_PATH.exists())
+        self.assertTrue(PHASE_15_SUMMARY_PATH.exists())
+        self.assertTrue(PHASE_15_VERIFICATION_PATH.exists())
 
     def test_milestone_archives_exist(self) -> None:
         self.assertTrue(MILESTONES_PATH.exists())
-        self.assertTrue(ARCHIVE_ROADMAP_PATH.exists())
-        self.assertTrue(ARCHIVE_REQUIREMENTS_PATH.exists())
+        self.assertTrue(V1_0_ARCHIVE_ROADMAP_PATH.exists())
+        self.assertTrue(V1_0_ARCHIVE_REQUIREMENTS_PATH.exists())
+        self.assertTrue(V1_1_ARCHIVE_ROADMAP_PATH.exists())
+        self.assertTrue(V1_1_ARCHIVE_REQUIREMENTS_PATH.exists())
+        self.assertTrue(V1_1_AUDIT_PATH.exists())
 
         milestones_text = MILESTONES_PATH.read_text(encoding="utf-8")
+        self.assertIn("## v1.1", milestones_text)
+        self.assertIn("v1.1-ROADMAP.md", milestones_text)
+        self.assertIn("v1.1-REQUIREMENTS.md", milestones_text)
+        self.assertIn("v1.1-MILESTONE-AUDIT.md", milestones_text)
         self.assertIn("## v1.0", milestones_text)
         self.assertIn("v1.0-ROADMAP.md", milestones_text)
         self.assertIn("v1.0-REQUIREMENTS.md", milestones_text)

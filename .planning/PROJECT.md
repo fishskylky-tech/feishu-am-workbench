@@ -39,6 +39,7 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 ## Context
 
 - Shipped milestone: v1.0 archived on 2026-04-16 with roadmap, requirements, audit, and phase artifacts preserved under `.planning/milestones/`.
+- Shipped milestone: v1.1 archived on 2026-04-17 with executable scene runtime roadmap, requirements, and audit artifacts preserved under `.planning/milestones/`.
 - Local repo now documents architecture, status, validation protocol, security model, roadmap intent, and a runtime meeting write-loop operator surface.
 - GitHub remote is active and private, with open issues, PRs, discussions, and one active Projects v2 board for 2026 roadmap execution.
 - Live Feishu Base currently contains 8 business tables, including customer master, contracts, actions, key people, competitors, contact logs, and a potential-customer pool.
@@ -67,13 +68,23 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 ## Current State
 
 - v1.0 shipped with phases 1-11 complete and archived.
-- The repository now supports capability diagnostics, customer-grounded context recovery, guarded Todo writes, milestone-grade validation evidence, and a runtime meeting write-loop operator command.
+- v1.1 shipped with phases 12-15 complete and archived.
+- The repository now supports capability diagnostics, customer-grounded context recovery, guarded Todo writes, milestone-grade validation evidence, and four executable scene runtime surfaces on one shared contract.
+
+## Most Recent Milestone: v1.1 Executable Scene Runtimes
+
+**Outcome:** Turn the existing scene-skill architecture contract into executable runtime surfaces without weakening live-first and guarded-write constraints.
+
+**Delivered:**
+- Added executable scene runtime entrypoints for post-meeting, customer recent status, archive refresh, and Todo follow-on workflows
+- Kept scene execution aligned with the existing live-first gateway and write-guard boundaries
+- Preserved clear integration seams for later bootstrap/admin operator paths
 
 ## Next Milestone Goals
 
-- Turn scene-skill architecture contracts into executable scene runtimes.
-- Add bootstrap/admin execution paths for new-workspace compatibility and setup.
-- Continue converting live-only validation boundaries into more repeatable automation.
+- Turn bootstrap/admin architecture contracts into executable operator paths.
+- Continue reducing live-only validation dependence where scene runtime fallback quality still depends on the current workspace.
+- Decide whether backlog Phase 999.1 should be executed as standalone historical cleanup or left deferred.
 
 ## Evolution
 
@@ -93,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-16 after v1.0 milestone archival*
+*Last updated: 2026-04-17 after v1.1 milestone closeout*

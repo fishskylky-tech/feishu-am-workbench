@@ -45,13 +45,12 @@
 - 没有引入新的明显冲突
 - 文档和版本记录与改动一致
 
-## 当前第一阶段做什么
+## 当前阶段做什么
 
-当前先按 [VALIDATION.md](./VALIDATION.md) 跑真实场景验证。
+当前仓库已经完成 v1.1 milestone closeout，主线不再处于“第一阶段验证”状态。
 
-优先顺序：
+现在的默认工作流是：
 
-1. 会后更新
-2. 复杂会议纪要解读
-3. 会前准备
-4. 客户档案刷新
+1. 继续按 [VALIDATION.md](./VALIDATION.md) 和 [TESTING.md](./TESTING.md) 做日常回归与 live 验证，保持已归档能力不回退
+2. 如需推进新主线，先定义下一轮 milestone，再进入新的 phase 规划与执行
+3. 如需清理历史 planning metadata，可单独处理 backlog Phase 999.1，但它不阻塞主线

@@ -1,31 +1,28 @@
 # Research: Pitfalls
 
-## Pitfall 1: Overgeneralizing too early
+## Highest-Risk Failures
 
-- Warning signs: roadmap work shifts from personal AM value to abstract portability before core loops are stable
-- Prevention: treat personal daily value as the main acceptance bar for v1
-- Best phase to address: Phase 1 and Phase 6
+1. Scene code bypasses gateway, preflight, guard, or writer boundaries.
+2. Live-first degrades into local-first or prompt-first execution.
+3. Recommendation-first output is confused with confirmed execution.
+4. Root skill absorbs scene-specific business logic again.
+5. Core runtime becomes tied to one host's tooling or message format.
+6. Schema drift causes silent misreads or miswrites.
+7. Scenes are split by tables instead of workflow intent.
+8. Admin/bootstrap logic leaks into daily scene execution.
 
-## Pitfall 2: Treating live schema as prompt context
+## Prevention
 
-- Warning signs: more hardcoded field names, larger prompt load, more fragile updates
-- Prevention: keep semantic contracts minimal and rely on live discovery for the rest
-- Best phase to address: Phase 2 and Phase 5
+- Make all scene writes flow through the existing shared execution shell
+- Require explicit live status, fallback reason, and write ceiling in scene results
+- Keep host-specific behavior outside core runtime and scene contracts
+- Enforce semantic-slot plus live-schema preflight before writes
+- Freeze first-wave scene boundaries before implementation starts
+- Add per-scene regression cases for happy path, fallback, unresolved customer, and schema issues
 
-## Pitfall 3: Letting scenes bypass runtime guard rails
+## Suggested Early Handling
 
-- Warning signs: direct Feishu writes from scene code, hidden fallback behavior, synthetic context claims
-- Prevention: keep gateway, preflight, guard, and writer boundaries explicit
-- Best phase to address: Phase 3 and Phase 4
-
-## Pitfall 4: Confusing archive structure with trustworthy canonical truth
-
-- Warning signs: duplicate customer docs, stale links, meeting-note routing based only on filename
-- Prevention: strengthen archive canonicalization and link maintenance before deeper archive automation
-- Best phase to address: Phase 3 and Phase 5
-
-## Pitfall 5: Measuring output quality only by prose quality
-
-- Warning signs: impressive summaries with weak traceability, no regression protection, or hidden live failures
-- Prevention: keep transcript-based evals and structured assertions as release gates
-- Best phase to address: Phase 4 and Phase 6
+- Phase 1: freeze execution boundaries and first-wave scene boundaries
+- Phase 2: land the shared execution shell and scene runtime contract
+- Phase 3: add validation, fallback, and drift coverage
+- Phase 4: separate admin/bootstrap and tighten portability and diagnostics
