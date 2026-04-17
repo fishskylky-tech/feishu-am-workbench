@@ -7,12 +7,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from evals.meeting_output_bridge import (
-    build_meeting_output_artifact,
-    build_meeting_todo_candidates,
-    recover_live_context,
-    run_confirmed_todo_write,
-)
 
 from .gateway import FeishuWorkbenchGateway
 from .lark_cli import LarkCliClient
@@ -20,6 +14,7 @@ from .live_adapter import LarkCliBaseQueryBackend, LiveWorkbenchConfig
 from .models import WriteCandidate, WriteExecutionResult
 from .runtime_sources import RuntimeSourceLoader
 from .todo_writer import TodoWriter
+from .expert_analysis_helper import ExpertAnalysisHelper
 
 SceneFallbackCategory = Literal[
     "none",
@@ -117,6 +112,8 @@ def _build_live_scene_context(
     *,
     topic_text: str = "",
 ) -> tuple[Any, Any]:
+    from evals.meeting_output_bridge import recover_live_context
+
     repo_root = request.repo_root.expanduser()
     gateway = FeishuWorkbenchGateway.for_live_lark_cli(str(repo_root))
     sources = RuntimeSourceLoader(repo_root).load()
@@ -183,6 +180,13 @@ def _build_context_result(
 
 
 def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
+    from evals.meeting_output_bridge import (
+        build_meeting_output_artifact,
+        build_meeting_todo_candidates,
+        recover_live_context,
+        run_confirmed_todo_write,
+    )
+
     repo_root = request.repo_root.expanduser()
     transcript_file = _normalize_scene_path(request.inputs["transcript_file"], repo_root)
     eval_name = str(request.inputs["eval_name"])
@@ -216,12 +220,14 @@ def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
             todo_writer=todo_writer,
         )
 
+    evidence_container = getattr(recovery, 'evidence_container', None)
     artifact = build_meeting_output_artifact(
         eval_name=eval_name,
         transcript_path=transcript_file,
         gateway_result=gateway_result,
         recovery=recovery,
         write_results=write_results,
+        evidence_container=evidence_container,
     )
 
     resource_status = gateway_result.resource_resolution.status
@@ -336,6 +342,7 @@ def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
                 "topic_text": topic_text,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
+                "evidence_container": getattr(recovery, 'evidence_container', None),
             }
         },
     )
@@ -399,12 +406,15 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
                 "archive_anchor_ready": has_archive_anchor,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
+                "evidence_container": getattr(recovery, 'evidence_container', None),
             }
         },
     )
 
 
 def run_todo_capture_and_update_scene(request: SceneRequest) -> SceneResult:
+    from evals.meeting_output_bridge import run_confirmed_todo_write
+
     topic_text = str(request.inputs.get("topic_text") or "")
     gateway_result, recovery = _build_live_scene_context(request, topic_text=topic_text)
     candidates = _build_follow_on_todo_candidates(request, gateway_result)
@@ -476,6 +486,7 @@ def run_todo_capture_and_update_scene(request: SceneRequest) -> SceneResult:
                 "topic_text": topic_text,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
+                "evidence_container": getattr(recovery, 'evidence_container', None),
             },
         },
     )

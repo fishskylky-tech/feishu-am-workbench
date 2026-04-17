@@ -19,7 +19,9 @@ from runtime.models import (
     ResourceResolution,
     WriteCandidate,
     WriteExecutionResult,
+    EvidenceContainer,
 )
+from runtime.expert_analysis_helper import ExpertAnalysisHelper, EvidenceAssemblyInput
 
 
 class GatewayRunner(Protocol):
@@ -51,6 +53,7 @@ def build_meeting_output(
     missing_sources: list[str] | None = None,
     recovery: ContextRecoveryResult | None = None,
     write_results: list[WriteExecutionResult] | None = None,
+    evidence_container: EvidenceContainer | None = None,
 ) -> str:
     artifact = build_meeting_output_artifact(
         eval_name=eval_name,
@@ -63,6 +66,7 @@ def build_meeting_output(
         missing_sources=missing_sources,
         recovery=recovery,
         write_results=write_results,
+        evidence_container=evidence_container,
     )
     return str(artifact["output_text"])
 
@@ -79,6 +83,7 @@ def build_meeting_output_artifact(
     missing_sources: list[str] | None = None,
     recovery: ContextRecoveryResult | None = None,
     write_results: list[WriteExecutionResult] | None = None,
+    evidence_container: EvidenceContainer | None = None,
 ) -> dict[str, Any]:
     if recovery is not None:
         context_status = recovery.status
@@ -101,7 +106,9 @@ def build_meeting_output_artifact(
         f"上下文恢复状态: {context_status}",
     ]
 
-    if used_sources:
+    if evidence_container is not None:
+        lines.extend(evidence_container.render_source_summary())
+    elif used_sources:
         lines.append(f"已使用飞书资料: {'、'.join(used_sources)}")
     elif fallback_reason:
         lines.append(f"fallback 原因: {fallback_reason}")
@@ -370,6 +377,72 @@ def _render_customer_resolution(gateway_result: GatewayResult) -> str:
     return "missing"
 
 
+def _build_customer_master_content(best: CustomerMatch) -> list[str]:
+    content = [_render_customer_snapshot(best)]
+    content.extend(_render_customer_master_details(best))
+    return content
+
+
+def _build_contact_records_content(contact_rows: list[dict[str, object]]) -> list[str]:
+    return [_render_latest_contact(row) for row in contact_rows] if contact_rows else []
+
+
+def _build_action_plan_content(action_rows: list[dict[str, object]]) -> list[str]:
+    return [_render_latest_action(row) for row in action_rows] if action_rows else []
+
+
+def _build_meeting_notes_content(
+    note_resolution: dict[str, object],
+    meeting_notes: list[str] | None = None,
+) -> list[str]:
+    if meeting_notes:
+        return meeting_notes
+    key = note_resolution.get("key_context")
+    return [key] if key else []
+
+
+def _build_archive_content(archive_resolution: dict[str, object]) -> list[str]:
+    key = archive_resolution.get("key_context")
+    return [key] if key else []
+
+
+def _extract_key_context_from_container(container: EvidenceContainer) -> list[str]:
+    priority_sources = ["customer_master", "contact_records", "action_plan", "meeting_notes", "customer_archive"]
+    combined: list[str] = []
+    for name in priority_sources:
+        src = container.sources.get(name)
+        if src and src.available:
+            combined.extend(src.content)
+    return combined
+
+
+def _extract_open_questions(
+    evidence_container: EvidenceContainer,
+    note_resolution: dict[str, object],
+    archive_resolution: dict[str, object],
+) -> list[str]:
+    questions: list[str] = []
+    contact_src = evidence_container.sources.get("contact_records")
+    if not contact_src or not contact_src.available:
+        questions.append("缺少最近客户联系记录，需人工确认最近一次有效沟通")
+    action_src = evidence_container.sources.get("action_plan")
+    if not action_src or not action_src.available:
+        questions.append("缺少当前行动计划，需确认是否存在未沉淀的推进事项")
+    questions.extend(note_resolution.get("open_questions", []))
+    questions.extend(archive_resolution.get("open_questions", []))
+    return questions
+
+
+def _extract_candidate_conflicts(
+    note_resolution: dict[str, object],
+    archive_resolution: dict[str, object],
+) -> list[str]:
+    conflicts: list[str] = []
+    conflicts.extend(note_resolution.get("candidate_conflicts", []))
+    conflicts.extend(archive_resolution.get("candidate_conflicts", []))
+    return conflicts
+
+
 def recover_live_context(
     *,
     gateway_result: GatewayResult,
@@ -396,68 +469,70 @@ def recover_live_context(
 
     best = resolution.candidates[0]
     customer_id = best.customer_id
-    used_sources = ["客户主数据"]
-    key_context = [_render_customer_snapshot(best)]
-    key_context.extend(_render_customer_master_details(best))
-    missing_sources: list[str] = []
-    open_questions: list[str] = []
-    candidate_conflicts: list[str] = []
 
     contact_rows = query_backend.query_rows_by_customer_id("客户联系记录", customer_id, limit=5)
-    if contact_rows:
-        used_sources.append("客户联系记录")
-        key_context.append(_render_latest_contact(contact_rows[0]))
-    else:
-        missing_sources.append("客户联系记录")
-        open_questions.append("缺少最近客户联系记录，需人工确认最近一次有效沟通")
-
     action_rows = query_backend.query_rows_by_customer_id("行动计划", customer_id, limit=5)
-    if action_rows:
-        used_sources.append("行动计划")
-        key_context.append(_render_latest_action(action_rows[0]))
-    else:
-        missing_sources.append("行动计划")
-        open_questions.append("缺少当前行动计划，需确认是否存在未沉淀的推进事项")
-
     meeting_notes = _rank_related_meeting_notes(contact_rows, topic_text=topic_text, limit=3)
-    if meeting_notes:
-        used_sources.append("相关会议纪要候选")
-        key_context.append(f"相关会议纪要候选: {'；'.join(meeting_notes)}")
-    else:
+
+    note_resolution: dict[str, object] = {}
+    if not meeting_notes:
         note_resolution = _resolve_meeting_note_context(
             query_backend=query_backend,
             customer=best,
             topic_text=topic_text,
             limit=3,
         )
-        if note_resolution["used_source"]:
-            used_sources.append(str(note_resolution["used_source"]))
-        if note_resolution["key_context"]:
-            key_context.append(str(note_resolution["key_context"]))
-        open_questions.extend(note_resolution["open_questions"])
-        candidate_conflicts.extend(note_resolution["candidate_conflicts"])
 
     archive_resolution = _resolve_archive_context(query_backend=query_backend, customer=best)
-    if archive_resolution["used_source"]:
-        used_sources.append(str(archive_resolution["used_source"]))
-    if archive_resolution["key_context"]:
-        key_context.append(str(archive_resolution["key_context"]))
-    missing_sources.extend(archive_resolution["missing_sources"])
-    open_questions.extend(archive_resolution["open_questions"])
-    candidate_conflicts.extend(archive_resolution["candidate_conflicts"])
 
-    status = "completed" if not missing_sources else "partial"
-    fallback_reason = None if status == "completed" else "some targeted live reads are still missing"
-    write_ceiling = "normal" if status == "completed" and not candidate_conflicts else "recommendation-only"
+    # Build EvidenceAssemblyInput and assemble via ExpertAnalysisHelper
+    assembly_input = EvidenceAssemblyInput(
+        customer_master_content=_build_customer_master_content(best),
+        customer_master_available=(resolution.status == "resolved" and bool(best.customer_id)),
+        customer_master_missing_reason=None if (resolution.status == "resolved" and best.customer_id) else "customer not resolved",
+        contact_records_content=_build_contact_records_content(contact_rows),
+        contact_records_available=bool(contact_rows),
+        contact_records_missing_reason=None if contact_rows else "no contact records found",
+        action_plan_content=_build_action_plan_content(action_rows),
+        action_plan_available=bool(action_rows),
+        action_plan_missing_reason=None if action_rows else "no action plan found",
+        meeting_notes_content=_build_meeting_notes_content(note_resolution, meeting_notes=meeting_notes),
+        meeting_notes_available=bool(note_resolution.get("used_source")) if note_resolution else bool(meeting_notes),
+        meeting_notes_missing_reason=note_resolution.get("open_questions", [None])[0] if (note_resolution and not note_resolution.get("used_source")) else None,
+        customer_archive_content=_build_archive_content(archive_resolution),
+        customer_archive_available=bool(archive_resolution.get("used_source")),
+        customer_archive_missing_reason=archive_resolution.get("open_questions", [None])[0] if not archive_resolution.get("used_source") else None,
+    )
+    helper = ExpertAnalysisHelper(assembly_input)
+    evidence_container = helper.assemble()
+
+    # Build used_sources from evidence_container
+    used_sources = list(evidence_container.available_sources())
+
+    # Build key_context from evidence_container
+    key_context = _extract_key_context_from_container(evidence_container)
+
+    # Build missing_sources from evidence_container
+    missing_sources = [
+        name for name, src in evidence_container.sources.items() if not src.available
+    ]
+
+    # Build open_questions
+    open_questions = _extract_open_questions(evidence_container, note_resolution, archive_resolution)
+
+    # Build candidate_conflicts
+    candidate_conflicts = _extract_candidate_conflicts(note_resolution, archive_resolution)
+
     return ContextRecoveryResult(
-        status=status,
+        status=evidence_container.overall_quality if evidence_container.overall_quality != "missing" else "context-limited",
         used_sources=used_sources,
-        fallback_reason=fallback_reason,
+        fallback_reason=evidence_container.fallback_reason,
         key_context=key_context,
         missing_sources=missing_sources,
         open_questions=open_questions,
-        write_ceiling=write_ceiling,
+        write_ceiling=evidence_container.write_ceiling,
         candidate_conflicts=candidate_conflicts,
+        evidence_container=evidence_container,
     )
 
 

@@ -97,6 +97,7 @@ class ContextRecoveryResult:
     open_questions: list[str] = field(default_factory=list)
     write_ceiling: WriteCeiling = "normal"
     candidate_conflicts: list[str] = field(default_factory=list)
+    evidence_container: EvidenceContainer | None = None
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -236,56 +237,25 @@ class GatewayResult:
 
 
 # --- Expert Analysis Foundation (Phase 16) ---
+# Re-exported from expert_analysis_helper for backward compatibility with code
+# that imports EvidenceContainer et al. from runtime.models.
 
-EvidenceQuality = Literal["live", "recovered", "archived", "external", "missing"]
+from .expert_analysis_helper import (
+    CRITICAL_SOURCES,
+    EvidenceAssemblyInput,
+    EvidenceContainer,
+    EvidenceQuality,
+    EvidenceSource,
+    EvidenceSourceName,
+    WriteCeiling,
+)
 
-EvidenceSourceName = Literal[
-    "transcript",
-    "customer_master",
-    "contact_records",
-    "action_plan",
-    "meeting_notes",
-    "customer_archive",
-    "external_input",
+__all__ = [
+    "CRITICAL_SOURCES",
+    "EvidenceAssemblyInput",
+    "EvidenceContainer",
+    "EvidenceQuality",
+    "EvidenceSource",
+    "EvidenceSourceName",
+    "WriteCeiling",
 ]
-
-
-@dataclass
-class EvidenceSource:
-    name: EvidenceSourceName
-    quality: EvidenceQuality
-    available: bool
-    content: list[str] = field(default_factory=list)
-    raw_data: dict[str, Any] = field(default_factory=dict)
-    missing_reason: str | None = None
-
-    def summary(self) -> str:
-        if not self.available:
-            return f"{self.name}: UNAVAILABLE ({self.missing_reason or 'source missing'})"
-        return f"{self.name}: {self.quality} | {len(self.content)} items"
-
-
-CRITICAL_SOURCES: set[EvidenceSourceName] = {"customer_master", "contact_records"}
-
-
-@dataclass
-class EvidenceContainer:
-    sources: dict[EvidenceSourceName, EvidenceSource] = field(default_factory=dict)
-    overall_quality: EvidenceQuality = "missing"
-    write_ceiling: WriteCeiling = "recommendation-only"
-    missing_source_count: int = 0
-    critical_source_missing: bool = False
-    missing_critical_sources: list[EvidenceSourceName] = field(default_factory=list)
-    fallback_reason: str | None = None
-
-    def get_source(self, name: EvidenceSourceName) -> EvidenceSource | None:
-        return self.sources.get(name)
-
-    def is_complete(self) -> bool:
-        return self.missing_source_count == 0 and not self.critical_source_missing
-
-    def available_sources(self) -> list[EvidenceSourceName]:
-        return [name for name, src in self.sources.items() if src.available]
-
-    def render_source_summary(self) -> list[str]:
-        return [src.summary() for src in self.sources.values()]
