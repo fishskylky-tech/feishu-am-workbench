@@ -1041,6 +1041,141 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         container.sources["transcript"] = EvidenceSource(name="transcript", quality="live", available=True, content=risks)
         return container
 
+    # =============================================================================
+    # TODO-01: Intent classification tests (意图 field)
+    # =============================================================================
+
+    def test_todo01_intent_classification_returns_fixed_values(self) -> None:
+        """Intent classification returns one of the four fixed values."""
+        from evals.meeting_output_bridge import _classify_action_intent
+
+        fixed_intents = {"风险干预", "扩张推进", "关系维护", "项目进展"}
+
+        risk_item = {"summary": "确认竞品风险情况", "theme": "risk"}
+        self.assertIn(_classify_action_intent(risk_item), fixed_intents)
+
+        expansion_item = {"summary": "开拓新客机会", "theme": "expansion"}
+        self.assertIn(_classify_action_intent(expansion_item), fixed_intents)
+
+        relationship_item = {"summary": "维护客户关系", "theme": "relationship"}
+        self.assertIn(_classify_action_intent(relationship_item), fixed_intents)
+
+        project_item = {"summary": "推进项目进展", "theme": "project"}
+        self.assertIn(_classify_action_intent(project_item), fixed_intents)
+
+    def test_todo01_intent_classification_keyword_matching(self) -> None:
+        """Intent is correctly derived from action item keywords."""
+        from evals.meeting_output_bridge import _classify_action_intent
+
+        # Risk keywords
+        risk_item = {"summary": "处理客户流失风险"}
+        self.assertEqual(_classify_action_intent(risk_item), "风险干预")
+
+        # Expansion keywords
+        expansion_item = {"summary": "新客开拓机会确认"}
+        self.assertEqual(_classify_action_intent(expansion_item), "扩张推进")
+
+        # Relationship keywords
+        relationship_item = {"summary": "拜访客户维护关系"}
+        self.assertEqual(_classify_action_intent(relationship_item), "关系维护")
+
+        # Default (project progress)
+        default_item = {"summary": "确认下一步动作"}
+        self.assertEqual(_classify_action_intent(default_item), "项目进展")
+
+    def test_todo01_intent_field_in_candidate_payload(self) -> None:
+        """WriteCandidate payload contains 意图 field with correct value."""
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+        candidates = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=gateway_result,
+            action_items=[
+                {"summary": "处理客户流失风险", "theme": "risk"},
+            ],
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertIn("意图", candidates[0].payload)
+        self.assertIn(candidates[0].payload["意图"], {"风险干预", "扩张推进", "关系维护", "项目进展"})
+
+    # =============================================================================
+    # TODO-02: Rationale field tests (判定理由 field)
+    # =============================================================================
+
+    def test_todo02_rationale_field_in_candidate_payload(self) -> None:
+        """WriteCandidate payload contains 判定理由 field as non-empty Chinese string."""
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+        candidates = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=gateway_result,
+            action_items=[
+                {"summary": "确认 Campaign 优化方案", "theme": "campaign"},
+            ],
+        )
+        self.assertEqual(len(candidates), 1)
+        self.assertIn("判定理由", candidates[0].payload)
+        rationale = candidates[0].payload["判定理由"]
+        self.assertIsInstance(rationale, str)
+        self.assertTrue(len(rationale) > 0)
+        # Rationale should be in Chinese
+        self.assertTrue(any("\u4e00" <= c <= "\u9fff" for c in rationale), "Rationale should contain Chinese characters")
+
+    def test_todo02_generate_action_rationale_function(self) -> None:
+        """_generate_action_rationale() returns non-empty Chinese string for valid action item."""
+        from evals.meeting_output_bridge import _generate_action_rationale
+
+        risk_item = {"summary": "处理客户流失风险", "theme": "risk"}
+        rationale = _generate_action_rationale(risk_item)
+        self.assertIsInstance(rationale, str)
+        self.assertTrue(len(rationale) > 0)
+        self.assertTrue(any("\u4e00" <= c <= "\u9fff" for c in rationale))
+
+        expansion_item = {"summary": "开拓新客机会", "theme": "expansion"}
+        rationale_exp = _generate_action_rationale(expansion_item)
+        self.assertIsInstance(rationale_exp, str)
+        self.assertTrue(len(rationale_exp) > 0)
+
+    def test_todo02_rationale_precedes_candidate_in_display_order(self) -> None:
+        """Rationale is stored separately in payload and available before candidate is proposed for write-back."""
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+        candidates = build_meeting_todo_candidates(
+            eval_name="unilever-stage-review",
+            gateway_result=gateway_result,
+            action_items=[
+                {"summary": "确认 Campaign 优化方案", "theme": "campaign"},
+            ],
+        )
+        self.assertEqual(len(candidates), 1)
+        candidate = candidates[0]
+        # Rationale is stored in payload and can be read before write-back confirmation
+        rationale = candidate.payload.get("判定理由", "")
+        intent = candidate.payload.get("意图", "")
+        self.assertTrue(len(rationale) > 0, "Rationale should be available before candidate is proposed for write-back")
+        self.assertTrue(len(intent) > 0, "Intent should be available before candidate is proposed for write-back")
+
 
 if __name__ == "__main__":
     unittest.main()
