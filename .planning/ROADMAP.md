@@ -32,12 +32,12 @@ v1.2 shifts the project from “scene surfaces are executable” to “scene out
 3. Scene results preserve fallback visibility when one or more evidence sources are unavailable.
 4. Safety rules remain live-first, recommendation-first, and guarded-write after the expert-analysis layer is introduced.
 
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 16-01-PLAN.md — EvidenceContainer model and ExpertAnalysisHelper utility module
-- [ ] 16-02-PLAN.md — Refactor scene implementations to use EvidenceContainer and ExpertAnalysisHelper
-- [ ] 16-03-PLAN.md — Verify registry dispatch and add tests for evidence assembly and fallback behavior
+- [x] 16-01-PLAN.md — EvidenceContainer model and ExpertAnalysisHelper utility module
+- [x] 16-02-PLAN.md — Refactor scene implementations to use EvidenceContainer and ExpertAnalysisHelper
+- [x] 16-03-PLAN.md — Verify registry dispatch and add tests for evidence assembly and fallback behavior
 
 ### Phase 17: Post-Meeting And Todo Expert Upgrade
 

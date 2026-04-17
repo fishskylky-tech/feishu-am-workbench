@@ -12,7 +12,7 @@ Turn the current executable scene runtime surface into a more professional custo
 
 ### Expert-Augmented Core Scenes
 
-- [ ] **CORE-01**: User can run post-meeting synthesis on transcript plus recovered history, customer archive, and optional external materials as one evidence bundle before judgment is generated
+- [x] **CORE-01**: User can run post-meeting synthesis on transcript plus recovered history, customer archive, and optional external materials as one evidence bundle before judgment is generated
 - [ ] **CORE-02**: User receives post-meeting output with fixed customer-operating sections for risks, opportunities, stakeholder changes, and next-round推进 path instead of a generic summary only
 - [ ] **TODO-01**: User receives follow-on Todo recommendations classified by customer-operating intent, including risk intervention, expansion push, relationship maintenance, and project progression
 - [ ] **TODO-02**: User can review expert rationale before any Todo candidate is proposed for write-back
@@ -29,7 +29,7 @@ Turn the current executable scene runtime surface into a more professional custo
 
 - [ ] **WRITE-01**: User sees Feishu-native durable-output targets proposed by default for prep, archive, proposal, and reporting artifacts rather than the local workspace being treated as the default sink
 - [ ] **WRITE-02**: User sees an explicit confirmation checklist for durable expert outputs, including audience, purpose, external/internal use, resource-coordination need, and whether the result should update action plans or archives
-- [ ] **SAFE-02**: All expert-augmented and newly added scenes remain live-first, recommendation-first, and guarded-write, with explicit fallback visibility when context or permissions are partial
+- [x] **SAFE-02**: All expert-augmented and newly added scenes remain live-first, recommendation-first, and guarded-write, with explicit fallback visibility when context or permissions are partial
 - [ ] **VAL-05**: Regression coverage demonstrates upgraded and new scene behavior across happy-path, limited-context, unresolved-customer, and blocked-write cases at the scene-contract level
 
 ## Future Requirements
