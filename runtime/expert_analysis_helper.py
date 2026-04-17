@@ -24,6 +24,8 @@ EvidenceSourceName = Literal[
     "external_input",
 ]
 
+LensLabel = Literal["risk", "opportunity", "relationship", "project_progress"]
+
 
 @dataclass
 class EvidenceSource:
@@ -40,7 +42,22 @@ class EvidenceSource:
         return f"{self.name}: {self.quality} | {len(self.content)} items"
 
 
+@dataclass
+class LensAttribution:
+    lens: LensLabel
+    source_names: list[EvidenceSourceName]
+    conclusions: list[str]
+    confidence: float = 1.0
+
+
 CRITICAL_SOURCES: set[EvidenceSourceName] = {"customer_master", "contact_records"}
+
+LENS_SOURCE_MAP: dict[LensLabel, list[EvidenceSourceName]] = {
+    "risk": ["customer_master", "contact_records", "action_plan"],
+    "opportunity": ["customer_master", "meeting_notes", "action_plan"],
+    "relationship": ["contact_records", "meeting_notes"],
+    "project_progress": ["action_plan", "meeting_notes", "customer_archive"],
+}
 
 
 @dataclass
@@ -293,3 +310,24 @@ class ExpertAnalysisHelper:
                     f"Evidence conflict: '{appearances[0][1]}' appears in {sources_str}"
                 )
         return conflicts
+
+
+def build_lens_attributions(
+    container: EvidenceContainer,
+    lens_results: dict[LensLabel, list[str]],
+) -> list[LensAttribution]:
+    """Build per-lens source attribution for STAT-01 output.
+
+    Per D-10: each lens draws from relevant EvidenceContainer sources.
+    """
+    attributions: list[LensAttribution] = []
+    for lens_name, conclusions in lens_results.items():
+        if not conclusions:
+            continue
+        source_names = LENS_SOURCE_MAP.get(lens_name, [])
+        attributions.append(LensAttribution(
+            lens=lens_name,
+            source_names=source_names,
+            conclusions=list(conclusions),
+        ))
+    return attributions
