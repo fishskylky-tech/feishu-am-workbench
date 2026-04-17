@@ -123,7 +123,7 @@ Plans:
 **Deferred at:** 2026-04-16 during /gsd-next advancement to Phase 4
 **Status:** Non-blocking and outside v1.1 closeout scope
 **Plans:**
-- [ ] 999.1-01-PLAN.md - Reconcile stale backlog wording now that Phase 1 already has retro-closure plan, summary, and verification artifacts
+4/4 plans complete
 
 ## Recommended Next Step
 
