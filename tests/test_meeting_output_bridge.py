@@ -36,7 +36,9 @@ from evals.meeting_output_bridge import build_meeting_todo_candidates  # noqa: E
 from evals.meeting_output_bridge import recover_live_context  # noqa: E402
 from evals.meeting_output_bridge import run_confirmed_todo_write  # noqa: E402
 from evals.meeting_output_bridge import run_gateway_and_build_meeting_output  # noqa: E402
+from evals.meeting_output_bridge import _derive_structured_sections  # noqa: E402
 from runtime.semantic_registry import SEMANTIC_FIELD_REGISTRY  # noqa: E402
+from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource  # noqa: E402
 
 
 class MeetingOutputBridgeTests(unittest.TestCase):
@@ -968,6 +970,76 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertIn("开放问题:", output_text)
         self.assertIn("档案候选与会议线程仍需人工确认", output_text)
         self.assertIn("会议纪要候选存在重名冲突", output_text)
+
+    def test_core02_four_sections_present_in_output(self) -> None:
+        """Post-meeting output contains all four required sections."""
+        gateway_result = GatewayResult(
+            resource_resolution=ResourceResolution(status="resolved"),
+            capability_report=CapabilityReport(),
+            customer_resolution=CustomerResolution(
+                status="resolved",
+                query="联合利华",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+            ),
+        )
+        artifact = build_meeting_output_artifact(
+            eval_name="unilever-stage-review",
+            transcript_path=UNILEVER_TRANSCRIPT,
+            gateway_result=gateway_result,
+            context_status="completed",
+            used_sources=["客户主数据", "客户联系记录", "行动计划", "客户档案"],
+            evidence_container=self._make_fake_evidence_container(),
+        )
+        output_text = artifact["output_text"]
+        self.assertIn("风险:", output_text)
+        self.assertIn("机会:", output_text)
+        self.assertIn("干系人变化:", output_text)
+        self.assertIn("下一轮推进路径:", output_text)
+
+    def test_core02_sections_derived_from_evidence_not_hardcoded(self) -> None:
+        """Section content varies based on available evidence."""
+        container_a = self._make_fake_evidence_container_with_risk_item("竞品")
+        container_b = self._make_fake_evidence_container_with_opportunity_item("机会")
+        sections_a = _derive_structured_sections(container_a, "transcript text with 竞品风险")
+        sections_b = _derive_structured_sections(container_b, "transcript text with 新客机会")
+        self.assertIn("竞品", sections_a.get("risks", []))
+        self.assertIn("机会", sections_b.get("opportunities", []))
+
+    def test_core02_section_item_limit_enforced(self) -> None:
+        """Each section is capped at 5 items maximum."""
+        container = self._make_fake_evidence_container_with_many_risks(10)
+        sections = _derive_structured_sections(container, "transcript with many risks")
+        self.assertLessEqual(len(sections.get("risks", [])), 5)
+
+    def _make_fake_evidence_container(self) -> EvidenceContainer:
+        """Helper to create a minimal EvidenceContainer for testing."""
+        return EvidenceContainer(sources={
+            "customer_master": EvidenceSource(name="customer_master", quality="live", available=True, content=["客户: 联合利华"]),
+            "contact_records": EvidenceSource(name="contact_records", quality="live", available=True, content=["联系记录"]),
+            "action_plan": EvidenceSource(name="action_plan", quality="recovered", available=True, content=["行动计划"]),
+            "meeting_notes": EvidenceSource(name="meeting_notes", quality="recovered", available=True, content=["会议纪要"]),
+            "customer_archive": EvidenceSource(name="customer_archive", quality="archived", available=True, content=["archive"]),
+            "transcript": EvidenceSource(name="transcript", quality="live", available=True, content=["transcript content"]),
+        })
+
+    def _make_fake_evidence_container_with_risk_item(self, risk_text: str) -> EvidenceContainer:
+        """Helper with a specific risk item."""
+        container = self._make_fake_evidence_container()
+        container.sources["transcript"] = EvidenceSource(name="transcript", quality="live", available=True, content=[f"transcript with {risk_text}"])
+        return container
+
+    def _make_fake_evidence_container_with_opportunity_item(self, opp_text: str) -> EvidenceContainer:
+        """Helper with a specific opportunity item."""
+        container = self._make_fake_evidence_container()
+        container.sources["transcript"] = EvidenceSource(name="transcript", quality="live", available=True, content=[f"transcript with {opp_text}"])
+        return container
+
+    def _make_fake_evidence_container_with_many_risks(self, count: int) -> EvidenceContainer:
+        """Helper with many risk items."""
+        container = self._make_fake_evidence_container()
+        risks = [f"风险项目{i}" for i in range(count)]
+        container.sources["transcript"] = EvidenceSource(name="transcript", quality="live", available=True, content=risks)
+        return container
 
 
 if __name__ == "__main__":

@@ -24,6 +24,56 @@ from runtime.models import (
 from runtime.expert_analysis_helper import ExpertAnalysisHelper, EvidenceAssemblyInput
 
 
+# CORE-02: Keyword sets for four structured section derivation
+_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "风险", "下滑", "收紧", "压力", "危机", "逾期", "负向"}
+_OPPORTUNITY_KEYWORDS = {"机会", "扩张", "增加", "扩容", "新客", "开拓", "增长", "潜力", "空间", "上行", "增长", "突破", "拓展", "增量", "机会点"}
+_STAKEHOLDER_CHANGE_KEYWORDS = {"干系人", "人事", "变动", "换人", "新增", "离开", "接手", "调整", "变更", "负责人", "接口人", "决策人", "联系人", "团队"}
+_NEXT_ROUND_KEYWORDS = {"下一步", "后续", "推进", "计划", "安排", "确认", "待办", "动作", "行动", "跟进", "执行", "落地", "推动", "启动"}
+
+
+def _derive_structured_sections(
+    evidence_container: EvidenceContainer,
+    transcript_text: str,
+) -> dict[str, list[str]]:
+    """Derive four customer-operating sections from evidence container + transcript.
+
+    Returns a dict with keys:
+      - "risks": 0-5 risk items
+      - "opportunities": 0-5 opportunity items
+      - "stakeholder_changes": 0-5 stakeholder change items
+      - "next_round": 0-5 next-round advancement items
+
+    Each section is capped at 5 items. Items are deduplicated within each section.
+    Uses keyword-based extraction only (no LLM inference).
+    """
+    # Collect all available text content from evidence sources
+    source_texts: list[str] = []
+    for src in evidence_container.sources.values():
+        if src.available and src.content:
+            source_texts.extend(src.content)
+
+    # Combine with transcript text for unified scanning
+    combined_text = " ".join(source_texts) + " " + transcript_text
+
+    def _extract_section(keywords: set[str], text: str) -> list[str]:
+        seen: set[str] = set()
+        items: list[str] = []
+        for keyword in keywords:
+            if keyword in text and keyword not in seen:
+                seen.add(keyword)
+                items.append(keyword)
+                if len(items) >= 5:
+                    break
+        return items
+
+    return {
+        "risks": _extract_section(_RISK_KEYWORDS, combined_text),
+        "opportunities": _extract_section(_OPPORTUNITY_KEYWORDS, combined_text),
+        "stakeholder_changes": _extract_section(_STAKEHOLDER_CHANGE_KEYWORDS, combined_text),
+        "next_round": _extract_section(_NEXT_ROUND_KEYWORDS, combined_text),
+    }
+
+
 class GatewayRunner(Protocol):
     def run(self, customer_query: str) -> GatewayResult:
         ...
@@ -130,7 +180,22 @@ def build_meeting_output_artifact(
         lines.append("统一写回结果:")
         lines.extend(_render_write_results(write_results))
 
-    lines.extend(_render_case_body(eval_name, transcript_text))
+    # CORE-02: Four structured customer-operating sections
+    if evidence_container is not None and transcript_text:
+        sections = _derive_structured_sections(evidence_container, transcript_text)
+        lines.append("风险:")
+        for item in sections.get("risks", [])[:5]:
+            lines.append(f"- {item}")
+        lines.append("机会:")
+        for item in sections.get("opportunities", [])[:5]:
+            lines.append(f"- {item}")
+        lines.append("干系人变化:")
+        for item in sections.get("stakeholder_changes", [])[:5]:
+            lines.append(f"- {item}")
+        lines.append("下一轮推进路径:")
+        for item in sections.get("next_round", [])[:5]:
+            lines.append(f"- {item}")
+
     return {
         "output_text": "\n".join(lines),
         "write_result_details": write_result_details,
@@ -498,10 +563,10 @@ def recover_live_context(
         action_plan_missing_reason=None if action_rows else "no action plan found",
         meeting_notes_content=_build_meeting_notes_content(note_resolution, meeting_notes=meeting_notes),
         meeting_notes_available=bool(note_resolution.get("used_source")) if note_resolution else bool(meeting_notes),
-        meeting_notes_missing_reason=note_resolution.get("open_questions", [None])[0] if (note_resolution and not note_resolution.get("used_source")) else None,
+        meeting_notes_missing_reason=_first_or_none(note_resolution.get("open_questions")) if (note_resolution and not note_resolution.get("used_source")) else None,
         customer_archive_content=_build_archive_content(archive_resolution),
         customer_archive_available=bool(archive_resolution.get("used_source")),
-        customer_archive_missing_reason=archive_resolution.get("open_questions", [None])[0] if not archive_resolution.get("used_source") else None,
+        customer_archive_missing_reason=_first_or_none(archive_resolution.get("open_questions")) if not archive_resolution.get("used_source") else None,
     )
     helper = ExpertAnalysisHelper(assembly_input)
     evidence_container = helper.assemble()
@@ -724,6 +789,11 @@ def _render_customer_master_details(best: CustomerMatch) -> list[str]:
     if next_action_summary:
         details.append(f"客户主数据下次行动: {next_action_summary}")
     return details
+def _first_or_none(values: list[object] | None) -> object | None:
+    """Return the first element of a list, or None if the list is empty or None."""
+    if values:
+        return values[0]
+    return None
 
 
 def _semantic_value(table_name: str, semantic_field: str, raw_record: dict[str, object]) -> str:
