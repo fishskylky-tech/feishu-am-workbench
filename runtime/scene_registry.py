@@ -17,6 +17,7 @@ from .scene_runtime import (
     run_archive_refresh_scene,
     run_cohort_scan_scene,
     run_customer_recent_status_scene,
+    run_meeting_prep_scene,
     run_post_meeting_scene,
     run_todo_capture_and_update_scene,
 )
@@ -55,6 +56,7 @@ def build_default_scene_registry() -> SceneRegistry:
     registry.register("archive-refresh", run_archive_refresh_scene)
     registry.register("todo-capture-and-update", run_todo_capture_and_update_scene)
     registry.register("cohort-scan", run_cohort_scan_scene)
+    registry.register("meeting-prep", run_meeting_prep_scene)
     return registry
 
 

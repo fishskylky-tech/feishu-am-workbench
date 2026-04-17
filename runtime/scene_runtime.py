@@ -17,6 +17,7 @@ from .todo_writer import TodoWriter
 from .expert_analysis_helper import EvidenceContainer, EvidenceSource, ExpertAnalysisHelper
 from .confirmation_checklist import (
     build_archive_refresh_checklist,
+    build_meeting_prep_checklist,
     render_confirmation_checklist,
 )
 
@@ -184,6 +185,97 @@ def _render_archive_refresh_output(lens_results: dict[str, list[str]]) -> list[s
             lines.append(f"{label}: {', '.join(conclusions[:3])}")
         else:
             lines.append(f"{label}: 暂无结论")
+    return lines
+
+
+def _render_meeting_prep_output(
+    stat01_lens_results: dict[str, list[str]],
+    key_people_items: list[str],
+    meeting_objectives: list[str],
+    risk_items: list[str],
+    opportunity_items: list[str],
+    suggested_questions: list[str],
+    suggested_next_steps: list[str],
+) -> list[str]:
+    """Render seven-dimension meeting prep output per D-07, D-08.
+
+    Format:
+    --- 会前准备简报 ---
+    当前状态: (reuses STAT-01 four-lens output)
+      风险: {keyword conclusions}
+      机会: {keyword conclusions}
+      关系: {keyword conclusions}
+      进展: {keyword conclusions}
+    关键人物:
+    - {name} | {role} | {relationship}
+    目的:
+    - {meeting objectives}
+    风险:
+    - {1-3 items}
+    机会:
+    - {1-3 items}
+    建议问题:
+    - {1-3 questions}
+    建议后续步骤:
+    - {1-3 steps}
+
+    Per D-08: 当前状态 dimension reuses STAT-01 four-lens output directly.
+    """
+    lines = ["--- 会前准备简报 ---", "当前状态:"]
+    # STAT-01 four lenses reused per D-08
+    lines.append(f"  风险: {', '.join(stat01_lens_results.get('risk', [])[:3]) or '暂无风险信号'}")
+    lines.append(f"  机会: {', '.join(stat01_lens_results.get('opportunity', [])[:3]) or '暂无机会信号'}")
+    lines.append(f"  关系: {', '.join(stat01_lens_results.get('relationship', [])[:3]) or '暂无关系信号'}")
+    lines.append(f"  进展: {', '.join(stat01_lens_results.get('project_progress', [])[:3]) or '暂无进展信号'}")
+
+    # 关键人物
+    lines.append("关键人物:")
+    if key_people_items:
+        for item in key_people_items[:3]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无关键人物信息")
+
+    # 目的
+    lines.append("目的:")
+    if meeting_objectives:
+        for obj in meeting_objectives[:3]:
+            lines.append(f"- {obj}")
+    else:
+        lines.append("- 暂无会议目的信息")
+
+    # 风险
+    lines.append("风险:")
+    if risk_items:
+        for item in risk_items[:3]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无风险信息")
+
+    # 机会
+    lines.append("机会:")
+    if opportunity_items:
+        for item in opportunity_items[:3]:
+            lines.append(f"- {item}")
+    else:
+        lines.append("- 暂无机会信息")
+
+    # 建议问题
+    lines.append("建议问题:")
+    if suggested_questions:
+        for q in suggested_questions[:3]:
+            lines.append(f"- {q}")
+    else:
+        lines.append("- 暂无建议问题")
+
+    # 建议后续步骤
+    lines.append("建议后续步骤:")
+    if suggested_next_steps:
+        for step in suggested_next_steps[:3]:
+            lines.append(f"- {step}")
+    else:
+        lines.append("- 暂无建议后续步骤")
+
     return lines
 
 
@@ -604,6 +696,148 @@ def run_archive_refresh_scene(request: SceneRequest) -> SceneResult:
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
                 "evidence_container": evidence_container,
+            }
+        },
+    )
+
+
+def run_meeting_prep_scene(request: SceneRequest) -> SceneResult:
+    """Meeting prep scene — produces seven-dimension recommendation-first brief.
+
+    Per D-07: Seven dimensions — 当前状态, 关键人物, 目的, 风险, 机会, 建议问题, 建议后续步骤.
+    Per D-08: 当前状态 dimension reuses STAT-01 four-lens output when available.
+    Per D-09: New standalone scene registers as 'meeting-prep' in scene registry.
+    Per D-10: Confirmation checklist is shown BEFORE scene executes.
+
+    Uses _build_live_scene_context() for evidence assembly and
+    _derive_account_posture_lenses() for STAT-01 four-lens reuse.
+    """
+    topic_text = str(request.inputs.get("topic_text") or "")
+    gateway_result, recovery = _build_live_scene_context(request, topic_text=topic_text)
+    facts = list(recovery.key_context)
+
+    # D-08: Reuse STAT-01 four-lens for 当前状态 dimension
+    evidence_container = getattr(recovery, 'evidence_container', None)
+    stat01_lens_results = _derive_account_posture_lenses(evidence_container)
+
+    # Build seven-dimension synthesis from evidence
+    # Key people: extract from contact_records
+    key_people_items: list[str] = []
+    if evidence_container:
+        contact_src = evidence_container.sources.get("contact_records")
+        if contact_src and contact_src.available and contact_src.content:
+            for content in contact_src.content[:5]:
+                if any(kw in content for kw in ["负责人", "决策人", "接口人", "关键人物", "联系人"]):
+                    key_people_items.append(content)
+
+    # Meeting objectives: from user inputs or inferred
+    meeting_objectives = []
+    if request.inputs.get("meeting_type"):
+        meeting_objectives.append(f"会议类型: {request.inputs.get('meeting_type')}")
+    if request.inputs.get("agenda"):
+        agenda = request.inputs.get("agenda")
+        if isinstance(agenda, list):
+            meeting_objectives.extend([str(a) for a in agenda[:3]])
+        else:
+            meeting_objectives.append(str(agenda))
+
+    # Risk items: from customer_master and action_plan
+    risk_items = list(stat01_lens_results.get("risk", []))[:3]
+
+    # Opportunity items: from meeting_notes and action_plan
+    opportunity_items = list(stat01_lens_results.get("opportunity", []))[:3]
+
+    # Suggested questions: derived from gaps (open questions and missing sources)
+    suggested_questions = []
+    if recovery.open_questions:
+        for q in recovery.open_questions[:2]:
+            suggested_questions.append(f"确认: {q}")
+    if recovery.missing_sources:
+        suggested_questions.append(f"待补齐: {', '.join(list(recovery.missing_sources)[:2])}")
+
+    # Suggested next steps: from recommendations in evidence
+    suggested_next_steps = []
+    if recovery.missing_sources:
+        suggested_next_steps.append(f"优先补齐 {', '.join(list(recovery.missing_sources)[:2])}")
+    if key_people_items:
+        suggested_next_steps.append("确认关键人物信息和联系方式")
+
+    # Build judgments
+    judgments: list[str] = []
+    if recovery.status == "completed":
+        judgments.append("当前会前准备已有足够 live 证据，可继续输出判断建议。")
+    else:
+        judgments.append("当前会前准备仍有上下文缺口，判断应保持 recommendation-first。")
+    if evidence_container and evidence_container.critical_source_missing:
+        judgments.append("关键证据来源缺失，建议优先补齐后再进行会前准备。")
+
+    # Build open questions
+    open_questions = list(recovery.open_questions)
+    if recovery.candidate_conflicts:
+        open_questions.extend(recovery.candidate_conflicts)
+
+    # Build recommendations
+    recommendations: list[str] = []
+    if not stat01_lens_results.get("risk") and not stat01_lens_results.get("opportunity"):
+        recommendations.append("建议先运行客户近期状态(scene: customer-recent-status)获取当前账户姿态。")
+    if not key_people_items:
+        recommendations.append("建议先确认客户关键人物信息后再进行会前准备。")
+    if suggested_next_steps:
+        recommendations.extend(suggested_next_steps[:2])
+
+    # D-10: Render confirmation checklist BEFORE scene output
+    checklist = build_meeting_prep_checklist(evidence_container, recovery)
+    checklist_output = render_confirmation_checklist(checklist)
+
+    # Render seven-dimension output
+    output_lines = _render_meeting_prep_output(
+        stat01_lens_results=stat01_lens_results,
+        key_people_items=key_people_items,
+        meeting_objectives=meeting_objectives,
+        risk_items=risk_items,
+        opportunity_items=opportunity_items,
+        suggested_questions=suggested_questions,
+        suggested_next_steps=suggested_next_steps,
+    )
+
+    # Build output: checklist shown first per D-10, then seven-dimension brief
+    lines = checklist_output + output_lines + [
+        f"资源解析状态: {gateway_result.resource_resolution.status}",
+        f"客户解析状态: {_render_customer_status(gateway_result)}",
+        f"场景上下文状态: {recovery.status}",
+        f"写回上限: {recovery.write_ceiling}",
+    ]
+    if facts:
+        lines.append("事实:")
+        lines.extend(f"- {item}" for item in facts)
+    if judgments:
+        lines.append("判断:")
+        lines.extend(f"- {item}" for item in judgments)
+    if open_questions:
+        lines.append("开放问题:")
+        lines.extend(f"- {item}" for item in open_questions)
+    if recommendations:
+        lines.append("建议:")
+        lines.extend(f"- {item}" for item in recommendations)
+
+    return _build_context_result(
+        request=request,
+        gateway_result=gateway_result,
+        recovery=recovery,
+        facts=facts,
+        judgments=judgments,
+        open_questions=open_questions,
+        recommendations=recommendations,
+        output_text="\n".join(lines),
+        payload={
+            "scene_payload": {
+                "topic_text": topic_text,
+                "stat01_lens_results": stat01_lens_results,  # D-08 reuse
+                "evidence_container": evidence_container,
+                "missing_sources": list(recovery.missing_sources),
+                "candidate_conflicts": list(recovery.candidate_conflicts),
+                "confirmation_checklist_output": checklist_output,  # D-10
+                "confirmed_answers": checklist.confirmed_answers(),  # D-10
             }
         },
     )
