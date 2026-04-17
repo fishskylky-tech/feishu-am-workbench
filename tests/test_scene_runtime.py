@@ -475,3 +475,127 @@ class TestEvidenceContainerHelpers:
         assert "contact_records" not in available
         assert "meeting_notes" not in available
         assert "customer_archive" not in available
+
+
+class TestStat01FourLensOutput:
+    """Test STAT-01: four-lens account posture output in run_customer_recent_status_scene."""
+
+    def test_four_lens_functions_exist(self) -> None:
+        """Verify _derive_account_posture_lenses and _render_four_lens_judgments exist."""
+        from runtime.scene_runtime import _derive_account_posture_lenses, _render_four_lens_judgments
+        assert callable(_derive_account_posture_lenses)
+        assert callable(_render_four_lens_judgments)
+
+    def test_derive_account_posture_lenses_returns_four_keys(self) -> None:
+        """_derive_account_posture_lenses returns dict with risk/opportunity/relationship/project_progress."""
+        from runtime.scene_runtime import _derive_account_posture_lenses
+        from runtime.expert_analysis_helper import EvidenceContainer
+
+        container = EvidenceContainer()
+        result = _derive_account_posture_lenses(container)
+        assert set(result.keys()) == {"risk", "opportunity", "relationship", "project_progress"}
+
+    def test_derive_account_posture_lenses_extracts_keywords(self) -> None:
+        """Keywords are extracted from relevant sources per LENS_SOURCE_MAP."""
+        from runtime.scene_runtime import _derive_account_posture_lenses
+        from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
+
+        container = EvidenceContainer()
+        container.sources["customer_master"] = EvidenceSource(
+            name="customer_master", quality="live", available=True,
+            content=["客户: TestCo", "风险: 流失预警"]
+        )
+        container.sources["contact_records"] = EvidenceSource(
+            name="contact_records", quality="live", available=True,
+            content=["关系: 信任良好", "合作稳定"]
+        )
+        container.sources["action_plan"] = EvidenceSource(
+            name="action_plan", quality="recovered", available=True,
+            content=["进展: Q2交付完成"]
+        )
+        container.sources["meeting_notes"] = EvidenceSource(
+            name="meeting_notes", quality="recovered", available=True,
+            content=["机会: 扩张空间"]
+        )
+
+        result = _derive_account_posture_lenses(container)
+        assert "流失" in result["risk"] or "风险" in result["risk"]
+        assert "信任" in result["relationship"] or "关系" in result["relationship"]
+        assert "完成" in result["project_progress"] or "进展" in result["project_progress"]
+        assert "扩张" in result["opportunity"] or "机会" in result["opportunity"]
+
+    def test_render_four_lens_judgments_labels_each_lens(self) -> None:
+        """_render_four_lens_judgments emits labeled judgment strings."""
+        from runtime.scene_runtime import _render_four_lens_judgments
+
+        lens_results = {
+            "risk": ["流失", "预警"],
+            "opportunity": ["扩张"],
+            "relationship": ["信任"],
+            "project_progress": ["交付完成"],
+        }
+        judgments = _render_four_lens_judgments(lens_results)
+        assert len(judgments) == 4
+        assert any("风险:" in j for j in judgments)
+        assert any("机会:" in j for j in judgments)
+        assert any("关系:" in j for j in judgments)
+        assert any("进展:" in j for j in judgments)
+
+    def test_render_four_lens_skips_empty_lenses(self) -> None:
+        """_render_four_lens_judgments skips lenses with no conclusions."""
+        from runtime.scene_runtime import _render_four_lens_judgments
+
+        lens_results = {
+            "risk": ["流失"],
+            "opportunity": [],
+            "relationship": [],
+            "project_progress": [],
+        }
+        judgments = _render_four_lens_judgments(lens_results)
+        assert len(judgments) == 1
+        assert "风险: 流失" in judgments[0]
+
+    def test_lens_capped_at_three_conclusions(self) -> None:
+        """Each lens produces at most 3 conclusions."""
+        from runtime.scene_runtime import _derive_account_posture_lenses
+        from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
+
+        # Stuff many keywords into one source
+        container = EvidenceContainer()
+        container.sources["customer_master"] = EvidenceSource(
+            name="customer_master", quality="live", available=True,
+            content=[
+                "风险: 流失", "风险: 预警", "风险: 下滑", "风险: 危机",
+                "风险: 逾期", "风险: 负向", "风险: 收紧", "风险: 压力",
+            ]
+        )
+        result = _derive_account_posture_lenses(container)
+        assert len(result["risk"]) <= 3
+
+    def test_derive_account_posture_lenses_handles_none_container(self) -> None:
+        """_derive_account_posture_lenses returns empty dicts when container is None."""
+        from runtime.scene_runtime import _derive_account_posture_lenses
+        result = _derive_account_posture_lenses(None)
+        assert result == {"risk": [], "opportunity": [], "relationship": [], "project_progress": []}
+
+
+class TestStat01LensAttribution:
+    """Test STAT-01: lens attributions traceable to EvidenceContainer sources."""
+
+    def test_lens_attributions_build_from_lens_results(self) -> None:
+        """build_lens_attributions returns LensAttribution per non-empty lens."""
+        from runtime.expert_analysis_helper import (
+            build_lens_attributions,
+            EvidenceContainer,
+            EvidenceSource,
+        )
+        container = EvidenceContainer()
+        container.sources["customer_master"] = EvidenceSource(
+            name="customer_master", quality="live", available=True, content=["风险: 流失"]
+        )
+        lens_results = {"risk": ["流失"], "opportunity": [], "relationship": [], "project_progress": []}
+        attributions = build_lens_attributions(container, lens_results)
+        assert len(attributions) == 1
+        assert attributions[0].lens == "risk"
+        assert attributions[0].source_names == ["customer_master", "contact_records", "action_plan"]
+        assert attributions[0].conclusions == ["流失"]
