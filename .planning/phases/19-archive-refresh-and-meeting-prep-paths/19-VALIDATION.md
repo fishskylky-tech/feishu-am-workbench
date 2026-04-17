@@ -1,9 +1,9 @@
 ---
 phase: 19
 slug: archive-refresh-and-meeting-prep-paths
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-17
 ---
 
@@ -38,12 +38,12 @@ created: 2026-04-17
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 19-01-01 | ARCH-01 | 1 | ARCH-01 | — | N/A | unit | `pytest tests/test_scene_runtime.py::TestArchRefreshFiveDimension -x` | needs new | ⬜ pending |
-| 19-01-02 | ARCH-01 | 1 | ARCH-01 | — | N/A | unit | `pytest tests/test_scene_runtime.py::TestArchRefreshDistinctFormat -x` | needs new | ⬜ pending |
-| 19-02-01 | PREP-01 | 1 | PREP-01 | — | N/A | unit | `pytest tests/test_scene_runtime.py::TestMeetingPrepSevenDimension -x` | needs new | ⬜ pending |
-| 19-02-02 | PREP-01 | 1 | PREP-01 | — | N/A | unit | `pytest tests/test_scene_runtime.py::TestMeetingPrepStat01Reuse -x` | needs new | ⬜ pending |
-| 19-03-01 | WRITE-02 | 1 | WRITE-02 | — | N/A | unit | `pytest tests/test_scene_runtime.py::TestWrite02Checklist -x` | needs new | ⬜ pending |
-| 19-03-02 | WRITE-02 | 1 | WRITE-02 | — | N/A | unit | `pytest tests/test_scene_runtime.py::TestMinimalQuestions -x` | needs new | ⬜ pending |
+| 19-01-01 | ARCH-01 | 1 | ARCH-01 | — | N/A | unit | `pytest tests/test_archive_refresh_scene.py::TestArchiveRefreshFiveDimension -x` | needs new | ⬜ pending |
+| 19-01-02 | ARCH-01 | 1 | ARCH-01 | — | N/A | unit | `pytest tests/test_archive_refresh_scene.py::TestArchiveRefreshDistinctFormat -x` | needs new | ⬜ pending |
+| 19-02-01 | PREP-01 | 2 | PREP-01 | — | N/A | unit | `pytest tests/test_meeting_prep_scene.py::TestMeetingPrepSevenDimension -x` | needs new | ⬜ pending |
+| 19-02-02 | PREP-01 | 2 | PREP-01 | — | N/A | unit | `pytest tests/test_meeting_prep_scene.py::TestMeetingPrepStat01Reuse -x` | needs new | ⬜ pending |
+| 19-03-01 | WRITE-02 | 1 | WRITE-02 | — | N/A | unit | `pytest tests/test_confirmation_checklist.py::TestWrite02Checklist -x` | needs new | ⬜ pending |
+| 19-03-02 | WRITE-02 | 1 | WRITE-02 | — | N/A | unit | `pytest tests/test_confirmation_checklist.py::TestMinimalQuestions -x` | needs new | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
