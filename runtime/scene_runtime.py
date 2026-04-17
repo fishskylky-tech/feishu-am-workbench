@@ -22,6 +22,22 @@ _STAT_OPPORTUNITY_KEYWORDS = {"机会", "扩张", "增加", "扩容", "新客", 
 _STAT_RELATIONSHIP_KEYWORDS = {"关系", "信任", "合作", "沟通", "对接", "联系", "配合", "协同", "维护", "深化"}
 _STAT_PROJECT_PROGRESS_KEYWORDS = {"进展", "进度", "完成", "交付", "里程碑", "阶段", "推进", "落地", "执行", "状态"}
 
+# ARCH-01: Five-dimension keyword sets for archive refresh derivation (per D-01, D-02)
+_ARCH_HISTORY_KEYWORDS = {"历史", "过去", "此前", "之前", "历年", "历程", "往日", "以往", "先前"}
+_ARCH_PEOPLE_KEYWORDS = {"关键人物", "负责人", "决策人", "接口人", "干系人", "对接人", "联系人", "主要联系人"}
+_ARCH_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "危机", "逾期", "负向", "压力", "风险点"}
+_ARCH_OPPORTUNITY_KEYWORDS = {"机会", "扩张", "增加", "扩容", "新客", "开拓", "增长", "潜力", "空间", "上行", "突破", "拓展", "增量", "机会点", "新增", "上量"}
+_ARCH_POSTURE_KEYWORDS = {"姿态", "策略", "方向", "定位", "战略", "打法", "思路", "规划", "计划", "重心"}
+
+# ARCH-01: Source mapping per dimension (per D-19)
+_ARCH_LENS_SOURCE_MAP: dict[str, list[str]] = {
+    "historical_arc": ["customer_archive", "meeting_notes"],
+    "key_people": ["contact_records", "customer_archive"],
+    "risk": ["customer_master", "action_plan"],
+    "opportunity": ["meeting_notes", "action_plan"],
+    "operating_posture": ["customer_master", "action_plan", "meeting_notes"],
+}
+
 
 def _derive_account_posture_lenses(
     evidence_container: Any,
