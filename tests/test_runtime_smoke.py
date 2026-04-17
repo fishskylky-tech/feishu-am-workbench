@@ -2283,6 +2283,40 @@ class RuntimeSmokeTests(unittest.TestCase):
         structured["facts"].append("changed")
         self.assertEqual(result.facts, ["客户已完成阶段复盘"])
 
+    def test_scene_result_structured_result_does_not_allow_payload_to_override_standard_fields(self) -> None:
+        result = SceneResult(
+            scene_name="post-meeting-synthesis",
+            resource_status="resolved",
+            customer_status="resolved",
+            context_status="completed",
+            write_ceiling="normal",
+            payload={
+                "scene_name": "archive-refresh",
+                "resource_status": "blocked",
+                "scene_payload": {"topic_text": "weekly review"},
+            },
+        )
+
+        structured = result.structured_result()
+
+        self.assertEqual(structured["scene_name"], "post-meeting-synthesis")
+        self.assertEqual(structured["resource_status"], "resolved")
+        self.assertEqual(
+            structured["scene_payload"]["reserved_payload_fields"],
+            {"scene_name": "archive-refresh", "resource_status": "blocked"},
+        )
+
+    def test_normalize_scene_path_expands_user_and_repo_relative_paths(self) -> None:
+        repo_root = Path("/tmp/repo-root")
+
+        with patch.object(scene_runtime.Path, "expanduser", return_value=Path("/Users/tester/demo.txt")):
+            expanded = scene_runtime._normalize_scene_path("~/demo.txt", repo_root)
+
+        relative = scene_runtime._normalize_scene_path("fixtures/demo.txt", repo_root)
+
+        self.assertEqual(expanded, Path("/Users/tester/demo.txt"))
+        self.assertEqual(relative, repo_root / "fixtures/demo.txt")
+
     def test_dispatch_scene_rejects_unknown_scene_name(self) -> None:
         request = SceneRequest(
             scene_name="unknown-scene",
