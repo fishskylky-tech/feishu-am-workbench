@@ -30,11 +30,12 @@
 6. CLEAN-05 完成：内部文档全部移入 .gitignore，远端干净
 7. CHECK-01 完成：最终复核通过，无敏感信息泄露，必要时外部安全扫描通过
 
-**Plans:** 3 plans in 3 waves
+**Plans:** 4 plans in 4 waves
 
 **Plan list:**
 - [ ] 22-01-PLAN.md — Wave 1: 全面评估（ASSESS-01）
-- [ ] 22-02-PLAN.md — Wave 2: 清理与脱敏（CLEAN-01~05）
+- [ ] 22-02-PLAN.md — Wave 2: 清理与脱敏（CLEAN-01~04）
+- [ ] 22-04-PLAN.md — Wave 2b: 内部文档归档与Git历史清理（CLEAN-05）
 - [ ] 22-03-PLAN.md — Wave 3: 最终复核（CHECK-01）
 
 ### Phase 23: Skill 规范化与能力深化巩固
