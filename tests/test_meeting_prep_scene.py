@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import unittest
+from pathlib import Path
+
 import pytest
 
 from runtime.scene_runtime import (
     _derive_account_posture_lenses,
     _render_meeting_prep_output,
     run_meeting_prep_scene,
+    SceneRequest,
 )
+from runtime.scene_registry import dispatch_scene
 from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
 
 
@@ -151,3 +156,69 @@ class TestMeetingPrepSceneRegistration:
         result = registry.dispatch(request)
         assert result.scene_name == "meeting-prep"
         assert "会前准备简报" in result.output_text
+
+
+class TestMeetingPrepRegression(unittest.TestCase):
+    """VAL-05 regression: meeting-prep scene handles 4 case types per D-01 to D-06."""
+
+    def test_meeting_prep_happy_path_dispatch_and_result_shape(self) -> None:
+        """Happy-path: meeting-prep dispatch returns valid SceneResult with expected shape."""
+        request = SceneRequest(
+            scene_name="meeting-prep",
+            repo_root=Path("."),
+            customer_query="测试客户",
+            inputs={"meeting_info": "Q2目标对齐会议"},
+        )
+        result = dispatch_scene(request)
+        self.assertEqual(result.scene_name, "meeting-prep")
+        self.assertIn(result.resource_status, ("live", "partial", "resolved"))
+        self.assertIn(result.customer_status, ("resolved", "missing"))
+        self.assertIn(result.context_status, ("complete", "partial", "context-limited", "not-run"))
+        self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
+        self.assertIsNotNone(result.payload)
+        self.assertIsInstance(result.payload, dict)
+
+    def test_meeting_prep_limited_context_fallback_visible(self) -> None:
+        """Limited-context: fallback_category is set and output/recommendations present."""
+        request = SceneRequest(
+            scene_name="meeting-prep",
+            repo_root=Path("."),
+            customer_query="完全不存在的客户XYZ999不存在",
+            inputs={},
+        )
+        result = dispatch_scene(request)
+        self.assertIn(result.context_status, ("partial", "minimal", "context-limited", "not-run"))
+        self.assertIn(result.fallback_category, ("context", "none", "customer"))
+        self.assertTrue(
+            result.output_text is not None or result.recommendations is not None,
+            "Expected output_text or recommendations with limited context",
+        )
+
+    def test_meeting_prep_unresolved_customer(self) -> None:
+        """Unresolved customer: customer_status is not resolved, fallback_category is customer, write_ceiling is recommendation-only."""
+        request = SceneRequest(
+            scene_name="meeting-prep",
+            repo_root=Path("."),
+            customer_query="完全不存在的客户XYZ999不存在",
+            inputs={},
+        )
+        result = dispatch_scene(request)
+        self.assertNotEqual(result.customer_status, "resolved")
+        self.assertIn(result.fallback_category, ("customer", "context"))
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+
+    def test_meeting_prep_blocked_write(self) -> None:
+        """Blocked-write: write_ceiling is recommendation-only, fallback_category is set, no write_candidates in payload."""
+        request = SceneRequest(
+            scene_name="meeting-prep",
+            repo_root=Path("."),
+            customer_query="完全不存在的客户XYZ999不存在",
+            inputs={},
+        )
+        result = dispatch_scene(request)
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+        self.assertIn(result.fallback_category, ("customer", "safety", "permission", "context"))
+        self.assertIsNotNone(result.recommendations)
+        self.assertGreater(len(result.recommendations), 0)
+        self.assertIsNotNone(result.payload)
+        self.assertNotIn("write_candidates", result.payload)
