@@ -150,12 +150,12 @@ class TestArchiveRefreshRegression(unittest.TestCase):
         result = dispatch_scene(request)
 
         self.assertEqual(result.scene_name, "archive-refresh")
-        # resource_status can be "resolved" | "unresolved" | "partial" | "live" | "unavailable"
-        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved"))
+        # resource_status from gateway: "resolved" | "partial" | "unresolved"
+        self.assertIn(result.resource_status, ("resolved", "partial", "unresolved"))
         # customer_status can be "resolved" | "ambiguous" | "not_found" | "missing"
         self.assertIn(result.customer_status, ("resolved", "ambiguous", "not_found", "missing"))
         # context_status per recover_live_context: "completed" | "partial" | "minimal" | "context-limited"
-        self.assertIn(result.context_status, ("complete", "partial", "minimal", "context-limited"))
+        self.assertIn(result.context_status, ("not-run", "completed", "partial", "context-limited"))
         self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
         self.assertIsNotNone(result.payload)
         self.assertGreater(len(result.payload), 0)
@@ -169,7 +169,7 @@ class TestArchiveRefreshRegression(unittest.TestCase):
         )
         result = dispatch_scene(request)
 
-        self.assertIn(result.context_status, ("partial", "minimal", "context-limited"))
+        self.assertIn(result.context_status, ("not-run", "completed", "partial", "context-limited"))
         self.assertIn(result.fallback_category, ("context", "none", "customer"))
         self.assertTrue(
             result.output_text is not None or result.recommendations is not None

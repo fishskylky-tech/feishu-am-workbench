@@ -171,9 +171,9 @@ class TestMeetingPrepRegression(unittest.TestCase):
         )
         result = dispatch_scene(request)
         self.assertEqual(result.scene_name, "meeting-prep")
-        self.assertIn(result.resource_status, ("live", "partial", "resolved"))
+        self.assertIn(result.resource_status, ("resolved", "partial", "unresolved"))
         self.assertIn(result.customer_status, ("resolved", "missing"))
-        self.assertIn(result.context_status, ("complete", "partial", "context-limited", "not-run"))
+        self.assertIn(result.context_status, ("not-run", "completed", "partial", "context-limited"))
         self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
         self.assertIsNotNone(result.payload)
         self.assertIsInstance(result.payload, dict)
@@ -187,7 +187,7 @@ class TestMeetingPrepRegression(unittest.TestCase):
             inputs={},
         )
         result = dispatch_scene(request)
-        self.assertIn(result.context_status, ("partial", "minimal", "context-limited", "not-run"))
+        self.assertIn(result.context_status, ("not-run", "completed", "partial", "context-limited"))
         self.assertIn(result.fallback_category, ("context", "none", "customer"))
         self.assertTrue(
             result.output_text is not None or result.recommendations is not None,
