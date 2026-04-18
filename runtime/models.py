@@ -247,7 +247,6 @@ from .expert_analysis_helper import (
     EvidenceQuality,
     EvidenceSource,
     EvidenceSourceName,
-    WriteCeiling,
 )
 
 __all__ = [
@@ -257,5 +256,5 @@ __all__ = [
     "EvidenceQuality",
     "EvidenceSource",
     "EvidenceSourceName",
-    "WriteCeiling",
+    # WriteCeiling is defined locally at module level; intentionally excluded from re-export
 ]

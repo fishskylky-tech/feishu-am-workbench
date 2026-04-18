@@ -85,7 +85,10 @@ class TestArchiveRefreshFiveDimension:
         """Empty dimensions show '暂无结论' placeholder."""
         lens_results = {k: [] for k in ["historical_arc", "key_people", "risk", "opportunity", "operating_posture"]}
         lines = _render_archive_refresh_output(lens_results)
-        assert all("暂无结论" in line for line in lines if "暂无结论" in line)
+        # Each of the 5 dimension lines must contain "暂无结论"
+        assert len(lines) >= 5, f"Expected at least 5 lines, got {len(lines)}"
+        placeholder_lines = [l for l in lines if "暂无结论" in l]
+        assert len(placeholder_lines) == 5, f"Expected 5 placeholder lines, got {len(placeholder_lines)}"
 
 
 class TestArchiveRefreshDistinctFormat:

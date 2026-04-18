@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Use one live-first, safety-first skill to turn AM inputs into actionable customer operating context and guarded write plans inside the existing Feishu workbench.
-**Current focus:** Phase 19 — Archive Refresh And Meeting Prep Paths
+**Current focus:** v1.2 shipped — next milestone TBD
 
 ## Initialization Snapshot
 
@@ -62,7 +62,7 @@ Resume File: .planning/phases/20-proposal-reporting-and-resource-coordination/20
 
 ## Next Command
 
-- Recommended: /gsd-plan-phase 16
+- Recommended: /gsd-new-milestone
 - Optional: /gsd-plan-phase 999.1
 
 ## Notes For Resume
