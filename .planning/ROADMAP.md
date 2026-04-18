@@ -113,7 +113,7 @@ Plans:
 **Goal:** Lock the upgraded and new scenes with regression evidence, documentation alignment, and milestone closeout readiness.
 **Depends on:** Phase 17, Phase 18, Phase 19, Phase 20
 **Requirements:** VAL-05
-**Status:** planning in progress
+**Status:** shipped 2026-04-18
 
 **Success criteria:**
 1. Regression coverage exists for happy-path, limited-context, unresolved-customer, and blocked-write cases across the upgraded and new scenes at the scene-contract level.
@@ -121,11 +121,11 @@ Plans:
 3. Requirements traceability is complete and milestone closeout can be audited without relying on undocumented behavior.
 
 Plans:
-- [ ] 21-01-PLAN.md — Regression tests: post-meeting, customer-recent-status, archive-refresh
-- [ ] 21-02-PLAN.md — Regression tests: cohort-scan, meeting-prep, proposal
-- [ ] 21-03-PLAN.md — Documentation updates: scene-runtime-contract, scene-skill-architecture, SKILL.md, VALIDATION.md
-- [ ] 21-04-PLAN.md — README, CHANGELOG, VERSION, ROADMAP completion
-- [ ] 21-05-PLAN.md — Milestone closeout: audit, archives, traceability, regression report
+- [x] 21-01-PLAN.md — Regression tests: post-meeting, customer-recent-status, archive-refresh
+- [x] 21-02-PLAN.md — Regression tests: cohort-scan, meeting-prep, proposal
+- [x] 21-03-PLAN.md — Documentation updates: scene-runtime-contract, scene-skill-architecture, SKILL.md, VALIDATION.md
+- [x] 21-04-PLAN.md — README, CHANGELOG, VERSION, ROADMAP completion
+- [x] 21-05-PLAN.md — Milestone closeout: audit, archives, traceability, regression report
 
 ## Archived Milestones
 
