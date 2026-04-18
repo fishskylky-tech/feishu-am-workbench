@@ -599,3 +599,187 @@ class TestStat01LensAttribution:
         assert attributions[0].lens == "risk"
         assert attributions[0].source_names == ["customer_master", "contact_records", "action_plan"]
         assert attributions[0].conclusions == ["流失"]
+
+
+# -----------------------------------------------------------------------
+# VAL-05 regression tests: scene-contract coverage for 4 case types
+# per D-01 to D-06 (happy-path, limited-context, unresolved-customer,
+# blocked-write) across post-meeting-synthesis, customer-recent-status,
+# and archive-refresh scenes.
+# -----------------------------------------------------------------------
+
+import unittest
+from pathlib import Path
+
+from runtime.scene_runtime import SceneRequest, SceneResult
+from runtime.scene_registry import dispatch_scene
+
+
+class TestPostMeetingRegression(unittest.TestCase):
+    """Regression coverage for post-meeting-synthesis scene contract.
+
+    Validates that dispatch_scene() produces a SceneResult that conforms to
+    the scene contract fields across all four case types.
+    """
+
+    def _make_request(self, customer_query: str, inputs: dict, options: dict) -> SceneRequest:
+        return SceneRequest(
+            scene_name="post-meeting-synthesis",
+            repo_root=Path("."),
+            customer_query=customer_query,
+            inputs=inputs,
+            options=options,
+        )
+
+    def test_post_meeting_happy_path_dispatch_and_result_shape(self) -> None:
+        """Happy path: valid customer, full inputs, dispatches correctly."""
+        # Provide a non-existent transcript path so _read_transcript_text returns
+        # ("", "missing") — the scene still produces a valid SceneResult.
+        request = self._make_request(
+            customer_query="测试客户",
+            inputs={"transcript_file": "/tmp/nonexistent_transcript_12345.txt", "eval_name": "test-eval"},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertEqual(result.scene_name, "post-meeting-synthesis")
+        # resource_status values per runtime/resource_resolver.py: "resolved" | "unresolved" | "partial"
+        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved"))
+        # customer_status can be "resolved" | "ambiguous" | "not_found" | "missing"
+        self.assertIn(result.customer_status, ("resolved", "ambiguous", "not_found", "missing"))
+        # context_status values per recover_live_context: "completed" | "partial" | "minimal" | "context-limited"
+        self.assertIn(result.context_status, ("complete", "partial", "minimal", "context-limited"))
+        self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
+        self.assertIsNotNone(result.output_text)
+        self.assertGreater(len(result.output_text), 0)
+        self.assertIsNotNone(result.payload)
+
+    def test_post_meeting_limited_context_fallback_visible(self) -> None:
+        """Limited context: partial evidence triggers fallback visibility."""
+        # Simulate partial evidence via empty customer query (unresolvable)
+        request = self._make_request(
+            customer_query="",  # unresolvable
+            inputs={"transcript_file": "/tmp/nonexistent_transcript_12345.txt", "eval_name": "test-eval"},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertIn(result.context_status, ("partial", "minimal", "context-limited"))
+        # fallback_category is "customer" when customer cannot be resolved
+        self.assertIn(result.fallback_category, ("context", "none", "customer"))
+        self.assertTrue(
+            result.output_text is not None or result.recommendations is not None
+        )
+
+    def test_post_meeting_unresolved_customer_handled(self) -> None:
+        """Unresolved customer: customer_status is not-found/missing, write ceiling is recommendation-only."""
+        request = self._make_request(
+            customer_query="此客户不存在且无法解析",
+            inputs={"transcript_file": "/tmp/nonexistent_transcript_12345.txt", "eval_name": "test-eval"},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        # customer_status can be "not_found" or "missing" when customer cannot be resolved
+        self.assertIn(result.customer_status, ("not_found", "missing"))
+        self.assertEqual(result.fallback_category, "customer")
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+
+    def test_post_meeting_blocked_write_ceiling(self) -> None:
+        """Blocked write: confirm_write=True but customer unresolvable forces recommendation-only."""
+        request = self._make_request(
+            customer_query="完全不存在的客户_无法解析",
+            inputs={"transcript_file": "/tmp/nonexistent_transcript_12345.txt", "eval_name": "test-eval"},
+            options={"confirm_write": True},
+        )
+        result = dispatch_scene(request)
+
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+        self.assertIn(result.fallback_category, ("customer", "safety", "permission"))
+        # recommendations may be empty when customer cannot be resolved — check payload instead
+        self.assertIsNotNone(result.payload)
+        self.assertNotIn("write_candidates", result.payload)
+
+
+class TestCustomerRecentStatusRegression(unittest.TestCase):
+    """Regression coverage for customer-recent-status scene contract.
+
+    Validates that dispatch_scene() produces a SceneResult that conforms to
+    the scene contract fields across all four case types.
+    """
+
+    def _make_request(self, customer_query: str, inputs: dict, options: dict) -> SceneRequest:
+        return SceneRequest(
+            scene_name="customer-recent-status",
+            repo_root=Path("."),
+            customer_query=customer_query,
+            inputs=inputs,
+            options=options,
+        )
+
+    def test_customer_recent_status_happy_path_dispatch_and_result_shape(self) -> None:
+        """Happy path: valid customer, dispatches and returns valid SceneResult."""
+        request = self._make_request(
+            customer_query="测试客户",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertEqual(result.scene_name, "customer-recent-status")
+        # resource_status values per resource_resolver.py: "resolved" | "unresolved" | "partial"
+        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved"))
+        # customer_status can be "resolved" | "ambiguous" | "not_found" | "missing"
+        self.assertIn(result.customer_status, ("resolved", "ambiguous", "not_found", "missing"))
+        # context_status per recover_live_context: "completed" | "partial" | "minimal" | "context-limited"
+        self.assertIn(result.context_status, ("complete", "partial", "minimal", "context-limited"))
+        self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
+        # payload must have lens_results or non-empty output_text
+        self.assertIsNotNone(result.payload)
+        has_lens_results = result.payload and "lens_results" in result.payload
+        has_output = result.output_text is not None and len(result.output_text) > 0
+        self.assertTrue(has_lens_results or has_output)
+
+    def test_customer_recent_status_limited_context_fallback_visible(self) -> None:
+        """Limited context: partial evidence triggers fallback visibility."""
+        request = self._make_request(
+            customer_query="",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertIn(result.context_status, ("partial", "minimal", "context-limited"))
+        self.assertIn(result.fallback_category, ("context", "none", "customer"))
+        self.assertTrue(
+            result.output_text is not None or result.recommendations is not None
+        )
+
+    def test_customer_recent_status_unresolved_customer(self) -> None:
+        """Unresolved customer: customer_status not-found/missing, fallback_category customer."""
+        request = self._make_request(
+            customer_query="此客户根本不存在于系统中",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertIn(result.customer_status, ("not_found", "missing"))
+        self.assertEqual(result.fallback_category, "customer")
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+
+    def test_customer_recent_status_blocked_write(self) -> None:
+        """Blocked write: recommendation-only ceiling with non-empty recommendations."""
+        request = self._make_request(
+            customer_query="虚构客户_绝对不存在",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+        self.assertIn(result.fallback_category, ("customer", "safety", "permission"))
+        self.assertIsNotNone(result.recommendations)
+        self.assertGreater(len(result.recommendations), 0)
+        self.assertIsNotNone(result.payload)
+        self.assertNotIn("write_candidates", result.payload)

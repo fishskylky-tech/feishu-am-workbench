@@ -106,3 +106,97 @@ class TestArchiveRefreshDistinctFormat:
         """Archive refresh output uses '--- 档案更新建议 ---' header per UI-SPEC."""
         lines = _render_archive_refresh_output({k: [] for k in ["historical_arc", "key_people", "risk", "opportunity", "operating_posture"]})
         assert lines[0] == "--- 档案更新建议 ---"
+
+
+# -----------------------------------------------------------------------
+# VAL-05 regression tests: scene-contract coverage for archive-refresh
+# per D-01 to D-06 (happy-path, limited-context, unresolved-customer,
+# blocked-write).
+# -----------------------------------------------------------------------
+
+import unittest
+from pathlib import Path
+
+from runtime.scene_runtime import SceneRequest
+from runtime.scene_registry import dispatch_scene
+
+
+class TestArchiveRefreshRegression(unittest.TestCase):
+    """Regression coverage for archive-refresh scene contract.
+
+    Validates that dispatch_scene() produces a SceneResult that conforms to
+    the scene contract fields across all four case types.
+    """
+
+    def _make_request(self, customer_query: str, inputs: dict, options: dict) -> SceneRequest:
+        return SceneRequest(
+            scene_name="archive-refresh",
+            repo_root=Path("."),
+            customer_query=customer_query,
+            inputs=inputs,
+            options=options,
+        )
+
+    def test_archive_refresh_happy_path_dispatch_and_result_shape(self) -> None:
+        """Happy path: valid customer, dispatches and returns valid SceneResult."""
+        request = self._make_request(
+            customer_query="测试客户",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertEqual(result.scene_name, "archive-refresh")
+        # resource_status can be "resolved" | "unresolved" | "partial" | "live" | "unavailable"
+        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved"))
+        # customer_status can be "resolved" | "ambiguous" | "not_found" | "missing"
+        self.assertIn(result.customer_status, ("resolved", "ambiguous", "not_found", "missing"))
+        # context_status per recover_live_context: "completed" | "partial" | "minimal" | "context-limited"
+        self.assertIn(result.context_status, ("complete", "partial", "minimal", "context-limited"))
+        self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
+        self.assertIsNotNone(result.payload)
+        self.assertGreater(len(result.payload), 0)
+
+    def test_archive_refresh_limited_context_fallback_visible(self) -> None:
+        """Limited context: partial evidence triggers fallback visibility."""
+        request = self._make_request(
+            customer_query="",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertIn(result.context_status, ("partial", "minimal", "context-limited"))
+        self.assertIn(result.fallback_category, ("context", "none", "customer"))
+        self.assertTrue(
+            result.output_text is not None or result.recommendations is not None
+        )
+
+    def test_archive_refresh_unresolved_customer(self) -> None:
+        """Unresolved customer: customer_status not-found/missing, fallback_category customer."""
+        request = self._make_request(
+            customer_query="此客户不存在于任何系统中",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertIn(result.customer_status, ("not_found", "missing"))
+        self.assertEqual(result.fallback_category, "customer")
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+
+    def test_archive_refresh_blocked_write(self) -> None:
+        """Blocked write: recommendation-only ceiling with non-empty recommendations."""
+        request = self._make_request(
+            customer_query="虚构客户_绝对不存在于系统",
+            inputs={},
+            options={},
+        )
+        result = dispatch_scene(request)
+
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+        self.assertIn(result.fallback_category, ("customer", "safety", "permission"))
+        self.assertIsNotNone(result.recommendations)
+        self.assertGreater(len(result.recommendations), 0)
+        self.assertIsNotNone(result.payload)
+        self.assertNotIn("write_candidates", result.payload)
