@@ -41,12 +41,12 @@
 
 #### Skill 规范化
 
-- [ ] **NORM-01**: SKILL.md 精简到 <2,000 tokens，保持 L1/L2/L3 渐进式披露边界
 - [ ] **NORM-02**: 对标外部 Skill 标准：
   - agentskills.io 格式规范
   - https://github.com/anthropics/skills
   - https://github.com/alchaincyf/darwin-skill
   - https://developers.googleblog.com/developers-guide-to-building-adk-agents-with-skills/
+- [ ] **NORM-01**: SKILL.md 精简到 <2,000 tokens，保持 L1/L2/L3 渐进式披露边界
 
 #### agency-agents 引入
 

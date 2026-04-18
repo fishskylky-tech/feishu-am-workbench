@@ -1,35 +1,64 @@
 # Roadmap: Feishu AM Workbench
 
 **Created:** 2026-04-17
-**Last updated:** 2026-04-18 after v1.2 shipped
+**Last updated:** 2026-04-19 after v1.3 initialization
 **Mode:** Interactive
 **Granularity:** Standard
-**Execution:** Parallel where dependencies allow
+**Execution:** Sequential within each phase
 
 ## Current Planning State
 
-- Active mainline milestone: none (v1.2 shipped — next milestone TBD)
-- Most recent shipped milestone: v1.2 Expert Customer Operating Scenes
-- Backlog Phase 999.1 remains optional historical cleanup
+- Active mainline milestone: v1.3 开源准备与Skill巩固
+- Previous shipped milestone: v1.2 Expert Customer Operating Scenes
 
-## 🚧 Next Milestone (Planning)
+## Active Milestone
 
-Use `/gsd-new-milestone` to start planning the next milestone.
+### Phase 1: 开源安全与发版准备
 
-## Shipped Milestones
+**Goal:** 安全、干净地将仓库发布到 GitHub public，无隐私泄露，文档完整准确。
 
-### ✅ v1.2: Expert Customer Operating Scenes (Phases 16-21) — SHIPPED 2026-04-18
+**Depends on:** v1.2 archived milestone outputs
 
-- [x] Phase 16: Expert Analysis Foundation And Multi-Source Evidence (3/3 plans) — shipped 2026-04-17
-- [x] Phase 17: Post-Meeting And Todo Expert Upgrade (4/4 plans) — shipped 2026-04-17
-- [x] Phase 18: Account Posture And Cohort Scanning (2/2 plans) — shipped 2026-04-17
-- [x] Phase 19: Archive Refresh And Meeting Prep Paths (3/3 plans) — shipped 2026-04-17
-- [x] Phase 20: Proposal, Reporting, And Resource Coordination (3/3 plans) — shipped 2026-04-18
-- [x] Phase 21: Validation And Milestone Closure (5/5 plans) — shipped 2026-04-18
+**Requirements:** ASSESS-01, CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04, CLEAN-05, CHECK-01
 
-Archived: [.planning/milestones/v1.2-ROADMAP.md](.planning/milestones/v1.2-ROADMAP.md)
+**Success criteria:**
+1. ASSESS-01 完成：全面评估当前仓库状态，覆盖隐私/安全、开源就绪度、文档完整性、外部依赖
+2. CLEAN-01 完成：.planning/ 从 git 移除，.gitignore 更新，本地文件保留
+3. CLEAN-02 完成：所有含敏感客户名的文件名脱敏
+4. CLEAN-03 完成：MIT LICENSE 文件存在且有效
+5. CLEAN-04 完成：所有公开文档（README、GETTING-STARTED、AGENTS 等）重写为开源友好版本
+6. CLEAN-05 完成：内部文档全部移入 .gitignore，远端干净
+7. CHECK-01 完成：最终复核通过，无敏感信息泄露，必要时外部安全扫描通过
+
+**Plans:** pending
+
+### Phase 2: Skill 规范化与能力深化巩固
+
+**Goal:** 基于 v1.0-v1.2 完成度评估，进行针对性深化巩固；引入 agency-agents 专家审核层；SKILL.md 精简对标外部标准。
+
+**Depends on:** Phase 1
+
+**Requirements:** ASSESS-03, ASSESS-04, NORM-02, NORM-01, AGENT-01, AGENT-02
+
+**Success criteria:**
+1. ASSESS-03 完成：v1.0-v1.2 全面复盘完成，识别出至少 3 个有提升空间的领域
+2. ASSESS-04 完成：针对评估结果制定了具体的深化或巩固方案
+3. NORM-02 完成：对标 agentskills.io / anthropics/skills / darwin-skill / Google ADK 标准
+4. NORM-01 完成：SKILL.md 精简到 <2,000 tokens，L1/L2/L3 边界清晰
+5. AGENT-01 完成：独立 scene 配置文件机制建立（方案 C），可插拔
+6. AGENT-02 完成：至少 2 个 scene 接入专家审核层（输入或输出）
+
+**Plans:** pending
 
 ## Archived Milestones
+
+### v1.2: Expert Customer Operating Scenes
+
+- Status: shipped 2026-04-18
+- Phases: 16-21 complete
+- Archive: [.planning/milestones/v1.2-ROADMAP.md](.planning/milestones/v1.2-ROADMAP.md)
+- Requirements: [.planning/milestones/v1.2-REQUIREMENTS.md](.planning/milestones/v1.2-REQUIREMENTS.md)
+- Audit: [.planning/milestones/v1.2-MILESTONE-AUDIT.md](.planning/milestones/v1.2-MILESTONE-AUDIT.md)
 
 ### v1.1: Executable Scene Runtimes
 
@@ -38,7 +67,6 @@ Archived: [.planning/milestones/v1.2-ROADMAP.md](.planning/milestones/v1.2-ROADM
 - Archive: [.planning/milestones/v1.1-ROADMAP.md](.planning/milestones/v1.1-ROADMAP.md)
 - Requirements: [.planning/milestones/v1.1-REQUIREMENTS.md](.planning/milestones/v1.1-REQUIREMENTS.md)
 - Audit: [.planning/v1.1-MILESTONE-AUDIT.md](.planning/v1.1-MILESTONE-AUDIT.md)
-- Summary: scene runtime contract is now executable and archived as a shipped milestone, not an active mainline roadmap
 
 ### v1.0: Milestone
 
@@ -48,13 +76,6 @@ Archived: [.planning/milestones/v1.2-ROADMAP.md](.planning/milestones/v1.2-ROADM
 - Requirements: [.planning/milestones/v1.0-REQUIREMENTS.md](.planning/milestones/v1.0-REQUIREMENTS.md)
 - Audit: [.planning/v1.0-MILESTONE-AUDIT.md](.planning/v1.0-MILESTONE-AUDIT.md)
 
-## Backlog
+---
 
-### Phase 999.1: Follow-up — Phase 1 incomplete discussion artifacts (BACKLOG)
-
-**Goal:** Optional historical metadata cleanup for earlier Phase 1 discussion wording; not a mainline delivery phase
-**Source phase:** 1
-**Deferred at:** 2026-04-16 during /gsd-next advancement to Phase 4
-**Status:** Non-blocking and outside v1.1 closeout scope
-**Plans:**
-3/3 plans complete
+*Last updated: 2026-04-19 after v1.3 initialization*
