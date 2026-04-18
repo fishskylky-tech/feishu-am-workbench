@@ -13,7 +13,7 @@
 
 ## Active Milestone
 
-### Phase 1: 开源安全与发版准备
+### Phase 22: 开源安全与发版准备
 
 **Goal:** 安全、干净地将仓库发布到 GitHub public，无隐私泄露，文档完整准确。
 
@@ -32,11 +32,11 @@
 
 **Plans:** pending
 
-### Phase 2: Skill 规范化与能力深化巩固
+### Phase 23: Skill 规范化与能力深化巩固
 
 **Goal:** 基于 v1.0-v1.2 完成度评估，进行针对性深化巩固；引入 agency-agents 专家审核层；SKILL.md 精简对标外部标准。
 
-**Depends on:** Phase 1
+**Depends on:** Phase 22
 
 **Requirements:** ASSESS-03, ASSESS-04, NORM-02, NORM-01, AGENT-01, AGENT-02
 
