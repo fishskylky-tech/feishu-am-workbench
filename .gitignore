@@ -43,3 +43,9 @@ do_commit.py
 .planning/codebase/
 .planning/ui-reviews/
 .planning/graphs/
+
+# Archive directory — contains customer-sensitive meeting transcripts
+archive/
+
+# Detect-secrets baseline — contains known secret signatures
+.secrets.baseline
