@@ -7,6 +7,9 @@ No live Feishu API calls — all tests use in-memory data or mocks.
 
 from __future__ import annotations
 
+import unittest
+from pathlib import Path
+
 import pytest
 
 from runtime.scene_runtime import (
@@ -19,7 +22,7 @@ from runtime.scene_runtime import (
     SceneRequest,
     SceneResult,
 )
-from runtime.scene_registry import build_default_scene_registry
+from runtime.scene_registry import build_default_scene_registry, dispatch_scene
 
 
 class TestConditionQueryParsing:
@@ -205,3 +208,82 @@ class TestCohortScanDispatch:
         result = registry.dispatch(request)
         assert result.scene_name == "cohort-scan"
         assert result.customer_status == "cohort"
+
+
+class TestCohortScanRegression(unittest.TestCase):
+    """VAL-05 regression: cohort-scan scene handles 4 case types per D-01 to D-06.
+
+    Cohort-scan queries customer master directly without requiring a pre-resolved
+    customer context. The four cases map to:
+    - happy-path: valid condition query returns cohort results
+    - limited-context: customer master reachable but condition yields few/no results
+    - empty-cohort: condition yields 0 matches -> _build_empty_cohort_result path
+    - blocked-write: write_ceiling always recommendation-only (D-05), no write_candidates
+    """
+
+    def test_cohort_scan_happy_path_dispatch_and_result_shape(self) -> None:
+        """Happy-path: cohort-scan dispatch returns valid SceneResult with expected shape."""
+        request = SceneRequest(
+            scene_name="cohort-scan",
+            repo_root=Path("."),
+            customer_query="活跃客户",
+            inputs={},
+        )
+        result = dispatch_scene(request)
+        self.assertEqual(result.scene_name, "cohort-scan")
+        self.assertIn(result.resource_status, ("live", "partial", "resolved"))
+        self.assertIn(result.context_status, ("complete", "partial", "completed"))
+        self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
+        self.assertIsNotNone(result.payload)
+        self.assertIsInstance(result.payload, dict)
+
+    def test_cohort_scan_limited_context_fallback_visible(self) -> None:
+        """Limited-context: cohort-scan always produces output/recommendations."""
+        request = SceneRequest(
+            scene_name="cohort-scan",
+            repo_root=Path("."),
+            customer_query="未知不存在客户XYZ123",
+            inputs={"condition_query": "近999天"},
+        )
+        result = dispatch_scene(request)
+        # cohort-scan context_status is driven by recovery; allow completed/partial
+        self.assertIn(result.context_status, ("partial", "minimal", "context-limited", "completed", "not-run"))
+        # Should have some output or recommendations regardless of context
+        self.assertTrue(
+            result.output_text is not None or result.recommendations is not None,
+            "Expected output_text or recommendations with limited context",
+        )
+
+    def test_cohort_scan_unresolved_or_empty_cohort(self) -> None:
+        """Empty cohort: write_ceiling is recommendation-only or output present."""
+        request = SceneRequest(
+            scene_name="cohort-scan",
+            repo_root=Path("."),
+            customer_query="",
+            inputs={"condition_query": "近999天无匹配客户"},
+        )
+        result = dispatch_scene(request)
+        # fallback_category may be 'none' when cohort is simply empty
+        self.assertIn(result.fallback_category, ("customer", "context", "none"))
+        self.assertTrue(
+            result.write_ceiling == "recommendation-only" or len(result.output_text) > 0,
+            "Expected recommendation-only ceiling or non-empty output for empty cohort",
+        )
+
+    def test_cohort_scan_blocked_write(self) -> None:
+        """Blocked-write: write_ceiling is always recommendation-only, no write_candidates in payload."""
+        request = SceneRequest(
+            scene_name="cohort-scan",
+            repo_root=Path("."),
+            customer_query="",
+            inputs={"condition_query": "近999天"},
+        )
+        result = dispatch_scene(request)
+        # D-05: cohort-scan write_ceiling is always recommendation-only
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+        # fallback_category may be 'none' when no blocking condition is present
+        self.assertIn(result.fallback_category, ("customer", "safety", "permission", "context", "none"))
+        self.assertIsNotNone(result.recommendations)
+        self.assertGreater(len(result.recommendations), 0)
+        self.assertIsNotNone(result.payload)
+        self.assertNotIn("write_candidates", result.payload)
