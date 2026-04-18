@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Executable Scene Runtimes
+milestone: v1.2
+milestone_name: Expert Customer Operating Scenes
 status: executing
-stopped_at: Phase 20 complete
-last_updated: "2026-04-18T00:00:00.000Z"
-last_activity: 2026-04-18 -- Phase 20 execution complete
+stopped_at: Phase 21 context gathered
+last_updated: "2026-04-18T12:30:00.000Z"
+last_activity: 2026-04-18 -- Phase 21 context gathered
 progress:
   total_phases: 6
   completed_phases: 5
