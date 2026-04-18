@@ -1,5 +1,14 @@
 # Milestones
 
+## v1.2
+
+- Status: SHIPPED 2026-04-18
+- Phases: 16-21
+- Roadmap archive: [.planning/v1.2-ROADMAP.md](.planning/v1.2-ROADMAP.md)
+- Requirements archive: [.planning/v1.2-REQUIREMENTS.md](.planning/v1.2-REQUIREMENTS.md)
+- Audit: [.planning/v1.2-MILESTONE-AUDIT.md](.planning/v1.2-MILESTONE-AUDIT.md)
+- Summary: expert customer operating scenes milestone closed with 6-scene VAL-05 coverage (post-meeting-synthesis, customer-recent-status, archive-refresh, cohort-scan, meeting-prep, proposal), expert-analysis foundation, and milestone closeout artifacts
+
 ## v1.1
 
 - Status: SHIPPED 2026-04-17
