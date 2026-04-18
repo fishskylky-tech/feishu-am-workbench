@@ -16,21 +16,21 @@ Turn the current executable scene runtime surface into a more professional custo
 - [x] **CORE-02**: User receives post-meeting output with fixed customer-operating sections for risks, opportunities, stakeholder changes, and next-round推进 path instead of a generic summary only
 - [x] **TODO-01**: User receives follow-on Todo recommendations classified by customer-operating intent, including risk intervention, expansion push, relationship maintenance, and project progression
 - [x] **TODO-02**: User can review expert rationale before any Todo candidate is proposed for write-back
-- [ ] **STAT-01**: User can query one customer and receive a current account-posture readout structured into risk, opportunity, relationship, and project-progress lenses
-- [ ] **ARCH-01**: User receives archive refresh recommendations as a structured customer-history synthesis covering historical arc, key people, risks, opportunities, and operating posture instead of a loose refresh note
+- [x] **STAT-01**: User can query one customer and receive a current account-posture readout structured into risk, opportunity, relationship, and project-progress lenses — Phase 18 ✅
+- [x] **ARCH-01**: User receives archive refresh recommendations as a structured customer-history synthesis covering historical arc, key people, risks, opportunities, and operating posture instead of a loose refresh note — Phase 19 ✅
 
 ### New Customer-Operating Scenes
 
-- [ ] **SCAN-01**: User can ask for a class of customers and receive grouped risk, opportunity, and common-issue analysis without requiring a fully automatic巡检 system
-- [ ] **PREP-01**: User can request meeting prep with customer name, meeting information, and an optional target, and receive a recommendation-first prep brief containing current status, key people, objectives, risks, opportunities, suggested questions, and suggested next steps
-- [ ] **PROP-01**: User can request proposal, reporting, or resource-coordination support with customer, goal, and multiple materials, and receive a structured draft that includes objective, core judgment, main narrative, resource asks, and open questions
+- [x] **SCAN-01**: User can ask for a class of customers and receive grouped risk, opportunity, and common-issue analysis without requiring a fully automatic巡检系统 — Phase 18 ✅
+- [x] **PREP-01**: User can request meeting prep with customer name, meeting information, and an optional target, and receive a recommendation-first prep brief containing current status, key people, objectives, risks, opportunities, suggested questions, and suggested next steps — Phase 19 ✅
+- [x] **PROP-01**: User can request proposal, reporting, or resource-coordination support with customer, goal, and multiple materials, and receive a structured draft that includes objective, core judgment, main narrative, resource asks, and open questions — Phase 20 ✅
 
 ### Output Routing, Safety, And Verification
 
-- [ ] **WRITE-01**: User sees Feishu-native durable-output targets proposed by default for prep, archive, proposal, and reporting artifacts rather than the local workspace being treated as the default sink
-- [ ] **WRITE-02**: User sees an explicit confirmation checklist for durable expert outputs, including audience, purpose, external/internal use, resource-coordination need, and whether the result should update action plans or archives
+- [x] **WRITE-01**: User sees Feishu-native durable-output targets proposed by default for prep, archive, proposal, and reporting artifacts rather than the local workspace being treated as the default sink — Phase 20 ✅
+- [x] **WRITE-02**: User sees an explicit confirmation checklist for durable expert outputs, including audience, purpose, external/internal use, resource-coordination need, and whether the result should update action plans or archives — Phase 19 ✅
 - [x] **SAFE-02**: All expert-augmented and newly added scenes remain live-first, recommendation-first, and guarded-write, with explicit fallback visibility when context or permissions are partial
-- [ ] **VAL-05**: Regression coverage demonstrates upgraded and new scene behavior across happy-path, limited-context, unresolved-customer, and blocked-write cases at the scene-contract level
+- [x] **VAL-05**: Regression coverage demonstrates upgraded and new scene behavior across happy-path, limited-context, unresolved-customer, and blocked-write cases at the scene-contract level — Phase 21 ✅
 
 ## Future Requirements
 
@@ -49,21 +49,21 @@ Turn the current executable scene runtime surface into a more professional custo
 
 ## Traceability
 
-| Requirement | Planned Phase |
-|-------------|---------------|
-| CORE-01 | Phase 16 |
-| CORE-02 | Phase 17 |
-| TODO-01 | Phase 17 |
-| TODO-02 | Phase 17 |
-| STAT-01 | Phase 18 |
-| ARCH-01 | Phase 19 |
-| SCAN-01 | Phase 18 |
-| PREP-01 | Phase 19 |
-| PROP-01 | Phase 20 |
-| WRITE-01 | Phase 20 |
-| WRITE-02 | Phase 19 |
-| SAFE-02 | Phase 16 |
-| VAL-05 | Phase 21 |
+| Requirement | Planned Phase | Status |
+|-------------|---------------|--------|
+| CORE-01 | Phase 16 | shipped ✅ |
+| CORE-02 | Phase 17 | shipped ✅ |
+| TODO-01 | Phase 17 | shipped ✅ |
+| TODO-02 | Phase 17 | shipped ✅ |
+| STAT-01 | Phase 18 | shipped ✅ |
+| ARCH-01 | Phase 19 | shipped ✅ |
+| SCAN-01 | Phase 18 | shipped ✅ |
+| PREP-01 | Phase 19 | shipped ✅ |
+| PROP-01 | Phase 20 | shipped ✅ |
+| WRITE-01 | Phase 20 | shipped ✅ |
+| WRITE-02 | Phase 19 | shipped ✅ |
+| SAFE-02 | Phase 16 | shipped ✅ |
+| VAL-05 | Phase 21 | shipped ✅ |
 
 ## Archived Requirement Sets
 
