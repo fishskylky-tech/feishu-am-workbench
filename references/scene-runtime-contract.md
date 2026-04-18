@@ -111,11 +111,15 @@ Phase 12 locks a medium-strength boundary freeze.
 - `customer-recent-status`
 - `archive-refresh`
 - `todo-capture-and-update`
+- `cohort-scan` (NEW in v1.2)
+- `meeting-prep` (NEW in v1.2)
+- `proposal` (NEW in v1.2)
 
 ### Locked priority grouping
 
 - first group: `post-meeting-synthesis`, `customer-recent-status`
 - second group: `archive-refresh`, `todo-capture-and-update`
+- third group (v1.2): `cohort-scan`, `meeting-prep`, `proposal`
 
 ### Locked boundary rules
 
@@ -133,6 +137,21 @@ That means:
 - the structured result should not depend on one CLI or chat renderer
 - host-specific formatting belongs in the final rendering layer, not in the contract itself
 - business meaning should survive across Hermes/OpenClaw/Codex-style hosts
+
+## v1.2 Scene Additions
+
+Phase 16-20 added expert-analysis foundation and three new scenes:
+- cohort-scan: user-triggered analytical entry for customer cohorts
+- meeting-prep: recommendation-first meeting brief with seven-dimension output
+- proposal: structured proposal/report/resource-coordination draft with five-dimension output
+
+All three scenes follow the same SceneResult contract and dispatch pattern.
+
+## VAL-05 Regression Scope Note
+
+VAL-05 regression coverage (Phase 21) covers 6 scenes: post-meeting-synthesis, customer-recent-status, archive-refresh, cohort-scan, meeting-prep, and proposal.
+
+The scene `todo-capture-and-update` is excluded from VAL-05 regression because it was shipped in v1.1 and is not part of the v1.2 scope. The total registry contains 7 scenes, but VAL-05 specifically targets the 6 scenes upgraded or new in v1.2 (Phases 16-20).
 
 ## Current Canonical Example
 
