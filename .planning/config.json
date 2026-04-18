@@ -41,5 +41,10 @@
   "granularity": "standard",
   "graphify": {
     "enabled": true
+  },
+  "review": {
+    "models": {
+      "opencode": "github-copilot/gpt-4o"
+    }
   }
 }

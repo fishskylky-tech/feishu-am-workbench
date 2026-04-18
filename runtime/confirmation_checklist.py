@@ -270,6 +270,7 @@ def render_confirmation_checklist(checklist: ConfirmationChecklist) -> list[str]
 def build_proposal_checklist(
     evidence_container: Any | None,
     recovery: Any | None,
+    proposal_type: str = "proposal",
 ) -> ConfirmationChecklist:
     """Build proposal scene confirmation checklist per D-13, D-14, D-15.
 
@@ -302,10 +303,11 @@ def build_proposal_checklist(
     )
 
     # D-14: Scene-specific items
+    # proposal_type suggestion (default proposal, user can override)
     checklist.items.append(ChecklistItem(
         key="proposal_type",
         label="提案类型",
-        system_suggestion="proposal",
+        system_suggestion=proposal_type,
     ))
 
     # D-15: output_destination inferred from evidence

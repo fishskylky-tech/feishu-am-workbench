@@ -224,6 +224,118 @@ def _render_proposal_output(
     return lines
 
 
+def _infer_proposal_output_destination(
+    evidence_container: Any,
+    proposal_type: str,
+) -> str:
+    """Infer default output destination based on proposal_type per D-12.
+
+    Per D-12: Default routing by proposal type:
+      - proposal -> Drive customer archive folder
+      - report -> Drive customer archive folder or weekly-report folder
+      - resource-coordination -> Task module or Base 行动计划 table
+
+    Returns a human-readable destination string for the confirmation checklist.
+    """
+    if proposal_type in ("proposal", "report"):
+        # Route to Drive folder
+        if evidence_container:
+            arch_src = evidence_container.sources.get("customer_archive")
+            if arch_src and arch_src.available:
+                archive_name = arch_src.raw_data.get("name", "客户档案文件夹")
+                return f"Drive 已有档案: {archive_name}"
+        return "Drive 客户档案文件夹"
+    else:
+        # resource-coordination -> Task or Base 行动计划
+        return "Base 行动计划表 / Task"
+
+
+def _extract_action_items_from_proposal(
+    lens_results: dict[str, list[str]],
+    proposal_type: str,
+) -> list[dict[str, str]]:
+    """Extract action items from proposal lens results for Base/Task write.
+
+    Per D-10: resource-coordination type routes to Base 行动计划 table or Task module.
+    Only extracts from resource_asks and open_questions for action item creation.
+
+    Returns list of action item dicts with keys: subject, description, due_date (optional).
+    """
+    action_items = []
+
+    if proposal_type != "resource-coordination":
+        return action_items
+
+    # Extract from resource_asks
+    resource_items = lens_results.get("resource_asks", [])
+    for item in resource_items[:3]:
+        action_items.append({
+            "subject": f"资源协调: {item}",
+            "description": item,
+        })
+
+    # Extract from open_questions
+    question_items = lens_results.get("open_questions", [])
+    for item in question_items[:2]:
+        action_items.append({
+            "subject": f"待确认: {item}",
+            "description": item,
+        })
+
+    return action_items
+
+
+def _build_proposal_routing_payload(
+    proposal_type: str,
+    confirmed_destination: str,
+    lens_results: dict[str, list[str]],
+    customer_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Build routing payload for proposal output per D-11, D-12.
+
+    Per D-11: Routing is recommendation + confirmation (same as Phase 19 WRITE-02 pattern).
+    Per D-12: Default routing by type — proposal/report to Drive, resource-coordination to Base/Task.
+
+    Returns routing payload dict with destination_type, target, content summary.
+    """
+    output_content = "\n".join([
+        "目的:",
+        *lens_results.get("objective", ["- 暂无目的信息"]),
+        "",
+        "核心判断:",
+        *lens_results.get("core_judgment", ["- 暂无核心判断"]),
+        "",
+        "主要叙事:",
+        *lens_results.get("main_narrative", ["- 暂无叙事内容"]),
+        "",
+        "资源请求:",
+        *lens_results.get("resource_asks", ["- 暂无资源请求"]),
+        "",
+        "待确认问题:",
+        *lens_results.get("open_questions", ["- 暂无待确认问题"]),
+    ])
+
+    if proposal_type in ("proposal", "report"):
+        # Drive routing
+        return {
+            "destination_type": "drive_doc",
+            "target": confirmed_destination,
+            "content": output_content,
+            "customer": customer_info,
+            "doc_type": "proposal" if proposal_type == "proposal" else "report",
+        }
+    else:
+        # Resource-coordination: Base table or Task
+        action_items = _extract_action_items_from_proposal(lens_results, proposal_type)
+        return {
+            "destination_type": "base_table" if action_items else "task",
+            "target": "行动计划" if action_items else "task",
+            "content": output_content,
+            "action_items": action_items,
+            "customer": customer_info,
+        }
+
+
 def _render_four_lens_judgments(lens_results: dict[str, list[str]]) -> list[str]:
     """Render four-lens results as labeled sub-items within judgments field.
 
@@ -989,29 +1101,57 @@ def run_proposal_scene(request: SceneRequest) -> SceneResult:
     Per D-07: Type-specific emphasis — proposal emphasizes core judgment + narrative; report emphasizes narrative; resource-coordination emphasizes resource asks.
     Per D-09: Independent judgment logic — not shared with Phase 17/18/19 judgment frameworks.
     Per D-10: Confirmation checklist shown BEFORE scene output.
+    Per D-11: Routing is recommendation + confirmation (WRITE-02 pattern).
+    Per D-12: Default routing by type — proposal/report to Drive, resource-coordination to Base/Task.
     Per D-19: No agency/autonomous behavior — remains recommendation-first and human-in-the-loop.
     """
     topic_text = str(request.inputs.get("topic_text") or "")
     gateway_result, recovery = _build_live_scene_context(request, topic_text=topic_text)
     facts = list(recovery.key_context)
 
-    # Per D-04, D-05: evidence assembly via EvidenceContainer
-    evidence_container = getattr(recovery, 'evidence_container', None)
-
-    # Per D-10: Render confirmation checklist BEFORE scene output
-    checklist = build_proposal_checklist(evidence_container, recovery)
-    checklist_output = render_confirmation_checklist(checklist)
-
-    # Per D-06: Derive five-dimension lenses from evidence
-    lens_results = _derive_proposal_lenses(evidence_container)
-
     # Per D-01, D-02: proposal_type from user input (default proposal)
     proposal_type = str(request.inputs.get("proposal_type") or "proposal")
     if proposal_type not in ("proposal", "report", "resource-coordination"):
         proposal_type = "proposal"
 
+    # Per D-04, D-05: evidence assembly via EvidenceContainer
+    evidence_container = getattr(recovery, 'evidence_container', None)
+
+    # Per D-10: Render confirmation checklist BEFORE scene output
+    # Per D-14: proposal_type passed to checklist for type-specific suggestion
+    checklist = build_proposal_checklist(evidence_container, recovery, proposal_type=proposal_type)
+    checklist_output = render_confirmation_checklist(checklist)
+
+    # Per D-06: Derive five-dimension lenses from evidence
+    lens_results = _derive_proposal_lenses(evidence_container)
+
     # Per D-07: Type-specific emphasis in output rendering
     output_lines = _render_proposal_output(lens_results, proposal_type)
+
+    # Per D-11: Build routing payload after confirmation
+    confirmed_answers = checklist.confirmed_answers()
+    confirmed_destination = confirmed_answers.get(
+        "output_destination",
+        _infer_proposal_output_destination(evidence_container, proposal_type),
+    )
+
+    # Build customer info for routing
+    customer_resolution = gateway_result.customer_resolution
+    customer_info: dict[str, Any] = {}
+    if customer_resolution and customer_resolution.candidates:
+        best = customer_resolution.candidates[0]
+        customer_info = {
+            "customer_id": best.customer_id,
+            "short_name": best.short_name,
+            "archive_link": getattr(best, "archive_link", None),
+        }
+
+    routing_payload = _build_proposal_routing_payload(
+        proposal_type=proposal_type,
+        confirmed_destination=confirmed_destination,
+        lens_results=lens_results,
+        customer_info=customer_info,
+    )
 
     # Build judgments per D-09 (independent judgment logic)
     judgments: list[str] = []
@@ -1035,6 +1175,12 @@ def run_proposal_scene(request: SceneRequest) -> SceneResult:
         recommendations.append("建议先确认客户近期动态和历史合作背景。")
     if proposal_type == "resource-coordination" and not lens_results.get("resource_asks"):
         recommendations.append("资源协调类型建议明确资源需求和投入计划。")
+
+    # Per D-11: Add routing recommendation to output
+    routing_recommendation = f"建议输出至: {confirmed_destination}"
+    if confirmed_answers.get("proposal_type"):
+        routing_recommendation += f" (类型: {confirmed_answers.get('proposal_type')})"
+    recommendations.insert(0, routing_recommendation)
 
     # Build output: checklist shown first per D-10, then five-dimension brief
     lines = checklist_output + output_lines + [
@@ -1071,10 +1217,11 @@ def run_proposal_scene(request: SceneRequest) -> SceneResult:
                 "proposal_type": proposal_type,
                 "proposal_lenses": lens_results,
                 "confirmation_checklist_output": checklist_output,
-                "confirmed_answers": checklist.confirmed_answers(),
+                "confirmed_answers": confirmed_answers,
                 "evidence_container": evidence_container,
                 "missing_sources": list(recovery.missing_sources),
                 "candidate_conflicts": list(recovery.candidate_conflicts),
+                "routing_payload": routing_payload,  # Per D-11
             }
         },
     )
