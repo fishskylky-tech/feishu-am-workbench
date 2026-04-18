@@ -68,33 +68,43 @@ Use one live-first, safety-first skill to turn AM inputs into actionable custome
 
 - v1.0 shipped with phases 1-11 complete and archived.
 - v1.1 shipped with phases 12-15 complete and archived.
-- The repository now supports capability diagnostics, customer-grounded context recovery, guarded Todo writes, milestone-grade validation evidence, and four executable scene runtime surfaces on one shared contract.
+- v1.2 shipped with phases 16-21 complete and archived — 7 scenes, VAL-05 24/24 tests pass.
+- Repository supports 7 executable scene runtimes on one shared contract: post-meeting-synthesis, customer-recent-status, archive-refresh, todo-capture-and-update, cohort-scan, meeting-prep, proposal.
+- Live-first, recommendation-first, guarded-write boundaries proven in production.
 
-## Most Recent Milestone: v1.1 Executable Scene Runtimes
+## Most Recent Milestone: v1.2 Expert Customer Operating Scenes
 
-**Outcome:** Turn the existing scene-skill architecture contract into executable runtime surfaces without weakening live-first and guarded-write constraints.
+**Outcome:** Upgrade executable scenes into expert-guided customer-operating workflows and add three new recommendation-first AM scenes.
 
 **Delivered:**
-- Added executable scene runtime entrypoints for post-meeting, customer recent status, archive refresh, and Todo follow-on workflows
-- Kept scene execution aligned with the existing live-first gateway and write-guard boundaries
-- Preserved clear integration seams for later bootstrap/admin operator paths
+- Expert-augmented post-meeting synthesis with multi-source evidence fusion (CORE-01, CORE-02, TODO-01, TODO-02)
+- Four-lens account-posture analysis and cohort-scan scene (STAT-01, SCAN-01)
+- Structured archive refresh with five-dimension synthesis (ARCH-01)
+- Meeting prep and proposal scenes with confirmation checklists (PREP-01, PROP-01, WRITE-01, WRITE-02)
+- VAL-05 regression: 24/24 tests pass across 6 scenes × 4 case types
 
-## Current Milestone: v1.2 Expert Customer Operating Scenes
+## Current Milestone: v1.3 开源准备与Skill巩固
 
-**Goal:** Upgrade the shipped executable scenes into expert-guided customer-operating workflows and add the next high-value recommendation-first AM scenes without weakening safety boundaries.
+**Goal:** 阶段性巩固 v1.0-v1.2 已完成的能力，安全干净地发布到 GitHub public，为后续 Skill 生态扩展打基础。
 
 **Target features:**
-- Expert-augmented post-meeting synthesis with multi-source evidence fusion, operating judgment, and explicit next-step paths
-- Expert-routed Todo follow-on that distinguishes risk intervention, expansion, relationship maintenance, and project progression actions
-- Account-posture recent-status analysis plus cohort-level risk/opportunity/common-issue scanning
-- Structured archive refresh with canonical write-back targets and richer customer-history synthesis
-- Recommendation-first meeting prep briefs
-- Recommendation-first proposal, reporting, and resource-coordination drafts that default to Feishu-native output routing
 
-**Key constraints for v1.2:**
-- Do not introduce automatic writes without confirmation
-- Do not default durable outputs to the local workspace when a Feishu-native destination should exist
-- Do not turn the foundation layer into a giant hidden business-context assembler; keep expert logic explicit at the scene layer
+### v1.3.1 — 开源安全 + 发版
+- 隐私文件清理（.planning/ → gitignore，本地保留）
+- 敏感文件名脱敏（unilever 客户名等）
+- 添加 MIT LICENSE
+- 所有决定公开的文档统一重写为"开源使用者/贡献者友好"标准
+- 其他文档评估与归档
+
+### v1.3.2 — Skill 规范化 + 能力深化巩固
+1. **整体完成度评估** — 基于 v1.0-v1.2 代码、ROADMAP、REQUIREMENTS 进行全面复盘，识别有提升空间的领域
+2. **Skill 规范化** — SKILL.md 精简到 <2,000 tokens，保持 L1/L2/L3 边界；对标 agentskills.io / anthropics/skills / darwin-skill / Google ADK 标准
+3. **agency-agents 引入** — 独立 scene 配置文件（方案 C），专家审核层：scene 输入/输出加专家把关
+
+**Key constraints for v1.3:**
+- 不增加新业务场景，聚焦巩固和规范化
+- 开源原则：只公布对使用者有帮助的内容，开发文件本地保留
+- agency-agents 引入不改核心 scene 逻辑
 
 ## Evolution
 
@@ -114,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-17 after v1.2 milestone initialization*
+*Last updated: 2026-04-19 after v1.3 milestone initialization*

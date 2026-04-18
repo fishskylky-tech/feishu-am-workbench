@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Expert Customer Operating Scenes
-status: complete
-stopped_at: Phase 21 shipped
-last_updated: "2026-04-18T18:00:00.000Z"
-last_activity: 2026-04-18 -- Phase 21 shipped
+milestone: v1.3
+milestone_name: 开源准备与Skill巩固
+status: not_started
+stopped_at: —
+last_updated: "2026-04-19T00:00:00.000Z"
+last_activity: 2026-04-19 -- v1.3 milestone initialized
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
-  percent: 100
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -32,21 +32,17 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 20 (Proposal, Reporting, And Resource Coordination) — COMPLETE
-Plan: 3 of 3
-Status: Complete
-Last activity: 2026-04-18 -- Phase 20 execution complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-19 — Milestone v1.3 开源准备与Skill巩固 started
 
 ## Phase Status
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| 16 | shipped 2026-04-17 | Expert-analysis foundation and multi-source evidence fusion |
-| 17 | shipped 2026-04-17 | Post-meeting and Todo expert upgrade |
-| 18 | shipped 2026-04-17 | Account-posture and cohort scanning scenes |
-| 19 | shipped 2026-04-17 | Archive refresh write-path definition and meeting prep scene |
-| 20 | shipped 2026-04-18 | Proposal/report/resource-coordination scene |
-| 21 | shipped 2026-04-18 | Validation closure and milestone closeout prep |
+| 1 | pending | 开源安全 + 发版 |
+| 2 | pending | Skill 规范化 + 能力深化巩固 |
 
 ## Working Assumptions
 
@@ -62,16 +58,7 @@ Resume File: .planning/phases/20-proposal-reporting-and-resource-coordination/20
 
 ## Next Command
 
-- Recommended: /gsd-new-milestone
-- Optional: /gsd-plan-phase 999.1
-
-## Notes For Resume
-
-- v1.2 scope is user-confirmed around six priorities: deepen post-meeting, Todo, recent-status, and archive-refresh scenes; add cohort scanning, meeting prep, and proposal/report/resource-coordination.
-- The milestone intentionally prioritizes expert analysis quality and durable-output routing over bootstrap/admin operator work.
-- Proposal/reporting artifacts should default to Feishu-native destinations, not the local workspace.
-- Cohort scanning in v1.2 is user-triggered analytical entry, not a scheduled automatic巡检 system.
-- Backlog Phase 999.1 remains optional cleanup outside the v1.2 mainline.
+- Recommended: /gsd-new-milestone → v1.3.1 planning
 
 ## Accumulated Context
 
