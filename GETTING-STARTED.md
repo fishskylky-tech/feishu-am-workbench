@@ -58,14 +58,14 @@ python3 -m runtime .
 
 ## 4. 第二步：跑一条真实会议链路
 
-推荐先跑联合利华案例，因为它已经在当前仓库里形成稳定验证基线：
+推荐先跑<CUSTOMER_A>案例，因为它已经在当前仓库里形成稳定验证基线：
 
 ```bash
 python3 -m evals.meeting_output_bridge \
-  --eval-name unilever-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --eval-name <CUSTOMER_A>-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt \
   --run-gateway \
-  --customer-query 联合利华
+  --customer-query <CUSTOMER_A>
 ```
 
 重点看 6 个字段：

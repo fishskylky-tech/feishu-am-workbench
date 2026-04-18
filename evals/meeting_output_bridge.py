@@ -242,7 +242,7 @@ def build_meeting_todo_candidates(
     if resolution is None or resolution.status != "resolved" or not resolution.candidates:
         return []
     customer = resolution.candidates[0]
-    if eval_name != "unilever-stage-review":
+    if eval_name != "<CUSTOMER_A>-stage-review":
         return []
     if action_items:
         candidates = _build_action_item_candidates(
@@ -936,12 +936,12 @@ def _parse_note_date(date_str: str) -> datetime | None:
 
 
 def _render_case_body(eval_name: str, transcript_text: str) -> list[str]:
-    if eval_name == "unilever-stage-review":
-        return _render_unilever_body(transcript_text)
-    if eval_name == "yonghe-product-solution-discussion":
-        return _render_yonghe_body(transcript_text)
-    if eval_name == "dominos-ad-tracking-qa":
-        return _render_dominos_body(transcript_text)
+    if eval_name == "<CUSTOMER_A>-stage-review":
+        return _render_<CUSTOMER_A>_body(transcript_text)
+    if eval_name == "<CUSTOMER_B>-product-solution-discussion":
+        return _render_<CUSTOMER_B>_body(transcript_text)
+    if eval_name == "<CUSTOMER_C>-ad-tracking-qa":
+        return _render_<CUSTOMER_C>_body(transcript_text)
     raise KeyError(f"unsupported eval case: {eval_name}")
 
 
@@ -971,12 +971,12 @@ def _render_write_results(write_results: list[WriteExecutionResult]) -> list[str
 
 
 def _build_recommended_todo_summary(eval_name: str, customer_name: str) -> str:
-    if eval_name == "unilever-stage-review":
+    if eval_name == "<CUSTOMER_A>-stage-review":
         return f"跟进{customer_name}下一轮 Campaign 优化方案确认"
     return f"跟进{customer_name}会议后续动作确认"
 
 
-def _render_unilever_body(transcript_text: str) -> list[str]:
+def _render_<CUSTOMER_A>_body(transcript_text: str) -> list[str]:
     open_questions = [
         "招募来源口径",
         "激活来源口径",
@@ -1002,7 +1002,7 @@ def _render_unilever_body(transcript_text: str) -> list[str]:
     return lines
 
 
-def _render_yonghe_body(transcript_text: str) -> list[str]:
+def _render_<CUSTOMER_B>_body(transcript_text: str) -> list[str]:
     lines = [
         "Meeting type: alignment_clarification",
         "客户主数据: no-write",
@@ -1017,7 +1017,7 @@ def _render_yonghe_body(transcript_text: str) -> list[str]:
     return lines
 
 
-def _render_dominos_body(transcript_text: str) -> list[str]:
+def _render_<CUSTOMER_C>_body(transcript_text: str) -> list[str]:
     lines = [
         "Meeting type: delivery_issue_handling",
         "客户主数据: no-write",
@@ -1028,7 +1028,7 @@ def _render_dominos_body(transcript_text: str) -> list[str]:
         "- 口径",
         "- 支持动作",
     ]
-    if "达美乐" in transcript_text:
+    if "<CUSTOMER_C>" in transcript_text:
         lines.append("会议主题: 广告追踪与取数口径答疑")
     return lines
 

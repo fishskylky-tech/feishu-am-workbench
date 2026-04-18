@@ -288,15 +288,15 @@ class RuntimeSmokeTests(unittest.TestCase):
             object_name="待办",
             layer="reminder",
             semantic_fields=["summary", "owner"],
-            payload={"summary": "跟进联合利华续费", "owner": "ou_owner"},
+            payload={"summary": "跟进<CUSTOMER_A>续费", "owner": "ou_owner"},
             operation="create",
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
             source_context={"scenario": "post_meeting", "customer_id": "C_002"},
             target_object="todo",
         )
         self.assertEqual(candidate.operation, "create")
         self.assertEqual(candidate.target_object, "todo")
-        self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.match_basis["customer"], "<CUSTOMER_A>")
         self.assertEqual(candidate.source_context["scenario"], "post_meeting")
 
     def test_write_execution_result_structured_result_preserves_blocked_evidence(self) -> None:
@@ -369,10 +369,10 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "priority", "customer"],
             payload={
-                "summary": "跟进联合利华续费",
+                "summary": "跟进<CUSTOMER_A>续费",
                 "owner": "ou_owner",
                 "priority": "高",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
             },
             operation="create",
             target_object="todo",
@@ -436,9 +436,9 @@ class RuntimeSmokeTests(unittest.TestCase):
             ),
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
-                '{"task": {"summary": "跟进联合利华续费方案", '
+                '{"task": {"summary": "跟进<CUSTOMER_A>续费方案", '
                 '"due": {"timestamp": "1776643200000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "<CUSTOMER_A>"}]}, '
                 '"update_fields": ["summary", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -457,8 +457,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             existing_tasks=[
                 {
                     "guid": "task_existing",
-                    "summary": "推进联合利华续费方案确认",
-                    "customer": "联合利华",
+                    "summary": "推进<CUSTOMER_A>续费方案确认",
+                    "customer": "<CUSTOMER_A>",
                     "due_at": "2026-04-18",
                 }
             ],
@@ -468,15 +468,15 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "customer", "priority"],
             payload={
-                "summary": "跟进联合利华续费方案",
+                "summary": "跟进<CUSTOMER_A>续费方案",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
                 "priority": "高",
                 "due_at": "2026-04-20",
             },
             operation="create",
             target_object="todo",
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
         )
         result = writer.create(candidate)
         self.assertTrue(result.attempted)
@@ -538,8 +538,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             ),
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
-                '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
+                '{"task": {"summary": "跟进<CUSTOMER_A> AI 埋点产品介绍给触脉确认", '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "<CUSTOMER_A>"}]}, '
                 '"update_fields": ["summary", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -558,8 +558,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             existing_tasks=[
                 {
                     "guid": "task_existing",
-                    "summary": "联合利华-AI埋点产品介绍给触脉（王奇）",
-                    "customer": "联合利华",
+                    "summary": "<CUSTOMER_A>-AI埋点产品介绍给触脉（王奇）",
+                    "customer": "<CUSTOMER_A>",
                     "due_at": "2026-04-18",
                 }
             ],
@@ -569,14 +569,14 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "customer", "priority"],
             payload={
-                "summary": "跟进联合利华 AI 埋点产品介绍给触脉确认",
+                "summary": "跟进<CUSTOMER_A> AI 埋点产品介绍给触脉确认",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
                 "priority": "高",
             },
             operation="create",
             target_object="todo",
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
         )
         result = writer.create(candidate)
         self.assertEqual(result.dedupe_decision, "update_existing")
@@ -627,8 +627,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             existing_tasks=[
                 {
                     "guid": "task_parent",
-                    "summary": "联合利华 活动 优化 方案",
-                    "customer": "联合利华",
+                    "summary": "<CUSTOMER_A> 活动 优化 方案",
+                    "customer": "<CUSTOMER_A>",
                     "due_at": "2026-04-20",
                 }
             ],
@@ -638,13 +638,13 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "customer"],
             payload={
-                "summary": "整理联合利华活动优化方案并发送会前资料",
+                "summary": "整理<CUSTOMER_A>活动优化方案并发送会前资料",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
             },
             operation="create",
             target_object="todo",
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
         )
         result = writer.create(candidate)
         self.assertFalse(result.attempted)
@@ -685,10 +685,10 @@ class RuntimeSmokeTests(unittest.TestCase):
         responses = {
             (
                 'task tasks create --data '
-                '{"summary": "整理联合利华活动优化方案并发送会前资料", '
+                '{"summary": "整理<CUSTOMER_A>活动优化方案并发送会前资料", '
                 '"tasklists": [{"tasklist_guid": "00000000-0000-4000-8000-000000000001"}], '
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}], '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "<CUSTOMER_A>"}], '
                 '"parent_task_guid": "task_parent"}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -711,8 +711,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             existing_tasks=[
                 {
                     "guid": "task_parent",
-                    "summary": "联合利华 活动 优化 方案",
-                    "customer": "联合利华",
+                    "summary": "<CUSTOMER_A> 活动 优化 方案",
+                    "customer": "<CUSTOMER_A>",
                     "due_at": "2026-04-20",
                 }
             ],
@@ -723,13 +723,13 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "customer"],
             payload={
-                "summary": "整理联合利华活动优化方案并发送会前资料",
+                "summary": "整理<CUSTOMER_A>活动优化方案并发送会前资料",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
             },
             operation="create",
             target_object="todo",
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
             source_context={"confirm_create_subtask": True},
         )
         result = writer.create(candidate)
@@ -787,23 +787,23 @@ class RuntimeSmokeTests(unittest.TestCase):
             [
                 {
                     "客户ID": "C001",
-                    "简称": "联合利华",
-                    "客户名称": "联合利华中国",
+                    "简称": "<CUSTOMER_A>",
+                    "客户名称": "<CUSTOMER_A>中国",
                     "客户档案": "https://doc.example/u",
                 }
             ]
         )
-        resolution = CustomerResolver(backend).resolve("联合利华")
+        resolution = CustomerResolver(backend).resolve("<CUSTOMER_A>")
         self.assertEqual(resolution.status, "resolved")
-        self.assertEqual(resolution.candidates[0].raw_record["客户名称"], "联合利华中国")
+        self.assertEqual(resolution.candidates[0].raw_record["客户名称"], "<CUSTOMER_A>中国")
 
     def test_customer_resolver_matches_customer_id_exactly(self) -> None:
         backend = FakeCustomerBackend(
             [
                 {
                     "客户ID": "C_002",
-                    "简称": "联合利华",
-                    "客户名称": "联合利华中国",
+                    "简称": "<CUSTOMER_A>",
+                    "客户名称": "<CUSTOMER_A>中国",
                 }
             ]
         )
@@ -818,16 +818,16 @@ class RuntimeSmokeTests(unittest.TestCase):
             [
                 {
                     "客户ID": "C_002",
-                    "简称": "联合利华华东",
-                    "客户名称": "联合利华华东",
+                    "简称": "<CUSTOMER_A>华东",
+                    "客户名称": "<CUSTOMER_A>华东",
                 }
             ]
         )
 
-        resolution = CustomerResolver(backend).resolve("联合利华")
+        resolution = CustomerResolver(backend).resolve("<CUSTOMER_A>")
 
         self.assertEqual(resolution.status, "resolved")
-        self.assertEqual(resolution.candidates[0].short_name, "联合利华华东")
+        self.assertEqual(resolution.candidates[0].short_name, "<CUSTOMER_A>华东")
 
     def test_customer_resolver_returns_missing_when_no_candidate_exists(self) -> None:
         backend = FakeCustomerBackend([])
@@ -843,18 +843,18 @@ class RuntimeSmokeTests(unittest.TestCase):
             [
                 {
                     "客户ID": "C_002",
-                    "简称": "联合利华华东",
-                    "客户名称": "联合利华华东",
+                    "简称": "<CUSTOMER_A>华东",
+                    "客户名称": "<CUSTOMER_A>华东",
                 },
                 {
                     "客户ID": "C_003",
-                    "简称": "联合利华华北",
-                    "客户名称": "联合利华华北",
+                    "简称": "<CUSTOMER_A>华北",
+                    "客户名称": "<CUSTOMER_A>华北",
                 },
             ]
         )
 
-        resolution = CustomerResolver(backend).resolve("联合利华")
+        resolution = CustomerResolver(backend).resolve("<CUSTOMER_A>")
 
         self.assertEqual(resolution.status, "ambiguous")
         self.assertEqual(len(resolution.candidates), 2)
@@ -864,18 +864,18 @@ class RuntimeSmokeTests(unittest.TestCase):
             [
                 {
                     "客户ID": "C_002",
-                    "简称": "联合利华",
-                    "客户名称": "联合利华中国",
+                    "简称": "<CUSTOMER_A>",
+                    "客户名称": "<CUSTOMER_A>中国",
                 },
                 {
                     "客户ID": "C_003",
-                    "简称": "联合利华",
-                    "客户名称": "联合利华餐饮",
+                    "简称": "<CUSTOMER_A>",
+                    "客户名称": "<CUSTOMER_A>餐饮",
                 },
             ]
         )
 
-        resolution = CustomerResolver(backend).resolve("联合利华")
+        resolution = CustomerResolver(backend).resolve("<CUSTOMER_A>")
 
         self.assertEqual(resolution.status, "ambiguous")
         self.assertEqual(len(resolution.candidates), 2)
@@ -885,8 +885,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             [
                 {
                     "客户ID": "C001",
-                    "简称": "联合利华",
-                    "客户名称": "联合利华中国",
+                    "简称": "<CUSTOMER_A>",
+                    "客户名称": "<CUSTOMER_A>中国",
                     "客户档案": "https://doc.example/u",
                 }
             ]
@@ -909,7 +909,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             },
         )
         result = gateway.run(
-            customer_query="联合利华",
+            customer_query="<CUSTOMER_A>",
             write_candidates=[candidate],
             owner_required_objects={"行动计划"},
         )
@@ -1062,7 +1062,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             object_name="待办",
             layer="reminder",
             semantic_fields=["customer"],
-            payload={"customer": "联合利华"},
+            payload={"customer": "<CUSTOMER_A>"},
         )
         report = runner.run(candidate)
         self.assertEqual(report.status, "blocked")
@@ -1435,10 +1435,10 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "priority", "customer"],
             payload={
-                "summary": "跟进联合利华续费",
+                "summary": "跟进<CUSTOMER_A>续费",
                 "owner": "ou_owner",
                 "priority": "高",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
             },
         )
         result = writer.create(candidate)
@@ -1450,11 +1450,11 @@ class RuntimeSmokeTests(unittest.TestCase):
         responses = {
             (
                 'task tasks create --data '
-                '{"summary": "跟进联合利华续费", "tasklists": [{"tasklist_guid": "00000000-0000-4000-8000-000000000001"}], '
+                '{"summary": "跟进<CUSTOMER_A>续费", "tasklists": [{"tasklist_guid": "00000000-0000-4000-8000-000000000001"}], '
                 '"members": [{"id": "ou_owner", "role": "assignee", "type": "user"}], '
                 '"description": "带客户档案链接", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}'
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "<CUSTOMER_A>"}]}'
             ): subprocess.CompletedProcess(
                 args=[],
                 returncode=0,
@@ -1530,9 +1530,9 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             semantic_fields=["summary", "owner", "customer", "priority"],
             payload={
-                "summary": "跟进联合利华续费",
+                "summary": "跟进<CUSTOMER_A>续费",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
                 "priority": "高",
                 "description": "带客户档案链接",
                 "due_at": "2026-04-14",
@@ -1560,7 +1560,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 'task tasks patch --params {"task_guid": "task_guid_1"} --data '
                 '{"task": {"summary": "更新后的标题", "description": "更新后的描述", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "<CUSTOMER_A>"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1655,7 +1655,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 "summary": "更新后的标题",
                 "description": "更新后的描述",
                 "due_at": "2026-04-14",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
                 "priority": "中",
                 "owner": "ou_new",
             },
@@ -1683,9 +1683,9 @@ class RuntimeSmokeTests(unittest.TestCase):
             ),
             (
                 'task tasks patch --params {"task_guid": "task_existing"} --data '
-                '{"task": {"summary": "跟进联合利华 AI 埋点产品介绍给触脉确认", "description": "补充新的会后上下文", '
+                '{"task": {"summary": "跟进<CUSTOMER_A> AI 埋点产品介绍给触脉确认", "description": "补充新的会后上下文", '
                 '"due": {"timestamp": "1776124800000", "is_all_day": true}, '
-                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "联合利华（UFS）"}]}, '
+                '"custom_fields": [{"guid": "a7009aff-7d85-4378-82c9-1584873f469d", "text_value": "<CUSTOMER_A>（UFS）"}]}, '
                 '"update_fields": ["summary", "description", "due", "custom_fields"]}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -1748,8 +1748,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             existing_tasks=[
                 {
                     "guid": "task_existing",
-                    "summary": "联合利华-AI埋点产品介绍给触脉（王奇）",
-                    "customer": "联合利华（UFS）",
+                    "summary": "<CUSTOMER_A>-AI埋点产品介绍给触脉（王奇）",
+                    "customer": "<CUSTOMER_A>（UFS）",
                     "due_at": "2026-04-14",
                 }
             ],
@@ -1761,13 +1761,13 @@ class RuntimeSmokeTests(unittest.TestCase):
             operation="create",
             semantic_fields=["summary", "description", "due_at", "customer", "priority"],
             payload={
-                "summary": "跟进联合利华 AI 埋点产品介绍给触脉确认",
+                "summary": "跟进<CUSTOMER_A> AI 埋点产品介绍给触脉确认",
                 "description": "补充新的会后上下文",
                 "due_at": "2026-04-14",
-                "customer": "联合利华（UFS）",
+                "customer": "<CUSTOMER_A>（UFS）",
                 "priority": "高",
             },
-            match_basis={"customer": "联合利华（UFS）", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>（UFS）", "time_window": "2026-04"},
         )
         result = writer.create(candidate)
         self.assertTrue(result.attempted)
@@ -1839,8 +1839,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             schema_preflight=SchemaPreflightRunner(PassingTodoSchemaBackend()),
             existing_tasks=[
                 {
-                    "summary": "跟进联合利华 Campaign 优化方案确认",
-                    "customer": "联合利华",
+                    "summary": "跟进<CUSTOMER_A> Campaign 优化方案确认",
+                    "customer": "<CUSTOMER_A>",
                     "due_at": "2026-04-10",
                 }
             ],
@@ -1853,12 +1853,12 @@ class RuntimeSmokeTests(unittest.TestCase):
             operation="create",
             semantic_fields=["summary", "owner", "customer", "priority"],
             payload={
-                "summary": "跟进联合利华 Campaign 优化方案确认",
+                "summary": "跟进<CUSTOMER_A> Campaign 优化方案确认",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
                 "priority": "高",
             },
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
         )
 
         result = writer.create(candidate)
@@ -1920,8 +1920,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             existing_tasks=[
                 {
                     "guid": "task_existing",
-                    "summary": "跟进联合利华 Campaign 优化方案确认",
-                    "customer": "联合利华",
+                    "summary": "跟进<CUSTOMER_A> Campaign 优化方案确认",
+                    "customer": "<CUSTOMER_A>",
                     "due_at": "2026-04-10",
                 }
             ],
@@ -1934,11 +1934,11 @@ class RuntimeSmokeTests(unittest.TestCase):
             operation="create",
             semantic_fields=["summary", "owner", "customer"],
             payload={
-                "summary": "跟进联合利华 Campaign 优化方案确认",
+                "summary": "跟进<CUSTOMER_A> Campaign 优化方案确认",
                 "owner": "ou_owner",
-                "customer": "联合利华",
+                "customer": "<CUSTOMER_A>",
             },
-            match_basis={"customer": "联合利华"},
+            match_basis={"customer": "<CUSTOMER_A>"},
         )
 
         result = writer.create(candidate)
@@ -2022,11 +2022,11 @@ class RuntimeSmokeTests(unittest.TestCase):
                 '{"field_name": "简称", "alias": "dim_short_name"}, '
                 '{"field_name": "公司名称", "alias": "dim_company_name"}], '
                 '"filters": {"type": 1, "conjunction": "or", "conditions": ['
-                '{"field_name": "简称", "operator": "is", "value": ["联合利华"]}, '
-                '{"field_name": "简称", "operator": "contains", "value": ["联合利华"]}, '
-                '{"field_name": "公司名称", "operator": "is", "value": ["联合利华"]}, '
-                '{"field_name": "公司名称", "operator": "contains", "value": ["联合利华"]}, '
-                '{"field_name": "客户 ID", "operator": "is", "value": ["联合利华"]}]}, '
+                '{"field_name": "简称", "operator": "is", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "简称", "operator": "contains", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "公司名称", "operator": "is", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "公司名称", "operator": "contains", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "客户 ID", "operator": "is", "value": ["<CUSTOMER_A>"]}]}, '
                 '"pagination": {"limit": 20}, "shaper": {"format": "flat"}}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -2042,7 +2042,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 returncode=0,
                 stdout=(
                     '{"ok":true,"data":{"fields":["客户 ID","简称","公司名称"],"data":['
-                    '["C_002","联合利华（UFS）","联合利华服务（合肥）有限公司上海分公司"]'
+                    '["C_002","<CUSTOMER_A>（UFS）","<CUSTOMER_A>服务（合肥）有限公司上海分公司"]'
                     ']}}'
                 ),
                 stderr="",
@@ -2054,9 +2054,9 @@ class RuntimeSmokeTests(unittest.TestCase):
         from runtime import LarkCliCustomerBackend  # noqa: E402
 
         backend = LarkCliCustomerBackend(client, config)
-        rows = backend.search_customer_master("联合利华")
+        rows = backend.search_customer_master("<CUSTOMER_A>")
         self.assertEqual(rows[0]["客户ID"], "C_002")
-        self.assertEqual(rows[0]["简称"], "联合利华（UFS）")
+        self.assertEqual(rows[0]["简称"], "<CUSTOMER_A>（UFS）")
 
     def test_customer_backend_prefers_data_query_for_precise_lookup(self) -> None:
         responses = {
@@ -2086,13 +2086,13 @@ class RuntimeSmokeTests(unittest.TestCase):
                 '{"field_name": "公司名称", "alias": "dim_company_name"}, '
                 '{"field_name": "客户档案", "alias": "dim_archive_link"}], '
                 '"filters": {"type": 1, "conjunction": "or", "conditions": ['
-                '{"field_name": "简称", "operator": "is", "value": ["联合利华"]}, '
-                '{"field_name": "简称", "operator": "contains", "value": ["联合利华"]}, '
-                '{"field_name": "客户名称", "operator": "is", "value": ["联合利华"]}, '
-                '{"field_name": "客户名称", "operator": "contains", "value": ["联合利华"]}, '
-                '{"field_name": "公司名称", "operator": "is", "value": ["联合利华"]}, '
-                '{"field_name": "公司名称", "operator": "contains", "value": ["联合利华"]}, '
-                '{"field_name": "客户ID", "operator": "is", "value": ["联合利华"]}]}, '
+                '{"field_name": "简称", "operator": "is", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "简称", "operator": "contains", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "客户名称", "operator": "is", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "客户名称", "operator": "contains", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "公司名称", "operator": "is", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "公司名称", "operator": "contains", "value": ["<CUSTOMER_A>"]}, '
+                '{"field_name": "客户ID", "operator": "is", "value": ["<CUSTOMER_A>"]}]}, '
                 '"pagination": {"limit": 20}, "shaper": {"format": "flat"}}'
             ): subprocess.CompletedProcess(
                 args=[],
@@ -2100,9 +2100,9 @@ class RuntimeSmokeTests(unittest.TestCase):
                 stdout=(
                     '{"ok":true,"data":{"main_data":['
                     '{"dim_customer_id":{"value":"C_002"},'
-                    '"dim_short_name":{"value":"联合利华（UFS）"},'
-                    '"dim_customer_name":{"value":"联合利华中国"},'
-                    '"dim_company_name":{"value":"联合利华服务公司"},'
+                    '"dim_short_name":{"value":"<CUSTOMER_A>（UFS）"},'
+                    '"dim_customer_name":{"value":"<CUSTOMER_A>中国"},'
+                    '"dim_company_name":{"value":"<CUSTOMER_A>服务公司"},'
                     '"dim_archive_link":{"value":"https://doc.example/u"}}'
                     ']}}'
                 ),
@@ -2113,9 +2113,9 @@ class RuntimeSmokeTests(unittest.TestCase):
         sources = RuntimeSourceLoader(REPO_ROOT).load()
         config = LiveWorkbenchConfig.from_sources(sources)
         backend = LarkCliCustomerBackend(client, config)
-        rows = backend.search_customer_master("联合利华")
+        rows = backend.search_customer_master("<CUSTOMER_A>")
         self.assertEqual(rows[0]["客户ID"], "C_002")
-        self.assertEqual(rows[0]["简称"], "联合利华（UFS）")
+        self.assertEqual(rows[0]["简称"], "<CUSTOMER_A>（UFS）")
         self.assertEqual(rows[0]["客户档案"], "https://doc.example/u")
 
     def test_base_query_backend_prefers_data_query_for_customer_id_reads(self) -> None:
@@ -2151,7 +2151,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                     '{"ok":true,"data":{"main_data":['
                     '{"dim_field_0":{"value":"C_002"},'
                     '"dim_field_1":{"value":"2026-04-11"},'
-                    '"dim_field_2":{"value":"联合利华｜续费沟通"}}'
+                    '"dim_field_2":{"value":"<CUSTOMER_A>｜续费沟通"}}'
                     ']}}'
                 ),
                 stderr="",
@@ -2239,7 +2239,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         contact_rows = backend.query_rows_by_customer_id("客户联系记录", "C_002", limit=5)
         action_rows = backend.query_rows_by_customer_id("行动计划", "C_002", limit=5)
         contract_rows = backend.query_rows_by_customer_id("合同清单", "C_002", limit=5)
-        self.assertEqual(contact_rows[0]["记录标题"], "联合利华｜续费沟通")
+        self.assertEqual(contact_rows[0]["记录标题"], "<CUSTOMER_A>｜续费沟通")
         self.assertEqual(action_rows[0]["具体行动"], "推进续费方案")
         self.assertEqual(contract_rows[0]["合同编码"], "HT-001")
         self.assertEqual(contract_rows[0]["合同状态"], "执行中")
@@ -2319,7 +2319,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             facts=["客户已完成阶段复盘"],
             judgments=["当前更适合继续跟进"],
             open_questions=["负责人是否仍为销售总监"],
-            recommendations=["确认联合利华后续动作"],
+            recommendations=["确认<CUSTOMER_A>后续动作"],
             fallback_category="none",
             fallback_reason=None,
             fallback_message=None,
@@ -2375,7 +2375,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         request = SceneRequest(
             scene_name="unknown-scene",
             repo_root=REPO_ROOT,
-            customer_query="联合利华",
+            customer_query="<CUSTOMER_A>",
         )
 
         with self.assertRaises(UnknownSceneError):
@@ -2422,8 +2422,8 @@ class RuntimeSmokeTests(unittest.TestCase):
             layer="reminder",
             operation="create",
             semantic_fields=["summary", "customer"],
-            payload={"summary": "确认联合利华后续动作", "customer": "联合利华"},
-            match_basis={"customer": "联合利华"},
+            payload={"summary": "确认<CUSTOMER_A>后续动作", "customer": "<CUSTOMER_A>"},
+            match_basis={"customer": "<CUSTOMER_A>"},
             source_context={"scenario": "post_meeting"},
         )
 
@@ -2444,11 +2444,11 @@ class RuntimeSmokeTests(unittest.TestCase):
                 SceneRequest(
                     scene_name="post-meeting-synthesis",
                     repo_root=REPO_ROOT,
-                    customer_query="联合利华",
+                    customer_query="<CUSTOMER_A>",
                     inputs={
-                        "eval_name": "unilever-stage-review",
+                        "eval_name": "<CUSTOMER_A>-stage-review",
                         "transcript_file": str(
-                            REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
+                            REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt"
                         ),
                         "action_items": [],
                     },
@@ -2459,7 +2459,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         payload = result.structured_result()
         self.assertEqual(payload["scene_name"], "post-meeting-synthesis")
         self.assertEqual(payload["used_sources"], ["客户主数据", "客户联系记录"])
-        self.assertEqual(payload["recommendations"], ["确认联合利华后续动作"])
+        self.assertEqual(payload["recommendations"], ["确认<CUSTOMER_A>后续动作"])
         self.assertEqual(payload["candidate_count"], 1)
         self.assertEqual(payload["context_status"], "completed")
 
@@ -2475,7 +2475,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                     {
                         "status": "resolved",
                         "candidates": [
-                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                            type("Customer", (), {"short_name": "<CUSTOMER_A>", "customer_id": "C_002"})()
                         ],
                     },
                 )(),
@@ -2488,7 +2488,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 "status": "partial",
                 "write_ceiling": "recommendation-only",
                 "used_sources": ["客户主数据", "客户联系记录"],
-                "key_context": ["客户主数据快照: 联合利华｜客户ID C_002"],
+                "key_context": ["客户主数据快照: <CUSTOMER_A>｜客户ID C_002"],
                 "open_questions": ["缺少当前行动计划"],
                 "candidate_conflicts": ["客户档案候选缺少显式客户证据"],
                 "missing_sources": ["行动计划"],
@@ -2501,14 +2501,14 @@ class RuntimeSmokeTests(unittest.TestCase):
                 SceneRequest(
                     scene_name="customer-recent-status",
                     repo_root=REPO_ROOT,
-                    customer_query="联合利华",
+                    customer_query="<CUSTOMER_A>",
                     inputs={"topic_text": "最近经营状态"},
                 )
             )
 
         payload = result.structured_result()
         self.assertEqual(payload["scene_name"], "customer-recent-status")
-        self.assertEqual(payload["facts"], ["客户主数据快照: 联合利华｜客户ID C_002"])
+        self.assertEqual(payload["facts"], ["客户主数据快照: <CUSTOMER_A>｜客户ID C_002"])
         self.assertTrue(any("recommendation-first" in item for item in payload["judgments"]))
         self.assertTrue(any("行动计划" in item for item in payload["recommendations"]))
         self.assertEqual(payload["fallback_category"], "context")
@@ -2525,7 +2525,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                     {
                         "status": "resolved",
                         "candidates": [
-                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                            type("Customer", (), {"short_name": "<CUSTOMER_A>", "customer_id": "C_002"})()
                         ],
                     },
                 )(),
@@ -2551,7 +2551,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 SceneRequest(
                     scene_name="customer-recent-status",
                     repo_root=REPO_ROOT,
-                    customer_query="联合利华",
+                    customer_query="<CUSTOMER_A>",
                 )
             )
 
@@ -2569,7 +2569,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                     {
                         "status": "resolved",
                         "candidates": [
-                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                            type("Customer", (), {"short_name": "<CUSTOMER_A>", "customer_id": "C_002"})()
                         ],
                     },
                 )(),
@@ -2582,7 +2582,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 "status": "partial",
                 "write_ceiling": "recommendation-only",
                 "used_sources": ["客户主数据", "客户档案候选"],
-                "key_context": ["客户档案候选: 联合利华客户档案｜https://doc.example/archive"],
+                "key_context": ["客户档案候选: <CUSTOMER_A>客户档案｜https://doc.example/archive"],
                 "open_questions": ["需确认 canonical archive"],
                 "candidate_conflicts": ["客户档案候选缺少显式客户证据"],
                 "missing_sources": [],
@@ -2595,7 +2595,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 SceneRequest(
                     scene_name="archive-refresh",
                     repo_root=REPO_ROOT,
-                    customer_query="联合利华",
+                    customer_query="<CUSTOMER_A>",
                 )
             )
 
@@ -2616,7 +2616,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                     {
                         "status": "resolved",
                         "candidates": [
-                            type("Customer", (), {"short_name": "联合利华", "customer_id": "C_002"})()
+                            type("Customer", (), {"short_name": "<CUSTOMER_A>", "customer_id": "C_002"})()
                         ],
                     },
                 )(),
@@ -2629,7 +2629,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 "status": "completed",
                 "write_ceiling": "normal",
                 "used_sources": ["客户主数据", "行动计划"],
-                "key_context": ["当前行动计划: 跟进联合利华复盘｜2026-04-20"],
+                "key_context": ["当前行动计划: 跟进<CUSTOMER_A>复盘｜2026-04-20"],
                 "open_questions": [],
                 "candidate_conflicts": [],
                 "missing_sources": [],
@@ -2655,11 +2655,11 @@ class RuntimeSmokeTests(unittest.TestCase):
                 SceneRequest(
                     scene_name="todo-capture-and-update",
                     repo_root=REPO_ROOT,
-                    customer_query="联合利华",
+                    customer_query="<CUSTOMER_A>",
                     inputs={
                         "todo_items": [
                             {
-                                "summary": "确认联合利华复盘结论",
+                                "summary": "确认<CUSTOMER_A>复盘结论",
                                 "owner": "ou_owner",
                                 "priority": "高",
                                 "due_at": "2026-04-20",
@@ -2673,7 +2673,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         payload = result.structured_result()
         self.assertEqual(payload["scene_name"], "todo-capture-and-update")
         self.assertEqual(payload["candidate_count"], 1)
-        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认联合利华复盘结论")
+        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认<CUSTOMER_A>复盘结论")
         self.assertEqual(payload["write_result_details"][0]["executed_operation"], "create")
 
     def test_todo_capture_and_update_scene_unresolved_customer_stays_recommendation_only(self) -> None:
@@ -2705,7 +2705,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                 SceneRequest(
                     scene_name="todo-capture-and-update",
                     repo_root=REPO_ROOT,
-                    customer_query="联合利华",
+                    customer_query="<CUSTOMER_A>",
                     inputs={"todo_items": [{"summary": "补一条待办"}]},
                 )
             )
@@ -2721,7 +2721,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             customer_status="resolved",
             context_status="completed",
             used_sources=["客户主数据"],
-            facts=["客户主数据快照: 联合利华｜客户ID C_002"],
+            facts=["客户主数据快照: <CUSTOMER_A>｜客户ID C_002"],
             judgments=["当前客户近期状态已有足够 live 证据，可继续输出经营判断。"],
             open_questions=[],
             recommendations=["基于当前 live 上下文整理一版客户最近状态结论，供后续会前/会后复用。"],
@@ -2741,7 +2741,7 @@ class RuntimeSmokeTests(unittest.TestCase):
                         "scene",
                         "customer-recent-status",
                         "--customer-query",
-                        "联合利华",
+                        "<CUSTOMER_A>",
                         "--repo-root",
                         str(REPO_ROOT),
                         "--json",
@@ -2765,7 +2765,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             facts=[],
             judgments=[],
             open_questions=[],
-            recommendations=["确认联合利华后续动作"],
+            recommendations=["确认<CUSTOMER_A>后续动作"],
             fallback_category="none",
             fallback_reason=None,
             fallback_message=None,
@@ -2782,11 +2782,11 @@ class RuntimeSmokeTests(unittest.TestCase):
                         "scene",
                         "post-meeting-synthesis",
                         "--eval-name",
-                        "unilever-stage-review",
+                        "<CUSTOMER_A>-stage-review",
                         "--transcript-file",
-                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"),
+                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt"),
                         "--customer-query",
-                        "联合利华",
+                        "<CUSTOMER_A>",
                         "--repo-root",
                         str(REPO_ROOT),
                         "--confirm-write",
@@ -2823,7 +2823,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             facts=[],
             judgments=[],
             open_questions=[],
-            recommendations=["确认联合利华后续动作"],
+            recommendations=["确认<CUSTOMER_A>后续动作"],
             fallback_category="none",
             fallback_reason=None,
             fallback_message=None,
@@ -2831,7 +2831,7 @@ class RuntimeSmokeTests(unittest.TestCase):
             output_text="artifact output",
             payload={
                 "candidate_count": 1,
-                "candidates": [{"payload": {"summary": "确认联合利华后续动作"}}],
+                "candidates": [{"payload": {"summary": "确认<CUSTOMER_A>后续动作"}}],
                 "write_result_details": [write_result.structured_result()],
             },
         )
@@ -2843,11 +2843,11 @@ class RuntimeSmokeTests(unittest.TestCase):
                     [
                         "meeting-write-loop",
                         "--eval-name",
-                        "unilever-stage-review",
+                        "<CUSTOMER_A>-stage-review",
                         "--transcript-file",
-                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"),
+                        str(REPO_ROOT / "tests" / "fixtures" / "transcripts" / "20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt"),
                         "--customer-query",
-                        "联合利华",
+                        "<CUSTOMER_A>",
                         "--repo-root",
                         str(REPO_ROOT),
                         "--confirm-write",
@@ -2860,7 +2860,7 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(request.scene_name, "post-meeting-synthesis")
         self.assertTrue(request.options["confirm_write"])
-        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认联合利华后续动作")
+        self.assertEqual(payload["candidates"][0]["payload"]["summary"], "确认<CUSTOMER_A>后续动作")
         self.assertEqual(payload["write_result_details"][0]["executed_operation"], "create")
         self.assertEqual(payload["write_result_details"][0]["remote_metadata"]["object_id"], "task_guid_11")
 

@@ -125,10 +125,10 @@ python3 -m runtime .
 
 ```bash
 python3 -m evals.meeting_output_bridge \
-  --eval-name unilever-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt \
+  --eval-name <CUSTOMER_A>-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt \
   --run-gateway \
-  --customer-query 联合利华
+  --customer-query <CUSTOMER_A>
 ```
 
 重点观察：
@@ -149,26 +149,26 @@ Phase 12 开始，runtime 的长期主入口是稳定 `scene` 名称，而不是
 先预览 canonical post-meeting scene：
 
 ```bash
-python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华
+python3 -m runtime scene post-meeting-synthesis   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>
 ```
 
 如果你已经确认要执行当前建议态 Todo 写回，再显式加 `--confirm-write`。如果需要把结果接到脚本或别的 agent，再加 `--json`：
 
 ```bash
-python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华   --confirm-write   --json
+python3 -m runtime scene post-meeting-synthesis   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>   --confirm-write   --json
 ```
 
 旧的 `meeting-write-loop` 仍保留，但现在只作为 `post-meeting-synthesis` 的 compatibility wrapper，而不是长期 contract 本体：
 
 ```bash
-python3 -m runtime meeting-write-loop   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华
+python3 -m runtime meeting-write-loop   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>
 ```
 
 再看客户近期状态：
 
 ```bash
 python3 -m runtime scene customer-recent-status \
-  --customer-query 联合利华 \
+  --customer-query <CUSTOMER_A> \
   --repo-root . \
   --json
 ```
@@ -177,7 +177,7 @@ python3 -m runtime scene customer-recent-status \
 
 ```bash
 python3 -m runtime scene archive-refresh \
-  --customer-query 联合利华 \
+  --customer-query <CUSTOMER_A> \
   --topic-text 客户档案 \
   --repo-root . \
   --json
@@ -187,8 +187,8 @@ python3 -m runtime scene archive-refresh \
 
 ```bash
 python3 -m runtime scene todo-capture-and-update \
-  --customer-query 联合利华 \
-  --todo-item-json '{"summary":"确认联合利华复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}' \
+  --customer-query <CUSTOMER_A> \
+  --todo-item-json '{"summary":"确认<CUSTOMER_A>复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}' \
   --repo-root . \
   --json
 ```
@@ -277,7 +277,7 @@ python3 -m runtime diagnose . --json
 ### 2. 跑一条 post-meeting scene 主路径
 
 ```bash
-python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-review   --transcript-file tests/fixtures/transcripts/20260410-联合利华\ Campaign活动分析优化-阶段汇报.txt   --customer-query 联合利华   --json
+python3 -m runtime scene post-meeting-synthesis   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>   --json
 ```
 
 这个入口会走共享 scene runtime contract，输出结构化审计结果，包括资源状态、客户解析、上下文恢复、写回上限和开放问题。
@@ -285,7 +285,7 @@ python3 -m runtime scene post-meeting-synthesis   --eval-name unilever-stage-rev
 ### 3. 先生成 Todo 候选而不直接写回
 
 ```bash
-python3 -m runtime scene todo-capture-and-update   --customer-query 联合利华   --todo-item-json '{"summary":"确认联合利华复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}'   --repo-root .   --json
+python3 -m runtime scene todo-capture-and-update   --customer-query <CUSTOMER_A>   --todo-item-json '{"summary":"确认<CUSTOMER_A>复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}'   --repo-root .   --json
 ```
 
 默认行为是建议态候选整理，不会绕过 preflight 和 guard 直接落写；只有显式加 `--confirm-write` 时才会进入统一 Todo writer 执行路径。

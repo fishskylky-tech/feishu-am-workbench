@@ -11,9 +11,9 @@ from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TRANSCRIPTS_DIR = REPO_ROOT / "tests" / "fixtures" / "transcripts"
-UNILEVER_TRANSCRIPT = TRANSCRIPTS_DIR / "20260410-联合利华 Campaign活动分析优化-阶段汇报.txt"
-YONGHE_TRANSCRIPT = TRANSCRIPTS_DIR / "20260409 神策AI 产品和永和大王会议记录.txt"
-DOMINOS_TRANSCRIPT = TRANSCRIPTS_DIR / "2026-3-18 达美乐神策会议纪要.txt"
+UNILEVER_TRANSCRIPT = TRANSCRIPTS_DIR / "20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt"
+YONGHE_TRANSCRIPT = TRANSCRIPTS_DIR / "20260409 神策AI 产品和<CUSTOMER_B>会议记录.txt"
+DOMINOS_TRANSCRIPT = TRANSCRIPTS_DIR / "2026-3-18 <CUSTOMER_C>神策会议纪要.txt"
 sys.path.insert(0, str(REPO_ROOT))
 
 from evals.runner import evaluate_case  # noqa: E402
@@ -48,13 +48,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         output_text = build_meeting_output(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=UNILEVER_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="partial",
@@ -86,18 +86,18 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
+                query="<CUSTOMER_A>",
                 candidates=[
                     CustomerMatch(
                         customer_id="C_002",
-                        short_name="联合利华",
+                        short_name="<CUSTOMER_A>",
                     )
                 ],
             ),
         )
 
         output_text = build_meeting_output(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=Path("/tmp/feishu-am-workbench-missing-transcript.txt"),
             gateway_result=gateway_result,
             context_status="partial",
@@ -114,13 +114,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         candidates = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=gateway_result,
         )
 
@@ -129,7 +129,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(candidate.target_object, "todo")
         self.assertEqual(candidate.operation, "create")
         self.assertEqual(candidate.source_context["scenario"], "post_meeting")
-        self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.match_basis["customer"], "<CUSTOMER_A>")
         self.assertEqual(candidate.match_basis["time_window"], "2026-04")
         self.assertNotIn("owner", candidate.payload)
 
@@ -139,13 +139,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         candidates = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=gateway_result,
             action_items=[
                 {"summary": "确认 Campaign 优化方案", "theme": "campaign_optimization", "due_at": "2026-04-20"},
@@ -170,13 +170,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         artifact = build_meeting_output_artifact(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=UNILEVER_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="completed",
@@ -215,7 +215,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertNotIn("preflight=", output_text)
         self.assertEqual(artifact["write_result_details"][0]["dedupe_decision"], "update_existing")
         self.assertEqual(artifact["write_result_details"][1]["blocked_reasons"], ["semantic_duplicate_detected", "subtask_recommended"])
-        self.assertTrue(evaluate_case(eval_name="unilever-stage-review", output_text=output_text)["passed"])
+        self.assertTrue(evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)["passed"])
 
     def test_write_candidate_routing_metadata_returns_isolated_required_fields(self) -> None:
         candidate = WriteCandidate(
@@ -224,22 +224,22 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             layer="reminder",
             operation="create",
             semantic_fields=["summary", "owner", "customer"],
-            payload={"summary": "跟进联合利华续费", "customer": "联合利华"},
-            match_basis={"customer": "联合利华", "time_window": "2026-04"},
-            source_context={"scenario": "post_meeting", "customer_id": "C_002", "meeting_eval": "unilever-stage-review"},
+            payload={"summary": "跟进<CUSTOMER_A>续费", "customer": "<CUSTOMER_A>"},
+            match_basis={"customer": "<CUSTOMER_A>", "time_window": "2026-04"},
+            source_context={"scenario": "post_meeting", "customer_id": "C_002", "meeting_eval": "<CUSTOMER_A>-stage-review"},
         )
 
         metadata = candidate.routing_metadata()
 
         self.assertEqual(metadata["operation"], "create")
         self.assertEqual(metadata["target_object"], "todo")
-        self.assertEqual(metadata["match_basis"]["customer"], "联合利华")
+        self.assertEqual(metadata["match_basis"]["customer"], "<CUSTOMER_A>")
         self.assertEqual(metadata["source_context"]["customer_id"], "C_002")
 
         metadata["match_basis"]["customer"] = "被篡改"
         metadata["source_context"]["customer_id"] = "changed"
 
-        self.assertEqual(candidate.match_basis["customer"], "联合利华")
+        self.assertEqual(candidate.match_basis["customer"], "<CUSTOMER_A>")
         self.assertEqual(candidate.source_context["customer_id"], "C_002")
 
     def test_run_confirmed_todo_write_uses_unified_todo_writer(self) -> None:
@@ -263,13 +263,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 )
 
         candidate = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=GatewayResult(
                 resource_resolution=ResourceResolution(status="resolved"),
                 customer_resolution=CustomerResolution(
                     status="resolved",
-                    query="联合利华",
-                    candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                    query="<CUSTOMER_A>",
+                    candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
                 ),
             ),
         )[0]
@@ -291,13 +291,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 raise AssertionError("update candidate should not call create")
 
         candidate = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=GatewayResult(
                 resource_resolution=ResourceResolution(status="resolved"),
                 customer_resolution=CustomerResolution(
                     status="resolved",
-                    query="联合利华",
-                    candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                    query="<CUSTOMER_A>",
+                    candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
                 ),
             ),
         )[0]
@@ -314,8 +314,8 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
                 if table_name == "客户联系记录":
                     return [
-                        {"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"},
-                        {"客户ID": customer_id, "记录标题": "联合利华｜投放优化讨论", "联系日期": "2026-04-03"},
+                        {"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜阶段汇报跟进", "联系日期": "2026-04-09"},
+                        {"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜投放优化讨论", "联系日期": "2026-04-03"},
                     ][:limit]
                 if table_name == "行动计划":
                     return [
@@ -328,13 +328,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
+                query="<CUSTOMER_A>",
                 candidates=[
                     CustomerMatch(
                         customer_id="C_002",
-                        short_name="联合利华",
-                        archive_link="https://doc.example/unilever",
-                        raw_record={"客户ID": "C_002", "简称": "联合利华", "客户档案": "https://doc.example/unilever"},
+                        short_name="<CUSTOMER_A>",
+                        archive_link="https://doc.example/<CUSTOMER_A>",
+                        raw_record={"客户ID": "C_002", "简称": "<CUSTOMER_A>", "客户档案": "https://doc.example/<CUSTOMER_A>"},
                     )
                 ],
             ),
@@ -350,7 +350,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             context["used_sources"],
             ["客户主数据", "客户联系记录", "行动计划", "客户档案链接"],
         )
-        self.assertIn("最近联系记录: 2026-04-09｜联合利华｜阶段汇报跟进", context["key_context"])
+        self.assertIn("最近联系记录: 2026-04-09｜<CUSTOMER_A>｜阶段汇报跟进", context["key_context"])
         self.assertIn("当前行动计划: 推进 Campaign 优化方案确认｜2026-04-20", context["key_context"])
 
     def test_recover_live_context_includes_ranked_related_meeting_notes(self) -> None:
@@ -360,13 +360,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                     return [
                         {
                             "客户ID": customer_id,
-                            "记录标题": "联合利华｜Campaign活动分析优化阶段汇报",
+                            "记录标题": "<CUSTOMER_A>｜Campaign活动分析优化阶段汇报",
                             "联系日期": "2026-04-10",
                             "会议纪要链接": "https://doc.example/note-1",
                         },
                         {
                             "客户ID": customer_id,
-                            "记录标题": "联合利华｜季度复盘沟通",
+                            "记录标题": "<CUSTOMER_A>｜季度复盘沟通",
                             "联系日期": "2026-04-05",
                             "会议纪要链接": "https://doc.example/note-2",
                         },
@@ -382,12 +382,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
+                query="<CUSTOMER_A>",
                 candidates=[
                     CustomerMatch(
                         customer_id="C_002",
-                        short_name="联合利华",
-                        archive_link="https://doc.example/unilever",
+                        short_name="<CUSTOMER_A>",
+                        archive_link="https://doc.example/<CUSTOMER_A>",
                     )
                 ],
             ),
@@ -396,7 +396,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         context = recover_live_context(
             gateway_result=gateway_result,
             query_backend=FakeQueryBackend(),
-            topic_text="20260410-联合利华 Campaign活动分析优化-阶段汇报",
+            topic_text="20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报",
         )
 
         self.assertIn("相关会议纪要候选", context["used_sources"])
@@ -411,13 +411,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                     return [
                         {
                             "客户ID": customer_id,
-                            "记录标题": "联合利华｜月度复盘汇报",
+                            "记录标题": "<CUSTOMER_A>｜月度复盘汇报",
                             "联系日期": "2024-04-10",
                             "会议纪要链接": "https://doc.example/old-note",
                         },
                         {
                             "客户ID": customer_id,
-                            "记录标题": "联合利华｜月度复盘汇报",
+                            "记录标题": "<CUSTOMER_A>｜月度复盘汇报",
                             "联系日期": "2026-04-10",
                             "会议纪要链接": "https://doc.example/new-note",
                         },
@@ -431,21 +431,21 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         context = recover_live_context(
             gateway_result=gateway_result,
             query_backend=FakeQueryBackend(),
-            topic_text="联合利华 月度复盘",
+            topic_text="<CUSTOMER_A> 月度复盘",
         )
         note_lines = [line for line in context["key_context"] if line.startswith("相关会议纪要候选:")]
         self.assertEqual(len(note_lines), 1)
         self.assertTrue(note_lines[0].index("new-note") < note_lines[0].index("old-note"))
 
-    def test_gateway_execution_marks_unilever_context_as_partial_until_stage3_reads_exist(self) -> None:
+    def test_gateway_execution_marks_<CUSTOMER_A>_context_as_partial_until_stage3_reads_exist(self) -> None:
         class FakeGateway:
             def run(self, customer_query: str):
                 self.last_query = customer_query
@@ -463,8 +463,8 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                         candidates=[
                             CustomerMatch(
                                 customer_id="C_002",
-                                short_name="联合利华",
-                                archive_link="https://doc.example/unilever",
+                                short_name="<CUSTOMER_A>",
+                                archive_link="https://doc.example/<CUSTOMER_A>",
                             )
                         ],
                     ),
@@ -476,19 +476,19 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
         gateway = FakeGateway()
         output_text, gateway_result = run_gateway_and_build_meeting_output(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=UNILEVER_TRANSCRIPT,
-            customer_query="联合利华",
+            customer_query="<CUSTOMER_A>",
             gateway=gateway,
             query_backend=EmptyQueryBackend(),
         )
 
-        self.assertEqual(gateway.last_query, "联合利华")
+        self.assertEqual(gateway.last_query, "<CUSTOMER_A>")
         self.assertEqual(gateway_result.customer_resolution.status, "resolved")
         self.assertIn("上下文恢复状态: partial", output_text)
         self.assertIn("已使用飞书资料: 客户主数据、客户档案链接", output_text)
         self.assertIn("未找到但应存在的资料: 客户联系记录、行动计划", output_text)
-        result = evaluate_case(eval_name="unilever-stage-review", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)
         self.assertTrue(result["passed"], result)
 
     def test_gateway_execution_keeps_context_limited_when_customer_resolution_fails(self) -> None:
@@ -511,9 +511,9 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 return []
 
         output_text, gateway_result = run_gateway_and_build_meeting_output(
-            eval_name="yonghe-product-solution-discussion",
+            eval_name="<CUSTOMER_B>-product-solution-discussion",
             transcript_path=YONGHE_TRANSCRIPT,
-            customer_query="永和大王",
+            customer_query="<CUSTOMER_B>",
             gateway=FakeGateway(),
             query_backend=EmptyQueryBackend(),
         )
@@ -522,12 +522,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertIn("上下文恢复状态: context-limited", output_text)
         self.assertIn("fallback 原因: customer cannot be resolved", output_text)
         result = evaluate_case(
-            eval_name="yonghe-product-solution-discussion",
+            eval_name="<CUSTOMER_B>-product-solution-discussion",
             output_text=output_text,
         )
         self.assertTrue(result["passed"], result)
 
-    def test_unilever_bridge_output_passes_eval_runner(self) -> None:
+    def test_<CUSTOMER_A>_bridge_output_passes_eval_runner(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="resolved",
@@ -539,27 +539,27 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
+                query="<CUSTOMER_A>",
                 candidates=[
                     CustomerMatch(
                         customer_id="C_002",
-                        short_name="联合利华",
-                        archive_link="https://doc.example/unilever",
+                        short_name="<CUSTOMER_A>",
+                        archive_link="https://doc.example/<CUSTOMER_A>",
                     )
                 ],
             ),
         )
         output_text = build_meeting_output(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=UNILEVER_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="completed",
             used_sources=["客户主数据", "客户联系记录", "行动计划", "客户档案"],
         )
-        result = evaluate_case(eval_name="unilever-stage-review", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)
         self.assertTrue(result["passed"], result)
 
-    def test_yonghe_bridge_output_passes_eval_runner_with_fallback_reason(self) -> None:
+    def test_<CUSTOMER_B>_bridge_output_passes_eval_runner_with_fallback_reason(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="partial",
@@ -567,22 +567,22 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 unconfirmed_keys=["customer_archive_folder"],
             ),
             capability_report=CapabilityReport(),
-            customer_resolution=CustomerResolution(status="missing", query="永和大王"),
+            customer_resolution=CustomerResolution(status="missing", query="<CUSTOMER_B>"),
         )
         output_text = build_meeting_output(
-            eval_name="yonghe-product-solution-discussion",
+            eval_name="<CUSTOMER_B>-product-solution-discussion",
             transcript_path=YONGHE_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="not-run",
             fallback_reason="customer cannot be resolved with enough confidence from current live customer master",
         )
         result = evaluate_case(
-            eval_name="yonghe-product-solution-discussion",
+            eval_name="<CUSTOMER_B>-product-solution-discussion",
             output_text=output_text,
         )
         self.assertTrue(result["passed"], result)
 
-    def test_dominos_bridge_output_passes_eval_runner_with_logic_focus(self) -> None:
+    def test_<CUSTOMER_C>_bridge_output_passes_eval_runner_with_logic_focus(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="partial",
@@ -590,16 +590,16 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 missing_keys=["base_token"],
             ),
             capability_report=CapabilityReport(),
-            customer_resolution=CustomerResolution(status="missing", query="达美乐"),
+            customer_resolution=CustomerResolution(status="missing", query="<CUSTOMER_C>"),
         )
         output_text = build_meeting_output(
-            eval_name="dominos-ad-tracking-qa",
+            eval_name="<CUSTOMER_C>-ad-tracking-qa",
             transcript_path=DOMINOS_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="not-run",
             fallback_reason="permission scope insufficient for current live lookup",
         )
-        result = evaluate_case(eval_name="dominos-ad-tracking-qa", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_C>-ad-tracking-qa", output_text=output_text)
         self.assertTrue(result["passed"], result)
 
     def test_bridge_cli_prints_runner_compatible_output(self) -> None:
@@ -609,7 +609,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 "-m",
                 "evals.meeting_output_bridge",
                 "--eval-name",
-                "yonghe-product-solution-discussion",
+                "<CUSTOMER_B>-product-solution-discussion",
                 "--transcript-file",
                 str(YONGHE_TRANSCRIPT),
                 "--resource-status",
@@ -628,7 +628,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         result = evaluate_case(
-            eval_name="yonghe-product-solution-discussion",
+            eval_name="<CUSTOMER_B>-product-solution-discussion",
             output_text=completed.stdout,
         )
         self.assertTrue(result["passed"], result)
@@ -642,7 +642,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                     customer_resolution=CustomerResolution(
                         status="resolved",
                         query=customer_query,
-                        candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                        candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
                     ),
                 )
 
@@ -664,11 +664,11 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                         [
                             "--run-gateway",
                             "--eval-name",
-                            "unilever-stage-review",
+                            "<CUSTOMER_A>-stage-review",
                             "--transcript-file",
                             str(UNILEVER_TRANSCRIPT),
                             "--customer-query",
-                            "联合利华",
+                            "<CUSTOMER_A>",
                             "--repo-root",
                             str(REPO_ROOT),
                         ]
@@ -676,7 +676,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         output_text = stdout.getvalue()
         self.assertIn("上下文恢复状态: partial", output_text)
-        result = evaluate_case(eval_name="unilever-stage-review", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)
         self.assertTrue(result["passed"], result)
 
     def test_recover_live_context_returns_typed_contract(self) -> None:
@@ -684,7 +684,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
                 if table_name == "客户联系记录":
                     return [
-                        {"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"},
+                        {"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜阶段汇报跟进", "联系日期": "2026-04-09"},
                     ]
                 if table_name == "行动计划":
                     return [
@@ -697,12 +697,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
+                query="<CUSTOMER_A>",
                 candidates=[
                     CustomerMatch(
                         customer_id="C_002",
-                        short_name="联合利华",
-                        archive_link="https://doc.example/unilever",
+                        short_name="<CUSTOMER_A>",
+                        archive_link="https://doc.example/<CUSTOMER_A>",
                     )
                 ],
             ),
@@ -731,7 +731,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 status="ambiguous",
                 query="联合",
                 candidates=[
-                    CustomerMatch(customer_id="C_002", short_name="联合利华"),
+                    CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>"),
                     CustomerMatch(customer_id="C_099", short_name="联合健康"),
                 ],
             ),
@@ -751,7 +751,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         class FakeQueryBackend:
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
                 if table_name == "客户联系记录":
-                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                    return [{"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜阶段汇报跟进", "联系日期": "2026-04-09"}]
                 if table_name == "行动计划":
                     return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
                 return []
@@ -761,15 +761,15 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
+                query="<CUSTOMER_A>",
                 candidates=[
                     CustomerMatch(
                         customer_id="C_002",
-                        short_name="联合利华",
-                        archive_link="https://doc.example/unilever",
+                        short_name="<CUSTOMER_A>",
+                        archive_link="https://doc.example/<CUSTOMER_A>",
                         raw_record={
                             "客户ID": "C_002",
-                            "简称": "联合利华",
+                            "简称": "<CUSTOMER_A>",
                             "策略摘要": "重点推进 Campaign 优化",
                             "上次接触日期": "2026-04-08",
                             "下次行动计划": "确认下一轮投放方案",
@@ -802,14 +802,14 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
                 if table_name == "客户联系记录":
-                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                    return [{"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜阶段汇报跟进", "联系日期": "2026-04-09"}]
                 if table_name == "行动计划":
                     return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
                 return []
 
             def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
                 self.archive_calls += 1
-                return [{"title": "联合利华客户档案", "url": "https://doc.example/archive"}]
+                return [{"title": "<CUSTOMER_A>客户档案", "url": "https://doc.example/archive"}]
 
         backend = FakeQueryBackend()
         gateway_result = GatewayResult(
@@ -817,28 +817,28 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华", archive_link="https://doc.example/unilever")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>", archive_link="https://doc.example/<CUSTOMER_A>")],
             ),
         )
 
         context = recover_live_context(gateway_result=gateway_result, query_backend=backend)
 
         self.assertEqual(backend.archive_calls, 0)
-        self.assertIn("客户档案链接: https://doc.example/unilever", context.key_context)
+        self.assertIn("客户档案链接: https://doc.example/<CUSTOMER_A>", context.key_context)
 
     def test_recover_live_context_uses_unique_archive_candidate_when_link_missing(self) -> None:
         class FakeQueryBackend:
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
                 if table_name == "客户联系记录":
-                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                    return [{"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜阶段汇报跟进", "联系日期": "2026-04-09"}]
                 if table_name == "行动计划":
                     return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
                 return []
 
             def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
                 return [{
-                    "title": "联合利华客户档案",
+                    "title": "<CUSTOMER_A>客户档案",
                     "url": "https://doc.example/archive",
                     "customer_id": customer_id,
                     "short_name": short_name,
@@ -849,8 +849,8 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
@@ -858,20 +858,20 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
         self.assertIn("客户档案候选", context.used_sources)
         self.assertEqual(context.write_ceiling, "normal")
-        self.assertIn("联合利华客户档案", "\n".join(context.key_context))
+        self.assertIn("<CUSTOMER_A>客户档案", "\n".join(context.key_context))
 
     def test_recover_live_context_downgrades_fuzzy_archive_candidate_without_explicit_evidence(self) -> None:
         class FakeQueryBackend:
             def query_rows_by_customer_id(self, table_name: str, customer_id: str, limit: int = 20):
                 if table_name == "客户联系记录":
-                    return [{"客户ID": customer_id, "记录标题": "联合利华｜阶段汇报跟进", "联系日期": "2026-04-09"}]
+                    return [{"客户ID": customer_id, "记录标题": "<CUSTOMER_A>｜阶段汇报跟进", "联系日期": "2026-04-09"}]
                 if table_name == "行动计划":
                     return [{"客户ID": customer_id, "具体行动": "推进 Campaign 优化方案确认", "计划完成时间": "2026-04-20"}]
                 return []
 
             def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
                 return [{
-                    "title": "联合利华客户档案",
+                    "title": "<CUSTOMER_A>客户档案",
                     "url": "https://doc.example/archive",
                 }]
 
@@ -880,8 +880,8 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
@@ -902,7 +902,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
             def discover_archive_candidates(self, customer_id: str, short_name: str, limit: int = 10):
                 return [{
-                    "title": "联合利华客户档案",
+                    "title": "<CUSTOMER_A>客户档案",
                     "url": "https://doc.example/archive",
                     "customer_id": customer_id,
                     "short_name": short_name,
@@ -916,8 +916,8 @@ class MeetingOutputBridgeTests(unittest.TestCase):
                 limit: int = 10,
             ):
                 return [
-                    {"title": "联合利华 Campaign活动分析优化 会议纪要 A", "url": "https://doc.example/note-a"},
-                    {"title": "联合利华 Campaign活动分析优化 会议纪要 B", "url": "https://doc.example/note-b"},
+                    {"title": "<CUSTOMER_A> Campaign活动分析优化 会议纪要 A", "url": "https://doc.example/note-a"},
+                    {"title": "<CUSTOMER_A> Campaign活动分析优化 会议纪要 B", "url": "https://doc.example/note-b"},
                 ]
 
         gateway_result = GatewayResult(
@@ -925,15 +925,15 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         context = recover_live_context(
             gateway_result=gateway_result,
             query_backend=FakeQueryBackend(),
-            topic_text="联合利华 Campaign活动分析优化 阶段汇报",
+            topic_text="<CUSTOMER_A> Campaign活动分析优化 阶段汇报",
         )
 
         self.assertIn("会议纪要候选", context.used_sources)
@@ -946,19 +946,19 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
 
         output_text = build_meeting_output(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=UNILEVER_TRANSCRIPT,
             gateway_result=gateway_result,
             recovery=ContextRecoveryResult(
                 status="partial",
                 used_sources=["客户主数据", "客户档案候选"],
-                key_context=["客户档案候选: 联合利华客户档案｜https://doc.example/archive"],
+                key_context=["客户档案候选: <CUSTOMER_A>客户档案｜https://doc.example/archive"],
                 missing_sources=["客户联系记录"],
                 open_questions=["档案候选与会议线程仍需人工确认"],
                 write_ceiling="recommendation-only",
@@ -978,12 +978,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
         artifact = build_meeting_output_artifact(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             transcript_path=UNILEVER_TRANSCRIPT,
             gateway_result=gateway_result,
             context_status="completed",
@@ -1014,7 +1014,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
     def _make_fake_evidence_container(self) -> EvidenceContainer:
         """Helper to create a minimal EvidenceContainer for testing."""
         return EvidenceContainer(sources={
-            "customer_master": EvidenceSource(name="customer_master", quality="live", available=True, content=["客户: 联合利华"]),
+            "customer_master": EvidenceSource(name="customer_master", quality="live", available=True, content=["客户: <CUSTOMER_A>"]),
             "contact_records": EvidenceSource(name="contact_records", quality="live", available=True, content=["联系记录"]),
             "action_plan": EvidenceSource(name="action_plan", quality="recovered", available=True, content=["行动计划"]),
             "meeting_notes": EvidenceSource(name="meeting_notes", quality="recovered", available=True, content=["会议纪要"]),
@@ -1090,12 +1090,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
         candidates = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=gateway_result,
             action_items=[
                 {"summary": "处理客户流失风险", "theme": "risk"},
@@ -1116,12 +1116,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
         candidates = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=gateway_result,
             action_items=[
                 {"summary": "确认 Campaign 优化方案", "theme": "campaign"},
@@ -1157,12 +1157,12 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             capability_report=CapabilityReport(),
             customer_resolution=CustomerResolution(
                 status="resolved",
-                query="联合利华",
-                candidates=[CustomerMatch(customer_id="C_002", short_name="联合利华")],
+                query="<CUSTOMER_A>",
+                candidates=[CustomerMatch(customer_id="C_002", short_name="<CUSTOMER_A>")],
             ),
         )
         candidates = build_meeting_todo_candidates(
-            eval_name="unilever-stage-review",
+            eval_name="<CUSTOMER_A>-stage-review",
             gateway_result=gateway_result,
             action_items=[
                 {"summary": "确认 Campaign 优化方案", "theme": "campaign"},

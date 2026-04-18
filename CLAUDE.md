@@ -19,7 +19,7 @@ python3 -m runtime .
 python3 -m runtime diagnose . --json
 
 # Run a specific scene
-python3 -m runtime scene post-meeting-synthesis --customer-query 联合利华 --json
+python3 -m runtime scene post-meeting-synthesis --customer-query <CUSTOMER_A> --json
 
 # Core test slice (run before any PR)
 python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_validation_assets -q
