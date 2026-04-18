@@ -91,4 +91,15 @@ Resume File: .planning/phases/20-proposal-reporting-and-resource-coordination/20
 |---|-------------|------|--------|--------|-----------|
 | 260415-nz8 | 细化 feishu-am-workbench 主skill+多场景子skill+通用底座架构设计评估 | 2026-04-15 | pending | Verified | [260415-nz8-feishu-am-workbench-skill-skill](./quick/260415-nz8-feishu-am-workbench-skill-skill/) |
 
-Last activity: 2026-04-17
+Last activity: 2026-04-18
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-04-18:
+
+| Category | Item | Status |
+|----------|------|--------|
+| quick_task | 260415-mll-feishu-am-workbench-skill-agent | missing |
+| quick_task | 260415-nz8-feishu-am-workbench-skill-skill | missing |
+
+*Note: These quick tasks are from archived Phase 1 sessions and their directories no longer exist. Acknowledged as non-blocking.*
