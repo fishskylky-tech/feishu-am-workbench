@@ -18,3 +18,28 @@ external-skills/
 task_plan.md
 findings.md
 progress.md
+
+# Claude Code local settings (user-specific permissions)
+.claude/settings.local.json
+.claude/worktrees/
+
+# Build outputs
+graphify-out/
+
+# Personal helper scripts
+commit-task1.sh
+do_commit.py
+
+# Phase planning transient files
+# Keep: STATE.md, ROADMAP.md, MILESTONES.md, PROJECT.md, REQUIREMENTS.md, milestones/
+.planning/phases/
+.planning/tmp/
+.planning/quick/
+.planning/research/
+.planning/threads/
+.planning/todos/
+.planning/debug/
+.planning/seeds/
+.planning/codebase/
+.planning/ui-reviews/
+.planning/graphs/

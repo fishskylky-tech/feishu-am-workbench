@@ -135,9 +135,21 @@ For a complete index with loading guidance, see [references/INDEX.md](./referenc
 ## Use This Skill When
 
 - The user wants account analysis from local files, Feishu records, notes, or public information.
-- The user wants meeting prep, post-meeting synthesis, or customer strategy suggestions.
+- The user wants meeting prep, post-meeting synthesis, cohort scan, proposal drafting, or customer strategy suggestions.
 - The user wants to update customer archives, master data, action plans, contact maps, contract records, or Todo.
 - The input mixes several dimensions at once, such as contacts, competitors, contracts, risks, opportunities, schedules, and action items.
+
+### Available Scenes (7 total)
+
+The skill supports 7 registered scenes:
+
+1. `post-meeting-synthesis` - Transform meeting transcripts into structured account-operating judgments with risks, opportunities, stakeholder changes, and next-step paths
+2. `customer-recent-status` - Query recent status of a single customer across four lenses: risk, opportunity, relationship, project progress
+3. `archive-refresh` - Propose canonical archive updates around customer history, key people, risk, opportunity, and operating posture
+4. `todo-capture-and-update` - Classify and create Todo follow-ons by customer-operating intent (risk intervention, expansion, relationship maintenance, project progression)
+5. `cohort-scan` - Query a class of customers to get aggregated analysis of risks, opportunities, and common issues
+6. `meeting-prep` - Generate recommendation-first meeting brief with seven-dimension output (current status, key people, objectives, risks, opportunities, suggested questions, suggested next steps)
+7. `proposal` - Generate structured proposal/report/resource-coordination draft with five-dimension output (objective, core judgment, main narrative, resource asks, open questions)
 
 ## Core Workflow
 

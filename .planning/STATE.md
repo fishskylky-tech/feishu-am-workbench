@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Executable Scene Runtimes
-status: v1.1 archived; closeout artifacts are complete and the next mainline milestone is not yet defined
-stopped_at: v1.1 closeout complete; define the next milestone or optionally execute backlog Phase 999.1
-last_updated: "2026-04-17T15:45:00Z"
-last_activity: 2026-04-17
+milestone: v1.2
+milestone_name: Expert Customer Operating Scenes
+status: complete
+stopped_at: Phase 21 shipped
+last_updated: "2026-04-18T18:00:00.000Z"
+last_activity: 2026-04-18 -- Phase 21 shipped
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 20
+  completed_plans: 20
   percent: 100
 ---
 
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Use one live-first, safety-first skill to turn AM inputs into actionable customer operating context and guarded write plans inside the existing Feishu workbench.
-**Current focus:** v1.1 has been archived; the next mainline milestone is not yet defined.
+**Current focus:** v1.2 shipped — next milestone TBD
 
 ## Initialization Snapshot
 
@@ -30,14 +30,23 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 - Live Feishu workspace: 8 Base tables, customer archive root, meeting-note folder, weekly-info folder, and one 神策 tasklist confirmed readable
 - Main brownfield risk: scene expansion must not regress live-first, guarded-write, or portability boundaries already proven in v1.0
 
+## Current Position
+
+Phase: 20 (Proposal, Reporting, And Resource Coordination) — COMPLETE
+Plan: 3 of 3
+Status: Complete
+Last activity: 2026-04-18 -- Phase 20 execution complete
+
 ## Phase Status
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| 12 | Archived in v1.1 | Shared scene runtime contract, scene router, boundary freeze docs, and validation guards are closed |
-| 13 | Archived in v1.1 | Canonical post-meeting scene runtime is closed with explicit phase artifacts and verification alignment |
-| 14 | Archived in v1.1 | Customer recent status scene runtime runs on the shared contract |
-| 15 | Archived in v1.1 | Archive/Todo scene expansion, validation closure, and portability guidance are aligned |
+| 16 | shipped 2026-04-17 | Expert-analysis foundation and multi-source evidence fusion |
+| 17 | shipped 2026-04-17 | Post-meeting and Todo expert upgrade |
+| 18 | shipped 2026-04-17 | Account-posture and cohort scanning scenes |
+| 19 | shipped 2026-04-17 | Archive refresh write-path definition and meeting prep scene |
+| 20 | shipped 2026-04-18 | Proposal/report/resource-coordination scene |
+| 21 | shipped 2026-04-18 | Validation closure and milestone closeout prep |
 
 ## Working Assumptions
 
@@ -47,9 +56,9 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Session Continuity
 
-Last session: 2026-04-17T12:00:00Z
-Stopped At: v1.1 closeout complete; define the next milestone or optionally execute backlog Phase 999.1
-Resume File: .planning/ROADMAP.md
+Last session: 2026-04-17T16:21:45.469Z
+Stopped At: Phase 20 context gathered
+Resume File: .planning/phases/20-proposal-reporting-and-resource-coordination/20-CONTEXT.md
 
 ## Next Command
 
@@ -58,14 +67,11 @@ Resume File: .planning/ROADMAP.md
 
 ## Notes For Resume
 
-- Research for the milestone is captured in `.planning/research/STACK.md`, `.planning/research/FEATURES.md`, `.planning/research/ARCHITECTURE.md`, `.planning/research/PITFALLS.md`, and `.planning/research/SUMMARY.md`.
-- Phase 12 is now closed: runtime has `scene` dispatch, `post-meeting-synthesis` compatibility routing, frozen first-wave scene boundaries, and validation guards for contract drift.
-- Phase 13 is now treated as retro-closed because the current scene runtime code already made post-meeting the canonical shared-contract surface.
-- Phase 14 now uses `customer-recent-status` as the second executable scene runtime and keeps facts/judgments/open questions/recommendations separate.
-- Phase 15 now defines `archive-refresh` and `todo-capture-and-update` on the same shared contract without introducing a second write path.
-- v1.1 milestone audit and archive artifacts now exist under `.planning/` and `.planning/milestones/`.
-- Backlog Phase 999.1 remains optional cleanup, is outside the v1.1 mainline unless explicitly promoted, and only covers historical metadata wording because Phase 1 already has retro closure artifacts.
-- v1.0 roadmap and requirements remain archived under `.planning/milestones/` for reference.
+- v1.2 scope is user-confirmed around six priorities: deepen post-meeting, Todo, recent-status, and archive-refresh scenes; add cohort scanning, meeting prep, and proposal/report/resource-coordination.
+- The milestone intentionally prioritizes expert analysis quality and durable-output routing over bootstrap/admin operator work.
+- Proposal/reporting artifacts should default to Feishu-native destinations, not the local workspace.
+- Cohort scanning in v1.2 is user-triggered analytical entry, not a scheduled automatic巡检 system.
+- Backlog Phase 999.1 remains optional cleanup outside the v1.2 mainline.
 
 ## Accumulated Context
 
@@ -77,6 +83,7 @@ Resume File: .planning/ROADMAP.md
 - Phase 12 closed on 2026-04-17 by turning the architecture contract into an executable scene runtime seam and frozen boundary reference set.
 - Phase 13-15 closed on 2026-04-17 by promoting post-meeting to the canonical scene surface, adding customer recent status, and defining archive/Todo expansion on the same contract.
 - v1.1 is now fully archived with milestone audit, roadmap archive, requirements archive, and milestone index entry.
+- v1.2 starts from the shipped scene-runtime base and raises the bar from executable scenes to expert customer-operating scenes with three new recommendation-first workflows.
 
 ### Quick Tasks Completed
 

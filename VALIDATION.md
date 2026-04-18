@@ -181,3 +181,22 @@
 - 统一验证报告已经产出
 - 可以给出按 P1 / P3 排序的修改建议
 - 至少 1 个 meeting 场景已验证统一 Todo writer 的 candidate -> result 闭环
+
+## Durable-Output Routing Rules
+
+Each scene routes its durable output to a specific Feishu destination:
+
+| Scene | Destination | Output Type |
+|-------|-------------|-------------|
+| `post-meeting-synthesis` | Feishu Todo | Task creation with customer/priority fields |
+| `customer-recent-status` | Feishu Docs | Structured account posture note |
+| `archive-refresh` | Feishu Docs | Structured archive update note |
+| `cohort-scan` | Feishu Docs | Cohort analysis summary |
+| `meeting-prep` | Feishu Docs | Seven-dimension meeting brief |
+| `proposal` | Feishu Docs or Todo | Structured proposal draft or action items (depending on proposal_type) |
+| `todo-capture-and-update` | Feishu Todo | Task creation/update |
+
+Routing behavior:
+- `proposal` scene routes to Docs for proposal/report drafts, or to Todo for action items, based on the `proposal_type` field
+- All scenes follow the recommendation-first principle before any write is executed
+- Write execution requires explicit user confirmation through the confirmation checklist

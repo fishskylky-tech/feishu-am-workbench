@@ -97,6 +97,7 @@ class ContextRecoveryResult:
     open_questions: list[str] = field(default_factory=list)
     write_ceiling: WriteCeiling = "normal"
     candidate_conflicts: list[str] = field(default_factory=list)
+    evidence_container: EvidenceContainer | None = None
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -233,3 +234,27 @@ class GatewayResult:
     preflight_reports: list[PreflightReport] = field(default_factory=list)
     guard_results: list[GuardResult] = field(default_factory=list)
     write_results: list[WriteExecutionResult] = field(default_factory=list)
+
+
+# --- Expert Analysis Foundation (Phase 16) ---
+# Re-exported from expert_analysis_helper for backward compatibility with code
+# that imports EvidenceContainer et al. from runtime.models.
+
+from .expert_analysis_helper import (
+    CRITICAL_SOURCES,
+    EvidenceAssemblyInput,
+    EvidenceContainer,
+    EvidenceQuality,
+    EvidenceSource,
+    EvidenceSourceName,
+)
+
+__all__ = [
+    "CRITICAL_SOURCES",
+    "EvidenceAssemblyInput",
+    "EvidenceContainer",
+    "EvidenceQuality",
+    "EvidenceSource",
+    "EvidenceSourceName",
+    # WriteCeiling is defined locally at module level; intentionally excluded from re-export
+]

@@ -65,11 +65,15 @@ The first locked wave is:
 2. `customer-recent-status`
 3. `archive-refresh`
 4. `todo-capture-and-update`
+5. `cohort-scan` (moved from deferred in v1.2)
+6. `meeting-prep` (moved from deferred in v1.2)
+7. `proposal` (NEW in v1.2)
 
 Priority grouping is also locked:
 
 - first group: `post-meeting-synthesis`, `customer-recent-status`
 - second group: `archive-refresh`, `todo-capture-and-update`
+- third group (v1.2): `cohort-scan`, `meeting-prep`, `proposal`
 
 The first group should be planned and packaged before the second group.
 
@@ -77,12 +81,13 @@ The first group should be planned and packaged before the second group.
 
 These scene candidates remain valid but are intentionally not part of the first locked wave:
 
-- `meeting-prep`
 - `weekly-or-monthly-account-review`
 - `public-update-synthesis`
 - `phase-goal-review`
 
 They should not be silently pulled into the first scene-skill wave.
+
+Note: `cohort-scan` and `meeting-prep` were moved from deferred to shipped in v1.2. The scene `proposal` is new in v1.2.
 
 ## Expert Agents Collaboration Model
 
@@ -153,3 +158,5 @@ That means later work must preserve all of the following unless a future phase e
 - gateway, schema preflight, write guard, and writer as the non-bypass shared path
 
 This is intentionally stronger than a loose architecture preference, but weaker than hard-coding every later implementation detail.
+
+Note: `todo-capture-and-update` is part of the 7-scene registry but was shipped in v1.1. VAL-05 regression (Phase 21) covers the 6 v1.2 scenes: post-meeting-synthesis, customer-recent-status, archive-refresh, cohort-scan, meeting-prep, proposal.

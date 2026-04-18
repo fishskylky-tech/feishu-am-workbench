@@ -226,9 +226,29 @@ python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_me
 
 ## 当前版本
 
-- 版本：1.1.0（对应 milestone v1.1）
-- 当前状态：v1.0 phases 1-11 与 v1.1 phases 12-15 都已完成并归档；v1.1 closeout artifacts 已补齐
-- 当前主线：v1.2 Expert Customer Operating Scenes；下一步是规划并执行 Phase 16，或可选处理 backlog 999.1
+- 版本：1.2.0（对应 milestone v1.2）
+- 当前状态：v1.0 phases 1-11 与 v1.1 phases 12-15 已完成并归档；v1.2 phases 16-20 已完成并归档
+
+## v1.2: Expert Customer Operating Scenes
+
+v1.2 将可执行的 scene surfaces 升级为专家级客户经营工作流。
+
+**新能力：**
+
+- **客户群分析 (Cohort Scan)**：查询一类客户群体，自动获取风险、机会、共性问题的聚合分析，无需手动筛选
+- **会前准备 (Meeting Prep)**：输入客户和会议信息，自动生成七维度简报（当前状态、关键人物、目的、风险、机会、建议问题、后续步骤）
+- **提案/报告生成 (Proposal)**：输入客户、目标、材料，自动生成五维度结构化草案（目的、核心判断、主要叙事、资源请求、待确认问题）
+
+**专家分析升级：**
+
+- 会议后分析：输出风险、机会、干系人变化、下轮推进路径的专家级判断
+- 客户现状分析：基于风险、机会、关系、进展四维度的账户姿态 readout
+- 档案刷新：提供历史弧线、关键人物、风险、机会、运营姿态五维度结构化更新建议
+
+**输出路由：**
+
+- 提案和报告默认路由到飞书云文档/任务，而非本地工作区
+- 所有结构性输出前增加确认清单，确保写回前已确认受众、目的、使用范围
 
 
 ## 安装

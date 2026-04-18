@@ -1,4 +1,10 @@
-"""Stable scene-name registry and dispatch helpers."""
+"""Stable scene-name registry and dispatch helpers.
+
+Note: This module is unaffected by Phase 16 expert-analysis additions.
+EvidenceContainer is carried through SceneResult.payload, not as a
+separate dispatch channel. The registry continues to dispatch by
+scene_name only.
+"""
 
 from __future__ import annotations
 
@@ -9,8 +15,11 @@ from .scene_runtime import (
     SceneRequest,
     SceneResult,
     run_archive_refresh_scene,
+    run_cohort_scan_scene,
     run_customer_recent_status_scene,
+    run_meeting_prep_scene,
     run_post_meeting_scene,
+    run_proposal_scene,
     run_todo_capture_and_update_scene,
 )
 
@@ -47,6 +56,9 @@ def build_default_scene_registry() -> SceneRegistry:
     registry.register("customer-recent-status", run_customer_recent_status_scene)
     registry.register("archive-refresh", run_archive_refresh_scene)
     registry.register("todo-capture-and-update", run_todo_capture_and_update_scene)
+    registry.register("cohort-scan", run_cohort_scan_scene)
+    registry.register("meeting-prep", run_meeting_prep_scene)
+    registry.register("proposal", run_proposal_scene)
     return registry
 
 

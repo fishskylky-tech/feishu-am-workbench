@@ -19,7 +19,59 @@ from runtime.models import (
     ResourceResolution,
     WriteCandidate,
     WriteExecutionResult,
+    EvidenceContainer,
 )
+from runtime.expert_analysis_helper import ExpertAnalysisHelper, EvidenceAssemblyInput
+
+
+# CORE-02: Keyword sets for four structured section derivation
+_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "风险", "下滑", "收紧", "压力", "危机", "逾期", "负向"}
+_OPPORTUNITY_KEYWORDS = {"机会", "扩张", "增加", "扩容", "新客", "开拓", "增长", "潜力", "空间", "上行", "增长", "突破", "拓展", "增量", "机会点"}
+_STAKEHOLDER_CHANGE_KEYWORDS = {"干系人", "人事", "变动", "换人", "新增", "离开", "接手", "调整", "变更", "负责人", "接口人", "决策人", "联系人", "团队"}
+_NEXT_ROUND_KEYWORDS = {"下一步", "后续", "推进", "计划", "安排", "确认", "待办", "动作", "行动", "跟进", "执行", "落地", "推动", "启动"}
+
+
+def _derive_structured_sections(
+    evidence_container: EvidenceContainer,
+    transcript_text: str,
+) -> dict[str, list[str]]:
+    """Derive four customer-operating sections from evidence container + transcript.
+
+    Returns a dict with keys:
+      - "risks": 0-5 risk items
+      - "opportunities": 0-5 opportunity items
+      - "stakeholder_changes": 0-5 stakeholder change items
+      - "next_round": 0-5 next-round advancement items
+
+    Each section is capped at 5 items. Items are deduplicated within each section.
+    Uses keyword-based extraction only (no LLM inference).
+    """
+    # Collect all available text content from evidence sources
+    source_texts: list[str] = []
+    for src in evidence_container.sources.values():
+        if src.available and src.content:
+            source_texts.extend(src.content)
+
+    # Combine with transcript text for unified scanning
+    combined_text = " ".join(source_texts) + " " + transcript_text
+
+    def _extract_section(keywords: set[str], text: str) -> list[str]:
+        seen: set[str] = set()
+        items: list[str] = []
+        for keyword in keywords:
+            if keyword in text and keyword not in seen:
+                seen.add(keyword)
+                items.append(keyword)
+                if len(items) >= 5:
+                    break
+        return items
+
+    return {
+        "risks": _extract_section(_RISK_KEYWORDS, combined_text),
+        "opportunities": _extract_section(_OPPORTUNITY_KEYWORDS, combined_text),
+        "stakeholder_changes": _extract_section(_STAKEHOLDER_CHANGE_KEYWORDS, combined_text),
+        "next_round": _extract_section(_NEXT_ROUND_KEYWORDS, combined_text),
+    }
 
 
 class GatewayRunner(Protocol):
@@ -51,6 +103,7 @@ def build_meeting_output(
     missing_sources: list[str] | None = None,
     recovery: ContextRecoveryResult | None = None,
     write_results: list[WriteExecutionResult] | None = None,
+    evidence_container: EvidenceContainer | None = None,
 ) -> str:
     artifact = build_meeting_output_artifact(
         eval_name=eval_name,
@@ -63,6 +116,7 @@ def build_meeting_output(
         missing_sources=missing_sources,
         recovery=recovery,
         write_results=write_results,
+        evidence_container=evidence_container,
     )
     return str(artifact["output_text"])
 
@@ -79,6 +133,7 @@ def build_meeting_output_artifact(
     missing_sources: list[str] | None = None,
     recovery: ContextRecoveryResult | None = None,
     write_results: list[WriteExecutionResult] | None = None,
+    evidence_container: EvidenceContainer | None = None,
 ) -> dict[str, Any]:
     if recovery is not None:
         context_status = recovery.status
@@ -101,7 +156,9 @@ def build_meeting_output_artifact(
         f"上下文恢复状态: {context_status}",
     ]
 
-    if used_sources:
+    if evidence_container is not None:
+        lines.extend(evidence_container.render_source_summary())
+    elif used_sources:
         lines.append(f"已使用飞书资料: {'、'.join(used_sources)}")
     elif fallback_reason:
         lines.append(f"fallback 原因: {fallback_reason}")
@@ -123,7 +180,22 @@ def build_meeting_output_artifact(
         lines.append("统一写回结果:")
         lines.extend(_render_write_results(write_results))
 
-    lines.extend(_render_case_body(eval_name, transcript_text))
+    # CORE-02: Four structured customer-operating sections
+    if evidence_container is not None and transcript_text:
+        sections = _derive_structured_sections(evidence_container, transcript_text)
+        lines.append("风险:")
+        for item in sections.get("risks", [])[:5]:
+            lines.append(f"- {item}")
+        lines.append("机会:")
+        for item in sections.get("opportunities", [])[:5]:
+            lines.append(f"- {item}")
+        lines.append("干系人变化:")
+        for item in sections.get("stakeholder_changes", [])[:5]:
+            lines.append(f"- {item}")
+        lines.append("下一轮推进路径:")
+        for item in sections.get("next_round", [])[:5]:
+            lines.append(f"- {item}")
+
     return {
         "output_text": "\n".join(lines),
         "write_result_details": write_result_details,
@@ -177,6 +249,7 @@ def build_meeting_todo_candidates(
             eval_name=eval_name,
             customer=customer,
             action_items=action_items,
+            evidence_container=None,
         )
         if candidates:
             return _consolidate_same_meeting_candidates(candidates)
@@ -212,6 +285,7 @@ def _build_action_item_candidates(
     eval_name: str,
     customer: CustomerMatch,
     action_items: list[dict[str, object]],
+    evidence_container: EvidenceContainer | None = None,
 ) -> list[WriteCandidate]:
     candidates: list[WriteCandidate] = []
     for item in action_items:
@@ -225,6 +299,8 @@ def _build_action_item_candidates(
             "customer": customer.short_name,
             "priority": str(item.get("priority") or "高"),
             "description": description or "来自会议场景的建议态跟进动作；负责人待确认后才能真正写入。",
+            "意图": _classify_action_intent(item, evidence_container),
+            "判定理由": _generate_action_rationale(item, evidence_container),
         }
         due_at = item.get("due_at")
         if due_at is not None:
@@ -324,6 +400,50 @@ def _merge_candidate_description(base: WriteCandidate, merged_summaries: list[st
     return "\n".join(lines)
 
 
+def _classify_action_intent(
+    item: dict[str, object],
+    evidence_container: EvidenceContainer | None = None,
+) -> str:
+    """Classify an action item into one of four fixed intent categories.
+
+    Returns one of: "风险干预", "扩张推进", "关系维护", "项目进展"
+    Uses keyword-based matching against summary/theme text.
+    """
+    text = " ".join(
+        str(v)
+        for v in [item.get("summary", ""), item.get("theme", "")]
+        if v
+    )
+
+    if any(kw in text for kw in {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "收紧", "压力", "危机", "逾期", "负向"}):
+        return "风险干预"
+    if any(kw in text for kw in {"扩张", "增加", "扩容", "新客", "开拓", "增长", "潜力", "空间", "上行", "突破", "拓展", "增量", "机会点"}):
+        return "扩张推进"
+    if any(kw in text for kw in {"关系", "维护", "拜访", "沟通", "联系"}):
+        return "关系维护"
+    return "项目进展"
+
+
+def _generate_action_rationale(
+    item: dict[str, object],
+    evidence_container: EvidenceContainer | None = None,
+) -> str:
+    """Generate a Chinese rationale string explaining why an action item matters.
+
+    Template-based generation using item summary and theme.
+    """
+    intent = _classify_action_intent(item, evidence_container)
+    summary = str(item.get("summary") or item.get("theme") or "")
+
+    if intent == "风险干预":
+        return f"该事项涉及客户经营风险，需及时跟进以防止情况恶化"
+    if intent == "扩张推进":
+        return f"该事项涉及客户扩张机会，及时确认有助于推进合作规模"
+    if intent == "关系维护":
+        return f"该事项涉及客户关系维护，定期沟通有助于持续建立信任"
+    return f"该事项涉及项目进展，确认后可确保项目按计划推进"
+
+
 def _normalize_action_theme(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "_", value.casefold()).strip("_")
     return normalized or "general_follow_up"
@@ -370,6 +490,72 @@ def _render_customer_resolution(gateway_result: GatewayResult) -> str:
     return "missing"
 
 
+def _build_customer_master_content(best: CustomerMatch) -> list[str]:
+    content = [_render_customer_snapshot(best)]
+    content.extend(_render_customer_master_details(best))
+    return content
+
+
+def _build_contact_records_content(contact_rows: list[dict[str, object]]) -> list[str]:
+    return [_render_latest_contact(row) for row in contact_rows] if contact_rows else []
+
+
+def _build_action_plan_content(action_rows: list[dict[str, object]]) -> list[str]:
+    return [_render_latest_action(row) for row in action_rows] if action_rows else []
+
+
+def _build_meeting_notes_content(
+    note_resolution: dict[str, object],
+    meeting_notes: list[str] | None = None,
+) -> list[str]:
+    if meeting_notes:
+        return meeting_notes
+    key = note_resolution.get("key_context")
+    return [key] if key else []
+
+
+def _build_archive_content(archive_resolution: dict[str, object]) -> list[str]:
+    key = archive_resolution.get("key_context")
+    return [key] if key else []
+
+
+def _extract_key_context_from_container(container: EvidenceContainer) -> list[str]:
+    priority_sources = ["customer_master", "contact_records", "action_plan", "meeting_notes", "customer_archive"]
+    combined: list[str] = []
+    for name in priority_sources:
+        src = container.sources.get(name)
+        if src and src.available:
+            combined.extend(src.content)
+    return combined
+
+
+def _extract_open_questions(
+    evidence_container: EvidenceContainer,
+    note_resolution: dict[str, object],
+    archive_resolution: dict[str, object],
+) -> list[str]:
+    questions: list[str] = []
+    contact_src = evidence_container.sources.get("contact_records")
+    if not contact_src or not contact_src.available:
+        questions.append("缺少最近客户联系记录，需人工确认最近一次有效沟通")
+    action_src = evidence_container.sources.get("action_plan")
+    if not action_src or not action_src.available:
+        questions.append("缺少当前行动计划，需确认是否存在未沉淀的推进事项")
+    questions.extend(note_resolution.get("open_questions", []))
+    questions.extend(archive_resolution.get("open_questions", []))
+    return questions
+
+
+def _extract_candidate_conflicts(
+    note_resolution: dict[str, object],
+    archive_resolution: dict[str, object],
+) -> list[str]:
+    conflicts: list[str] = []
+    conflicts.extend(note_resolution.get("candidate_conflicts", []))
+    conflicts.extend(archive_resolution.get("candidate_conflicts", []))
+    return conflicts
+
+
 def recover_live_context(
     *,
     gateway_result: GatewayResult,
@@ -396,68 +582,70 @@ def recover_live_context(
 
     best = resolution.candidates[0]
     customer_id = best.customer_id
-    used_sources = ["客户主数据"]
-    key_context = [_render_customer_snapshot(best)]
-    key_context.extend(_render_customer_master_details(best))
-    missing_sources: list[str] = []
-    open_questions: list[str] = []
-    candidate_conflicts: list[str] = []
 
     contact_rows = query_backend.query_rows_by_customer_id("客户联系记录", customer_id, limit=5)
-    if contact_rows:
-        used_sources.append("客户联系记录")
-        key_context.append(_render_latest_contact(contact_rows[0]))
-    else:
-        missing_sources.append("客户联系记录")
-        open_questions.append("缺少最近客户联系记录，需人工确认最近一次有效沟通")
-
     action_rows = query_backend.query_rows_by_customer_id("行动计划", customer_id, limit=5)
-    if action_rows:
-        used_sources.append("行动计划")
-        key_context.append(_render_latest_action(action_rows[0]))
-    else:
-        missing_sources.append("行动计划")
-        open_questions.append("缺少当前行动计划，需确认是否存在未沉淀的推进事项")
-
     meeting_notes = _rank_related_meeting_notes(contact_rows, topic_text=topic_text, limit=3)
-    if meeting_notes:
-        used_sources.append("相关会议纪要候选")
-        key_context.append(f"相关会议纪要候选: {'；'.join(meeting_notes)}")
-    else:
+
+    note_resolution: dict[str, object] = {}
+    if not meeting_notes:
         note_resolution = _resolve_meeting_note_context(
             query_backend=query_backend,
             customer=best,
             topic_text=topic_text,
             limit=3,
         )
-        if note_resolution["used_source"]:
-            used_sources.append(str(note_resolution["used_source"]))
-        if note_resolution["key_context"]:
-            key_context.append(str(note_resolution["key_context"]))
-        open_questions.extend(note_resolution["open_questions"])
-        candidate_conflicts.extend(note_resolution["candidate_conflicts"])
 
     archive_resolution = _resolve_archive_context(query_backend=query_backend, customer=best)
-    if archive_resolution["used_source"]:
-        used_sources.append(str(archive_resolution["used_source"]))
-    if archive_resolution["key_context"]:
-        key_context.append(str(archive_resolution["key_context"]))
-    missing_sources.extend(archive_resolution["missing_sources"])
-    open_questions.extend(archive_resolution["open_questions"])
-    candidate_conflicts.extend(archive_resolution["candidate_conflicts"])
 
-    status = "completed" if not missing_sources else "partial"
-    fallback_reason = None if status == "completed" else "some targeted live reads are still missing"
-    write_ceiling = "normal" if status == "completed" and not candidate_conflicts else "recommendation-only"
+    # Build EvidenceAssemblyInput and assemble via ExpertAnalysisHelper
+    assembly_input = EvidenceAssemblyInput(
+        customer_master_content=_build_customer_master_content(best),
+        customer_master_available=(resolution.status == "resolved" and bool(best.customer_id)),
+        customer_master_missing_reason=None if (resolution.status == "resolved" and best.customer_id) else "customer not resolved",
+        contact_records_content=_build_contact_records_content(contact_rows),
+        contact_records_available=bool(contact_rows),
+        contact_records_missing_reason=None if contact_rows else "no contact records found",
+        action_plan_content=_build_action_plan_content(action_rows),
+        action_plan_available=bool(action_rows),
+        action_plan_missing_reason=None if action_rows else "no action plan found",
+        meeting_notes_content=_build_meeting_notes_content(note_resolution, meeting_notes=meeting_notes),
+        meeting_notes_available=bool(note_resolution.get("used_source")) if note_resolution else bool(meeting_notes),
+        meeting_notes_missing_reason=_first_or_none(note_resolution.get("open_questions")) if (note_resolution and not note_resolution.get("used_source")) else None,
+        customer_archive_content=_build_archive_content(archive_resolution),
+        customer_archive_available=bool(archive_resolution.get("used_source")),
+        customer_archive_missing_reason=_first_or_none(archive_resolution.get("open_questions")) if not archive_resolution.get("used_source") else None,
+    )
+    helper = ExpertAnalysisHelper(assembly_input)
+    evidence_container = helper.assemble()
+
+    # Build used_sources from evidence_container
+    used_sources = list(evidence_container.available_sources())
+
+    # Build key_context from evidence_container
+    key_context = _extract_key_context_from_container(evidence_container)
+
+    # Build missing_sources from evidence_container
+    missing_sources = [
+        name for name, src in evidence_container.sources.items() if not src.available
+    ]
+
+    # Build open_questions
+    open_questions = _extract_open_questions(evidence_container, note_resolution, archive_resolution)
+
+    # Build candidate_conflicts
+    candidate_conflicts = _extract_candidate_conflicts(note_resolution, archive_resolution)
+
     return ContextRecoveryResult(
-        status=status,
+        status=evidence_container.overall_quality if evidence_container.overall_quality != "missing" else "context-limited",
         used_sources=used_sources,
-        fallback_reason=fallback_reason,
+        fallback_reason=evidence_container.fallback_reason,
         key_context=key_context,
         missing_sources=missing_sources,
         open_questions=open_questions,
-        write_ceiling=write_ceiling,
+        write_ceiling=evidence_container.write_ceiling,
         candidate_conflicts=candidate_conflicts,
+        evidence_container=evidence_container,
     )
 
 
@@ -649,6 +837,11 @@ def _render_customer_master_details(best: CustomerMatch) -> list[str]:
     if next_action_summary:
         details.append(f"客户主数据下次行动: {next_action_summary}")
     return details
+def _first_or_none(values: list[object] | None) -> object | None:
+    """Return the first element of a list, or None if the list is empty or None."""
+    if values:
+        return values[0]
+    return None
 
 
 def _semantic_value(table_name: str, semantic_field: str, raw_record: dict[str, object]) -> str:
