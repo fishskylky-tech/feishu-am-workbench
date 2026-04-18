@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import unittest
+from pathlib import Path
+
 import pytest
 
 from runtime.scene_runtime import (
@@ -11,7 +14,9 @@ from runtime.scene_runtime import (
     _build_proposal_routing_payload,
     _render_proposal_output,
     run_proposal_scene,
+    SceneRequest,
 )
+from runtime.scene_registry import dispatch_scene
 from runtime.confirmation_checklist import (
     build_proposal_checklist,
 )
@@ -334,3 +339,69 @@ class TestProposalSceneRegistration:
         result = registry.dispatch(request)
         assert result.scene_name == "proposal"
         assert "提案/报告/资源协调草案" in result.output_text or "确认清单" in result.output_text
+
+
+class TestProposalRegression(unittest.TestCase):
+    """VAL-05 regression: proposal scene handles 4 case types per D-01 to D-06."""
+
+    def test_proposal_happy_path_dispatch_and_result_shape(self) -> None:
+        """Happy-path: proposal dispatch returns valid SceneResult with expected shape."""
+        request = SceneRequest(
+            scene_name="proposal",
+            repo_root=Path("."),
+            customer_query="测试客户",
+            inputs={"proposal_type": "proposal", "goal": "Q2合作推进", "materials": []},
+        )
+        result = dispatch_scene(request)
+        self.assertEqual(result.scene_name, "proposal")
+        self.assertIn(result.resource_status, ("live", "partial", "resolved"))
+        self.assertIn(result.customer_status, ("resolved", "missing"))
+        self.assertIn(result.context_status, ("complete", "partial", "context-limited", "not-run"))
+        self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
+        self.assertIsNotNone(result.payload)
+        self.assertIsInstance(result.payload, dict)
+
+    def test_proposal_limited_context_fallback_visible(self) -> None:
+        """Limited-context: fallback_category is set and output/recommendations present."""
+        request = SceneRequest(
+            scene_name="proposal",
+            repo_root=Path("."),
+            customer_query="完全不存在的客户XYZ999不存在",
+            inputs={"proposal_type": "proposal", "goal": "Q2合作推进", "materials": []},
+        )
+        result = dispatch_scene(request)
+        self.assertIn(result.context_status, ("partial", "minimal", "context-limited", "not-run"))
+        self.assertIn(result.fallback_category, ("context", "none", "customer"))
+        self.assertTrue(
+            result.output_text is not None or result.recommendations is not None,
+            "Expected output_text or recommendations with limited context",
+        )
+
+    def test_proposal_unresolved_customer(self) -> None:
+        """Unresolved customer: customer_status is not resolved, fallback_category is customer, write_ceiling is recommendation-only."""
+        request = SceneRequest(
+            scene_name="proposal",
+            repo_root=Path("."),
+            customer_query="完全不存在的客户XYZ999不存在",
+            inputs={"proposal_type": "proposal", "goal": "Q2合作推进", "materials": []},
+        )
+        result = dispatch_scene(request)
+        self.assertNotEqual(result.customer_status, "resolved")
+        self.assertEqual(result.fallback_category, "customer")
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+
+    def test_proposal_blocked_write(self) -> None:
+        """Blocked-write: write_ceiling is recommendation-only, fallback_category is set, no write_candidates in payload."""
+        request = SceneRequest(
+            scene_name="proposal",
+            repo_root=Path("."),
+            customer_query="完全不存在的客户XYZ999不存在",
+            inputs={"proposal_type": "proposal", "goal": "Q2合作推进", "materials": []},
+        )
+        result = dispatch_scene(request)
+        self.assertEqual(result.write_ceiling, "recommendation-only")
+        self.assertIn(result.fallback_category, ("customer", "safety", "permission", "context"))
+        self.assertIsNotNone(result.recommendations)
+        self.assertGreater(len(result.recommendations), 0)
+        self.assertIsNotNone(result.payload)
+        self.assertNotIn("write_candidates", result.payload)
