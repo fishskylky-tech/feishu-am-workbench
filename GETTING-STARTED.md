@@ -41,7 +41,7 @@ source .venv/bin/activate
 3. 填入以下核心环境变量：
 
 ```bash
-FEISHU_AM_BASE_URL=https://open.feishu.cn
+FEISHU_AM_WORKBENCH_BASE_URL=https://open.feishu.cn
 FEISHU_AM_BASE_TOKEN=<你的 Base Token>
 FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER=<客户归档文件夹 ID>
 FEISHU_AM_MEETING_NOTES_FOLDER=<会议记录文件夹 ID>
@@ -76,10 +76,10 @@ python3 -m runtime .
 
 ```bash
 python3 -m evals.meeting_output_bridge \
-  --eval-name <客户名>-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-<客户名>-Campaign活动分析优化-阶段汇报.txt \
+  --eval-name <CUSTOMER_A>-stage-review \
+  --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt \
   --run-gateway \
-  --customer-query <客户名>
+  --customer-query <CUSTOMER_A>
 ```
 
 运行后会看到类似这样的结构化输出：
