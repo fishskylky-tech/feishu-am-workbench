@@ -227,7 +227,7 @@ class ExpertAgent(ABC):
     """Abstract base class for platform-specific expert agents.
 
     Per AA-01-PLAN.md Section 4: ExpertAgent interface contract.
-    Platform adapters (OpenClaw, Hermes, Claude Code, Codex) implement this interface.
+    Platform adapters implement this interface (see agents/ for available adapters).
     """
     @abstractmethod
     async def invoke(self, prompt: str, context: dict) -> ExpertReviewResult:

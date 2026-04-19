@@ -41,7 +41,7 @@ class PlatformCapabilities:
 
 
 PLATFORM_CAPABILITY_MAP: dict[str, PlatformCapabilities] = {
-    # OpenClaw: KNOWN (verified via Context7 /openclaw/openclaw)
+    # openclaw: KNOWN — verified via /openclaw/openclaw docs
     "openclaw": PlatformCapabilities(
         platform="openclaw",
         supports_parallel=True,
@@ -51,34 +51,34 @@ PLATFORM_CAPABILITY_MAP: dict[str, PlatformCapabilities] = {
         max_concurrent=3,
         timeout_default=120,
     ),
-    # Hermes: ASSUMED — capability research deferred to Phase 27+
+    # hermes: ASSUMED — capability research deferred to Phase 27+
     "hermes": PlatformCapabilities(
         platform="hermes",
-        supports_parallel=True,  # ASSUMED: delegate_task supports parallel tasks
+        supports_parallel=True,
         supports_streaming=False,
         supports_structured_output=True,
         supports_toolsets=True,
         max_concurrent=3,
         timeout_default=120,
     ),
-    # Claude Code: ASSUMED — capability research deferred to Phase 27+
+    # claude_code: ASSUMED — capability research deferred to Phase 27+
     "claude_code": PlatformCapabilities(
         platform="claude_code",
-        supports_parallel=True,  # ASSUMED: Task tool supports parallel
+        supports_parallel=True,
         supports_streaming=False,
         supports_structured_output=True,
         supports_toolsets=True,
         max_concurrent=3,
         timeout_default=120,
     ),
-    # Codex: ASSUMED — capability research deferred to Phase 27+
+    # codex: ASSUMED — capability research deferred to Phase 27+
     "codex": PlatformCapabilities(
         platform="codex",
-        supports_parallel=True,  # ASSUMED: spawn_agent supports parallel
+        supports_parallel=True,
         supports_streaming=False,
-        supports_structured_output=False,  # Plain text responses
+        supports_structured_output=False,
         supports_toolsets=False,
-        max_concurrent=2,  # Conservative limit for Codex
+        max_concurrent=2,
         timeout_default=120,
     ),
 }
