@@ -288,3 +288,66 @@ class TestLoadExpertCards:
 
         result = load_yaml_config(yaml_file)
         assert result == {"key": "value", "list": ["item1", "item2"]}
+
+
+class TestOutputAuditBlocking:
+    """BEHAVIOR: block_on_flags triggers blocked=True in output audit."""
+
+    def test_block_on_flags_triggers_blocked(self, tmp_path):
+        """When block_on_flags dimension is flagged, audit_result.blocked should be True."""
+        # Import here to avoid import errors if expert_analysis_helper is not available
+        from runtime.expert_analysis_helper import run_output_audit
+
+        # Create a minimal output_card with block_on_flags
+        output_card = ExpertCardConfig(
+            enabled=True,
+            expert_name="经营顾问",
+            review_type="recommendation_audit",
+            check_signals=["专业性", "业务逻辑"],
+            output_field="output_audit_notes",
+            block_on_flags=["业务逻辑"],
+        )
+
+        # Recommendations that only address "专业性", not "业务逻辑"
+        recommendations = ["建议使用规范的专业术语撰写报告"]
+
+        result = run_output_audit(recommendations, output_card)
+
+        assert result.blocked is True, (
+            f"Expected blocked=True when block_on_flags dimension '业务逻辑' is flagged, "
+            f"but got blocked={result.blocked}. findings={result.findings}"
+        )
+
+    def test_no_block_when_all_flags_pass(self, tmp_path):
+        """When no block_on_flags dimensions are flagged, blocked should be False."""
+        from runtime.expert_analysis_helper import run_output_audit
+
+        output_card = ExpertCardConfig(
+            enabled=True,
+            expert_name="经营顾问",
+            review_type="recommendation_audit",
+            check_signals=["专业性", "业务逻辑"],
+            output_field="output_audit_notes",
+            block_on_flags=["业务逻辑"],
+        )
+
+        # Recommendations that address both dimensions
+        recommendations = [
+            "建议使用规范的专业术语，符合业务逻辑地进行方案设计",
+        ]
+
+        result = run_output_audit(recommendations, output_card)
+
+        assert result.blocked is False, (
+            f"Expected blocked=False when all flags pass, "
+            f"but got blocked={result.blocked}. findings={result.findings}"
+        )
+
+    def test_yaml_missing_expert_cards_file_returns_none(self, tmp_path):
+        """BEHAVIOR: Missing expert-cards.yaml is handled gracefully (fail-open)."""
+        scene_dir = tmp_path / "scenes" / "proposal"
+        scene_dir.mkdir(parents=True)
+        # Note: intentionally NOT creating expert-cards.yaml
+        cards = load_expert_cards("proposal", repo_root=tmp_path)
+        assert cards["input_review"] is None
+        assert cards["output_review"] is None
