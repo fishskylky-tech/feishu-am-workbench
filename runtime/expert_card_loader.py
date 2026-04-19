@@ -166,11 +166,12 @@ def load_expert_cards(
 
     scene_dir = resolve_scene_dir(repo_root, scene_name)
     if scene_dir is None:
+        expected_path = repo_root / "scenes" / scene_name
         logger.warning(
             "load_expert_cards: scene directory not found for '%s'. "
             "Expected: %s. Returning None.",
             scene_name,
-            scene_dir,
+            expected_path,
         )
         return {"input_review": None, "output_review": None}
 

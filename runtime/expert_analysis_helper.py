@@ -475,10 +475,6 @@ def run_output_audit(
     # blocked if any block_on_flags are triggered
     block_on_flags = output_card.block_on_flags or []
     blocked = any(
-        flag in findings for flag in [
-            f"FLAG: {flag}" for flag in block_on_flags
-        ] if any(flag in f for f in findings)
-    ) or any(
         f"FLAG: {flag}" in findings for flag in block_on_flags
     )
 

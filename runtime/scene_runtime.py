@@ -14,7 +14,7 @@ from .live_adapter import LarkCliBaseQueryBackend, LarkCliCustomerBackend, LiveW
 from .models import WriteCandidate, WriteExecutionResult
 from .runtime_sources import RuntimeSourceLoader
 from .todo_writer import TodoWriter
-from .expert_analysis_helper import EvidenceContainer, EvidenceSource, ExpertAnalysisHelper
+from .expert_analysis_helper import EvidenceContainer, EvidenceSource
 from .confirmation_checklist import (
     build_archive_refresh_checklist,
     build_meeting_prep_checklist,
