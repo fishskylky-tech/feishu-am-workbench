@@ -49,3 +49,6 @@ archive/
 
 # Detect-secrets baseline — contains known secret signatures
 .secrets.baseline
+
+# Archived internal documents
+.archive/
