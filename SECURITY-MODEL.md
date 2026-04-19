@@ -4,78 +4,78 @@
 
 ---
 
-## Overview
+## 概述
 
-This document describes the security model for the Feishu AM Workbench skill. The primary security concern is protecting sensitive customer data and Feishu access credentials.
+本文档描述了 Feishu AM Workbench skill 的安全模型。主要安全关切是保护敏感客户数据和 Feishu 访问凭证。
 
-## Security Principles
+## 安全原则
 
-### 1. Credentials Never Committed
+### 1. 凭证永不提交
 
-- Feishu tokens, API keys, and access credentials **must not** be committed to the repository.
-- All credential configurations **must** use environment variables or local config files excluded from version control.
+- Feishu 令牌、API 密钥和访问凭证**禁止**提交到仓库。
+- 所有凭证配置**必须**使用环境变量或从版本控制中排除的本地配置文件。
 
-### 2. Customer Data Protection
+### 2. 客户数据保护
 
-- Customer names appearing in file names are considered sensitive and should be sanitized.
-- Real customer data in transcripts and meeting notes should never be committed without sanitization.
-- The `archive/` directory contains customer-sensitive materials and is excluded from version control.
+- 文件名中出现的客户姓名被视为敏感信息，应进行脱敏处理。
+- 会议记录和纪要中的真实客户数据在脱敏前不应提交。
+- `archive/` 目录包含客户敏感材料，已从版本控制中排除。
 
-### 3. Write Confirmation Gate
+### 3. 写入确认门控
 
-- All Feishu write operations require explicit user confirmation before execution.
-- The skill operates in **recommendation mode** by default, presenting proposed changes for review.
-- Writes are only executed after user approval.
+- 所有 Feishu 写入操作在执行前需要用户明确确认。
+- Skill 默认以**建议模式**运行，展示拟议变更供审核。
+- 仅在用户批准后执行写入。
 
-## Files Excluded from Version Control
+## 从版本控制中排除的文件
 
-| Pattern | Reason |
+| 模式 | 原因 |
 |---------|--------|
-| `.env` | Contains Feishu tokens and API keys |
-| `.env.local` | Local environment overrides |
-| `.secrets.baseline` | Contains known secret signatures |
-| `archive/` | Customer-sensitive meeting transcripts and materials |
-| `tests/fixtures/transcripts/*.txt` | Real customer/project names in filenames |
-| `.planning/` | Internal milestone notes and user context |
-| `docs/assessment-checklist.md` | Internal evaluation documents |
-| `docs/loading-strategy.md` | Internal loading strategy |
+| `.env` | 包含 Feishu 令牌和 API 密钥 |
+| `.env.local` | 本地环境覆盖 |
+| `.secrets.baseline` | 包含已知的密钥签名 |
+| `archive/` | 客户敏感会议记录和材料 |
+| `tests/fixtures/transcripts/*.txt` | 文件名中有真实客户/项目名称 |
+| `.planning/` | 内部里程碑记录和用户上下文 |
+| `docs/assessment-checklist.md` | 内部评估文档 |
+| `docs/loading-strategy.md` | 内部加载策略 |
 
-## Runtime Security
+## 运行时安全
 
-### Feishu Token Handling
+### Feishu 令牌处理
 
-- Tokens are sourced from environment variables at runtime
-- The skill uses `lark-cli` for authenticated Feishu API calls
-- Token refresh is handled by `lark-cli`, not by the skill directly
+- 令牌在运行时从环境变量获取
+- Skill 使用 `lark-cli` 进行经过认证的 Feishu API 调用
+- 令牌刷新由 `lark-cli` 处理，skill 不直接处理
 
-### Schema Validation Before Writes
+### 写入前的 Schema 验证
 
-Before any write operation:
-1. Confirm target table exists in live Feishu Base
-2. Confirm target field exists
-3. Confirm field type matches intended write
-4. For `select`/`multi_select` fields, fetch live options and resolve against those
+在任何写入操作前：
+1. 确认目标表格存在于 live Feishu Base
+2. 确认目标字段存在
+3. 确认字段类型与预期写入匹配
+4. 对于 `select`/`multi_select` 字段，获取 live 选项并据此解析
 
-### Idempotency Protection
+### 幂等性保护
 
-- Duplicate writes are prevented via idempotency checks
-- Update routing rules ensure the same logical update is not applied multiple times
+- 通过幂等性检查防止重复写入
+- 更新路由规则确保同一逻辑更新不会被多次应用
 
-## Secrets Detection
+## Secrets 检测
 
-The repository uses `detect-secrets` baseline file (`.secrets.baseline`) to prevent accidental secret commits. The baseline is regularly updated when new secret types are introduced.
+仓库使用 `detect-secrets` 基线文件（`.secrets.baseline`）防止意外密钥提交。引入新密钥类型时会定期更新基线。
 
-## Security Best Practices for Contributors
+## 贡献者安全最佳实践
 
-1. **Never commit credentials** — Use `.env` files excluded from git
-2. **Sanitize filenames** — Remove real customer names from file paths
-3. **Review before commits** — Run `git diff` and check for sensitive content
-4. **Update secrets baseline** — When adding new credential patterns, update `.secrets.baseline`
+1. **永不提交凭证** — 使用从 git 排除的 `.env` 文件
+2. **文件名脱敏** — 从文件路径中移除真实客户名称
+3. **提交前审核** — 运行 `git diff` 并检查敏感内容
+4. **更新密钥基线** — 添加新凭证模式时更新 `.secrets.baseline`
 
-## Vulnerability Reporting
+## 漏洞报告
 
-If you discover a security vulnerability in this skill, please report it via GitHub Issues with the label `security`. Do not disclose security issues publicly before they are addressed.
+如果您在此 skill 中发现安全漏洞，请通过 GitHub Issues 报告，并标注 `security` 标签。在问题解决前，请勿公开披露安全问题。
 
 ---
 
-*This security model follows the principle of "local-first, safe-write" — keeping sensitive data local while ensuring all remote writes are intentional and confirmed.*
+*此安全模型遵循"本地优先、安全写入"原则——在确保所有远程写入都是有意图且经过确认的同时，保持敏感数据本地化。*
