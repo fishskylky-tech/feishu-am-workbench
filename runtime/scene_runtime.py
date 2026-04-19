@@ -815,6 +815,11 @@ def _serialize_candidate(candidate: Any) -> dict[str, Any]:
 
 def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
     from runtime.expert_analysis_helper import build_lens_attributions
+    from runtime.expert_card_loader import load_expert_cards
+
+    # AGENT-02: Load expert cards at start (interface contract step 1)
+    expert_cards = load_expert_cards(request.scene_name, request.repo_root)
+    input_audit_result: Any = None
 
     topic_text = str(request.inputs.get("topic_text") or "")
     gateway_result, recovery = _build_live_scene_context(request, topic_text=topic_text)
@@ -868,6 +873,11 @@ def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
         lines.append("建议:")
         lines.extend(f"- {item}" for item in recommendations)
 
+    # AGENT-02: Input audit before _build_context_result (input only, no output per expert-cards.yaml)
+    if expert_cards["input_review"] and expert_cards["input_review"].enabled:
+        from runtime.expert_analysis_helper import run_input_audit
+        input_audit_result = run_input_audit(evidence_container, expert_cards["input_review"])
+
     return _build_context_result(
         request=request,
         gateway_result=gateway_result,
@@ -884,7 +894,9 @@ def run_customer_recent_status_scene(request: SceneRequest) -> SceneResult:
                 "candidate_conflicts": list(recovery.candidate_conflicts),
                 "evidence_container": evidence_container,
                 "lens_attributions": lens_attributions,
-            }
+            },
+            # AGENT-02: Expert card audit result in payload
+            "input_audit_result": input_audit_result,
         },
     )
 
