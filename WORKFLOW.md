@@ -4,156 +4,156 @@
 
 ---
 
-This document describes the core workflow for using the Feishu AM Workbench skill.
+本文档描述了使用 Feishu AM Workbench skill 的核心工作流程。
 
-## Core Workflow Overview
+## 核心工作流概览
 
 ```
-User Input → Scene Classification → Context Recovery → Entity Extraction
-     ↓                                                      ↓
-Recommendation Review ← Analysis & Judgment ← Structured Summary
+用户输入 → 场景分类 → 上下文恢复 → 实体提取
+     ↓                                              ↓
+建议审核 ← 分析与判断 ← 结构化摘要
      ↓
-User Confirmation
+用户确认
      ↓
-Feishu Write (if confirmed)
+Feishu 写入（如已确认）
      ↓
-Result Report
+结果报告
 ```
 
-## Step-by-Step Process
+## 分步流程
 
-### Step 1: Identify Intent and Customer
+### 步骤1：识别意图和客户
 
-1. Parse the user's request to identify the primary intent (meeting prep, post-meeting synthesis, customer status query, etc.)
-2. Extract customer name(s) from the input
-3. Resolve `客户ID` from `客户主数据` as the source of truth
+1. 解析用户请求，识别主要意图（会前准备、会后综合、客户状态查询等）
+2. 从输入中提取客户名称
+3. 从`客户主数据`解析`客户ID`作为数据源
 
-### Step 2: Scene Selection
+### 步骤2：场景选择
 
-The skill routes the request to one of 7 registered scenes:
+Skill 将请求路由到 7 个已注册场景之一：
 
-| Scene | Purpose |
+| 场景 | 用途 |
 |-------|---------|
-| `post-meeting-synthesis` | Transform meeting transcripts into structured judgments |
-| `customer-recent-status` | Query recent customer status across four lenses |
-| `archive-refresh` | Propose archive updates from multiple sources |
-| `todo-capture-and-update` | Classify and create Todo follow-ons |
-| `cohort-scan` | Query aggregated customer class analysis |
-| `meeting-prep` | Generate recommendation-first meeting brief |
-| `proposal` | Generate structured proposal/report draft |
+| `post-meeting-synthesis` | 将会议记录转化为结构化判断 |
+| `customer-recent-status` | 从四个维度查询客户近期状态 |
+| `archive-refresh` | 从多个来源提出档案更新建议 |
+| `todo-capture-and-update` | 分类并创建 Todo 后续事项 |
+| `cohort-scan` | 查询聚合客户分类分析 |
+| `meeting-prep` | 生成以建议为先的会议简报 |
+| `proposal` | 生成结构化提案/报告草稿 |
 
-### Step 3: Context Recovery (Live-First Gate)
+### 步骤3：上下文恢复（live-first 门控）
 
-When the task involves meeting notes or transcripts:
+当任务涉及会议记录或纪要时：
 
-1. **Attempt live-first**: Try to recover context from Feishu records (Base tables, docs, meeting notes)
-2. **If live lookup succeeds**: Use recovered context to enrich the analysis
-3. **If live lookup fails**: Fall back to local file analysis only
+1. **尝试 live-first**：尝试从 Feishu 记录（Base 表格、文档、会议记录）恢复上下文
+2. **如果 live 查询成功**：使用恢复的上下文丰富分析
+3. **如果 live 查询失败**：仅回退到本地文件分析
 
-This gate ensures the skill always starts with the most current customer context available.
+此门控确保 skill 始终从可用的最新客户上下文开始。
 
-### Step 4: Entity Extraction
+### 步骤4：实体提取
 
-Extract structured information before planning any updates:
+在规划任何更新之前提取结构化信息：
 
-- Customer identity
-- Contacts and org changes
-- Competitors
-- Contracts, amounts, and collections
-- Risks and opportunities
-- Key progress, blockers, and Todos
-- Schedules and milestone dates
-- Public updates and account judgment
+- 客户身份
+- 联系人和组织变更
+- 竞争对手
+- 合同、金额和回款
+- 风险和机会
+- 关键进展、阻碍和 Todo
+- 日程和里程碑日期
+- 公开更新和账户判断
 
-### Step 5: Meeting Type Classification
+### 步骤5：会议类型分类
 
-For meeting-related tasks, classify the meeting type to determine the write ceiling:
+对于涉及会议的任务，分类会议类型以确定写入上限：
 
-- **Strategic**: Full archive update, all tables writable
-- **Tactical**: Selected tables, focused update
-- **Operational**: Minimal write, context-only
+- **战略性**：完整档案更新，所有表格可写
+- **战术性**：选定表格，重点更新
+- **操作性**：最小写入，仅上下文
 
-### Step 6: Produce Analysis and Recommendations
+### 步骤6：生成分析和建议
 
-Generate two outputs:
+生成两个输出：
 
-1. **Account Analysis**: Structured summary with facts, judgment, risks, opportunities
-2. **Change Plan**: Structured list of proposed updates with create vs. update decisions
+1. **账户分析**：包含事实、判断、风险、机会的结构化摘要
+2. **变更计划**：包含创建 vs. 更新决策的结构化拟议更新列表
 
-### Step 7: User Confirmation
+### 步骤7：用户确认
 
-Present the recommendations to the user and wait for explicit confirmation before any Feishu write.
+将建议呈现给用户，在任何 Feishu 写入前等待明确确认。
 
-### Step 8: Execute Write (if confirmed)
+### 步骤8：执行写入（如已确认）
 
-Write order:
-1. Structured Feishu tables first
-2. Customer archive docs
-3. Meeting-note cold-memory docs
-4. Feishu Todo items last
+写入顺序：
+1. 首先写入结构化 Feishu 表格
+2. 然后客户档案文档
+3. 然后会议记录冷记忆文档
+4. 最后 Feishu Todo 项目
 
-### Step 9: Report Results
+### 步骤9：报告结果
 
-Report success, partial failure, schema drift, or blocked status clearly.
+清晰报告成功、部分失败、schema 漂移或被阻止状态。
 
-## Write Confirmation Flow
+## 写入确认流程
 
 ```
-[Analysis Complete]
+[分析完成]
        ↓
-[Show: Customer | Context Recovery | Extracted Entities | Change Plan]
+[展示：客户 | 上下文恢复 | 提取实体 | 变更计划]
        ↓
-[User: "Yes, proceed" / "Modify X" / "Cancel"]
+[用户："是，继续" / "修改 X" / "取消"]
        ↓
-[If confirmed]: Execute writes in order → Report results
-[If modified]: Regenerate change plan → Re-confirm
-[If cancelled]: Stop, no writes made
+[如确认]：按顺序执行写入 → 报告结果
+[如修改]：重新生成变更计划 → 再次确认
+[如取消]：停止，无写入
 ```
 
-## Scene-Specific Workflows
+## 场景特定工作流
 
-### Post-Meeting Synthesis
+### 会后综合
 
-1. Run live-first gate
-2. Classify meeting type
-3. Extract entities (contacts, risks, opportunities, todos)
-4. Generate structured summary
-5. Propose archive and action plan updates
-6. Wait for confirmation
-7. Write tables → Archive docs → Todos
+1. 运行 live-first 门控
+2. 分类会议类型
+3. 提取实体（联系人、风险、机会、Todo）
+4. 生成结构化摘要
+5. 提出档案和行动计划更新建议
+6. 等待确认
+7. 写入表格 → 档案文档 → Todo
 
-### Meeting Prep
+### 会前准备
 
-1. Query customer recent status
-2. Generate seven-dimension brief:
-   - Current status
-   - Key people
-   - Objectives
-   - Risks
-   - Opportunities
-   - Suggested questions
-   - Suggested next steps
-3. Present to user
+1. 查询客户近期状态
+2. 生成七维简报：
+   - 当前状态
+   - 关键人员
+   - 目标
+   - 风险
+   - 机会
+   - 建议问题
+   - 建议后续步骤
+3. 呈现给用户
 
-### Todo Capture
+### Todo 捕获
 
-1. Extract action items from meeting or materials
-2. Classify by intent (risk intervention, expansion, relationship, project)
-3. Check for existing similar todos (dedupe by meaning)
-4. Propose new todos or update existing ones
-5. Wait for confirmation
-6. Create or update in Feishu Todo
+1. 从会议或材料中提取行动项
+2. 按意图分类（风险干预、扩张、关系、项目）
+3. 检查现有相似 Todo（按含义去重）
+4. 提出新 Todo 或更新现有 Todo
+5. 等待确认
+6. 在 Feishu Todo 中创建或更新
 
-## Error Handling
+## 错误处理
 
-| Error Type | Behavior |
+| 错误类型 | 行为 |
 |-----------|----------|
-| Customer ambiguous | Stop and ask for clarification |
-| Schema drift | Trust live schema, surface drift in change plan |
-| Live lookup unavailable | Fall back to local-only analysis |
-| Write blocked | Report blocked status with reasons |
-| Partial failure | Report completed writes + remaining failures |
+| 客户模糊 | 停止并请求澄清 |
+| Schema 漂移 | 信任 live schema，在变更计划中暴露漂移 |
+| Live 查询不可用 | 回退到仅本地分析 |
+| 写入被阻止 | 报告被阻止状态及原因 |
+| 部分失败 | 报告已完成的写入 + 剩余失败 |
 
 ---
 
-*This workflow follows the principle: Read carefully first, then recommend, then act only after confirmation.*
+*此工作流程遵循原则：先仔细阅读，然后建议，然后仅在确认后行动。*
