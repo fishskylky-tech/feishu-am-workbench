@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
+
+logger = logging.getLogger(__name__)
 
 
 from .gateway import FeishuWorkbenchGateway
@@ -122,6 +125,13 @@ def select_orchestration_strategy(
 
     # 3+ experts: check if all platforms support parallel
     if expert_count >= 3:
+        unknown_platforms = [p for p in platforms if p not in PLATFORM_CAPABILITY_MAP]
+        if unknown_platforms:
+            logger.warning(
+                "Unknown platform(s) %s encountered in select_orchestration_strategy. "
+                "These will be treated as openclaw. Verify platform names are correct.",
+                unknown_platforms,
+            )
         all_support_parallel = all(
             PLATFORM_CAPABILITY_MAP.get(p, PLATFORM_CAPABILITY_MAP["openclaw"]).supports_parallel
             for p in platforms
