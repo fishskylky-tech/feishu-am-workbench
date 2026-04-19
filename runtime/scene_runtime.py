@@ -695,6 +695,12 @@ def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
         recover_live_context,
         run_confirmed_todo_write,
     )
+    from runtime.expert_card_loader import load_expert_cards
+
+    # AGENT-02: Load expert cards at start (interface contract step 1)
+    expert_cards = load_expert_cards(request.scene_name, request.repo_root)
+    input_audit_result: Any = None
+    output_audit_result: Any = None
 
     repo_root = request.repo_root.expanduser()
     transcript_file = _normalize_scene_path(request.inputs["transcript_file"], repo_root)
@@ -730,6 +736,12 @@ def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
         )
 
     evidence_container = getattr(recovery, 'evidence_container', None)
+
+    # AGENT-02: Input audit before evidence assembly (interface contract step 2)
+    if expert_cards["input_review"] and expert_cards["input_review"].enabled:
+        from runtime.expert_analysis_helper import run_input_audit
+        input_audit_result = run_input_audit(evidence_container, expert_cards["input_review"])
+
     artifact = build_meeting_output_artifact(
         eval_name=eval_name,
         transcript_path=transcript_file,
@@ -756,6 +768,11 @@ def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
         write_ceiling=recovery.write_ceiling,
     )
 
+    # AGENT-02: Output audit before SceneResult returned (interface contract step 4)
+    if expert_cards["output_review"] and expert_cards["output_review"].enabled:
+        from runtime.expert_analysis_helper import run_output_audit
+        output_audit_result = run_output_audit(recommendations, expert_cards["output_review"])
+
     return SceneResult(
         scene_name=request.scene_name,
         resource_status=resource_status,
@@ -779,6 +796,9 @@ def run_post_meeting_scene(request: SceneRequest) -> SceneResult:
                 "meeting_eval": eval_name,
                 "transcript_file": transcript_file.name,
             },
+            # AGENT-02: Expert card audit results in payload
+            "input_audit_result": input_audit_result,
+            "output_audit_result": output_audit_result,
         },
     )
 
