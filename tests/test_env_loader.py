@@ -11,7 +11,6 @@ from runtime.env_loader import load_dotenv
 
 
 class EnvLoaderTests(unittest.TestCase):
-    @unittest.skipIf(os.environ.get("CI"), "requires local .env file")
     def test_load_dotenv_reads_key_value_pairs(self) -> None:
         # Ensure clean environment before test
         os.environ.pop("FEISHU_AM_TODO_TASKLIST_GUID", None)
