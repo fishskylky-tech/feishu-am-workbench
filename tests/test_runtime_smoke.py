@@ -583,7 +583,6 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(result.executed_operation, "update")
         self.assertEqual(result.remote_object_id, "task_existing")
 
-    @unittest.skipIf(True, "pre-existing bug: _normalize_terms doesn't handle angle brackets in customer placeholders")
     def test_todo_writer_recommends_create_subtask_for_step_level_duplicate(self) -> None:
         class PassingTodoSchemaBackend:
             def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
@@ -653,7 +652,6 @@ class RuntimeSmokeTests(unittest.TestCase):
         self.assertEqual(result.executed_operation, "blocked")
         self.assertIn("subtask_recommended", result.blocked_reasons)
 
-    @unittest.skipIf(True, "pre-existing bug: _normalize_terms doesn't handle angle brackets in customer placeholders")
     def test_todo_writer_creates_subtask_when_explicitly_confirmed(self) -> None:
         class PassingTodoSchemaBackend:
             def get_table_schema(self, object_name: str) -> dict[str, dict[str, object]] | None:
