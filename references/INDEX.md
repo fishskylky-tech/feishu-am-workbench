@@ -9,6 +9,7 @@ This skill follows a three-tier progressive disclosure model (L1: metadata, L2: 
 | File | Summary | When to Load | Priority | Est. Tokens | Tier Group |
 |------|---------|-------------|----------|-------------|------------|
 | [feishu-workbench-gateway.md](./feishu-workbench-gateway.md) | Unified gateway for all Feishu workbench access | Always (if Feishu) | Critical | 1004 | L3-always |
+| [lark-base-operations-guide.md](./lark-base-operations-guide.md) | Safe patterns for Base record operations | Base record operations | Critical | 1850 | L3-critical |
 | [entity-extraction-schema.md](./entity-extraction-schema.md) | Full extraction bundle schema | All tasks (extraction stage) | High | 615 | L3-extraction |
 | [meeting-context-recovery.md](./meeting-context-recovery.md) | Context recovery process | Meeting tasks | High | 855 | L3-meeting |
 | [meeting-live-first-policy.md](./meeting-live-first-policy.md) | Live-first execution gate | Meeting tasks | High | 619 | L3-meeting |
@@ -30,7 +31,7 @@ This skill follows a three-tier progressive disclosure model (L1: metadata, L2: 
 | [minimal-stable-core.md](./minimal-stable-core.md) | Invariant core definition | Backward compat checks | Low | 672 | L3-on-demand |
 | [live-resource-links.example.md](./live-resource-links.example.md) | Example runtime wiring | Runtime setup examples | Low | 73 | L3-on-demand |
 
-**Total L3 Token Budget**: ~17,327 tokens (if all references loaded)
+**Total L3 Token Budget**: ~19,177 tokens (if all references loaded)
 
 ## Detailed File Descriptions
 
@@ -43,6 +44,7 @@ This skill follows a three-tier progressive disclosure model (L1: metadata, L2: 
 | [fact-grading.md](./fact-grading.md) | How to classify facts vs. judgments and assign confidence levels | After extraction, before producing the change plan |
 | [feishu-runtime-sources.md](./feishu-runtime-sources.md) | Where the current personal environment's live Feishu resource hints come from (env vars, local files, config) | When the runtime needs to discover Base token, folder tokens, or tasklist guid |
 | [feishu-workbench-gateway.md](./feishu-workbench-gateway.md) | Unified gateway for all Feishu workbench access: stages, resource resolution, context hydration, preflight | Whenever the task needs live Feishu data or is preparing a write plan |
+| [lark-base-operations-guide.md](./lark-base-operations-guide.md) | Safe patterns for Base record operations: record_id vs business fields, parallel array mapping, verification workflows | Before any +record-list, +record-get, or +record-upsert operation |
 | [live-resource-links.example.md](./live-resource-links.example.md) | Example URLs and tokens for local runtime wiring (use env vars for real values) | When the runtime needs concrete entry point examples |
 | [live-schema-preflight.md](./live-schema-preflight.md) | Contract for live schema validation: what to check, output format (safe/safe_with_drift/blocked), drift taxonomy | Before any Base or Todo write |
 | [master-data-guardrails.md](./master-data-guardrails.md) | Which fields in 客户主数据 are protected, guarded, or freely updatable, and when to update strategy fields | Before changing any field in the customer master table |

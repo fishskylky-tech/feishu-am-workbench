@@ -99,6 +99,7 @@ For quick overview: see [references/INDEX.md](./references/INDEX.md)
 - [references/entity-extraction-schema.md](./references/entity-extraction-schema.md) — before parsing mixed inputs
 - [references/master-data-guardrails.md](./references/master-data-guardrails.md) — before changing customer master data
 - [references/update-routing.md](./references/update-routing.md) — before deciding where each extracted item belongs
+- [references/lark-base-operations-guide.md](./references/lark-base-operations-guide.md) — before any Base record operations (list/get/upsert)
 - [references/feishu-runtime-sources.md](./references/feishu-runtime-sources.md) — for runtime setup and prerequisites
 - [references/feishu-workbench-gateway.md](./references/feishu-workbench-gateway.md) — for Feishu workbench access
 - [references/meeting-context-recovery.md](./references/meeting-context-recovery.md) — for meeting note/transcript tasks

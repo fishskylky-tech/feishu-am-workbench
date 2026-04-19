@@ -405,6 +405,162 @@ class LarkCliCustomerBackend:
                     rows.append(item)
         return rows
 
+    def list_records_with_ids(
+        self, table_id_or_name: str, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        """List records with their record_ids included.
+
+        Returns a list of dicts with 'record_id' and 'fields' keys.
+        This is the safe pattern for record operations that require record_id.
+
+        Example:
+            [
+                {"record_id": "recAAA", "fields": {"客户名称": "客户A", ...}},
+                {"record_id": "recBBB", "fields": {"客户名称": "客户B", ...}},
+            ]
+
+        Per references/lark-base-operations-guide.md:
+        - record_id_list and data arrays are parallel and must be indexed together
+        - Never infer position from business field values
+        """
+        payload = self.client.invoke_json(
+            [
+                "base",
+                "+record-list",
+                "--base-token",
+                self.config.base_token or "",
+                "--table-id",
+                table_id_or_name,
+                "--limit",
+                str(limit),
+            ]
+        )
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            return []
+
+        # Handle matrix format (parallel arrays)
+        record_id_list = data.get("record_id_list")
+        fields_header = data.get("fields")
+        data_matrix = data.get("data")
+
+        if (
+            isinstance(record_id_list, list)
+            and isinstance(fields_header, list)
+            and isinstance(data_matrix, list)
+        ):
+            # Matrix format: build records from parallel arrays
+            normalized_columns = [
+                self._normalize_column_name(item) for item in fields_header
+            ]
+            results: list[dict[str, Any]] = []
+            for i, row in enumerate(data_matrix):
+                if not isinstance(row, list):
+                    continue
+                if i >= len(record_id_list):
+                    continue
+                fields_dict: dict[str, Any] = {}
+                for j, column in enumerate(normalized_columns):
+                    if column and j < len(row):
+                        fields_dict[column] = row[j]
+                results.append(
+                    {"record_id": str(record_id_list[i]), "fields": fields_dict}
+                )
+            return results
+
+        # Handle items format (less common)
+        items = data.get("items") or data.get("records") or []
+        if isinstance(items, list):
+            results = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                record_id = item.get("record_id")
+                fields = item.get("fields")
+                if record_id and isinstance(fields, dict):
+                    results.append({"record_id": str(record_id), "fields": fields})
+            return results
+
+        return []
+
+    def find_record_by_field(
+        self,
+        table_id_or_name: str,
+        field_name: str,
+        field_value: Any,
+        limit: int = 100,
+    ) -> dict[str, Any] | None:
+        """Find a single record by matching a business field value.
+
+        Returns the first matching record with 'record_id' and 'fields', or None.
+
+        Per references/lark-base-operations-guide.md:
+        - This is the safe way to find record_id from a business field
+        - Never use business field values directly as record_id
+        """
+        records = self.list_records_with_ids(table_id_or_name, limit=limit)
+        field_value_str = self._stringify(field_value)
+        for record in records:
+            fields = record.get("fields", {})
+            if self._stringify(fields.get(field_name)) == field_value_str:
+                return record
+        return None
+
+    def get_record(
+        self, table_id_or_name: str, record_id: str
+    ) -> dict[str, Any] | None:
+        """Get a single record by its record_id.
+
+        Returns record fields or None if not found.
+
+        Per references/lark-base-operations-guide.md:
+        - record_id must be a system-generated ID (e.g., recXXX)
+        - This is used for pre-modification and post-modification verification
+        """
+        try:
+            payload = self.client.invoke_json(
+                [
+                    "base",
+                    "+record-get",
+                    "--base-token",
+                    self.config.base_token or "",
+                    "--table-id",
+                    table_id_or_name,
+                    "--record-id",
+                    record_id,
+                ]
+            )
+            data = payload.get("data")
+            if isinstance(data, dict):
+                fields = data.get("fields")
+                if isinstance(fields, dict):
+                    return fields
+        except LarkCliCommandError:
+            return None
+        return None
+
+    def verify_record_identity(
+        self,
+        table_id_or_name: str,
+        record_id: str,
+        verification_field: str,
+        expected_value: Any,
+    ) -> tuple[bool, str]:
+        """Verify a record's identity before modification.
+
+        Returns (is_match, actual_value).
+
+        Per references/lark-base-operations-guide.md:
+        - Always verify before update to prevent wrong record modification
+        - Check that record_id points to the expected business record
+        """
+        fields = self.get_record(table_id_or_name, record_id)
+        if fields is None:
+            return False, ""
+        actual_value = self._stringify(fields.get(verification_field))
+        expected_value_str = self._stringify(expected_value)
+        return actual_value == expected_value_str, actual_value
+
     def _extract_matrix_rows(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         columns = data.get("fields")
         matrix = data.get("data")
