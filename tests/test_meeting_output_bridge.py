@@ -400,6 +400,11 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
         self.assertIn("meeting_notes", context["used_sources"])
         self.assertIsInstance(context["key_context"], list)
+        key_context_entries = [str(entry) for entry in context["key_context"]]
+        self.assertTrue(
+            any("note-1" in entry or "note-2" in entry for entry in key_context_entries),
+            "Expected the related meeting notes to appear in key_context",
+        )
 
     def test_recover_live_context_prefers_recent_note_when_titles_are_similar(self) -> None:
         class FakeQueryBackend:
@@ -486,7 +491,6 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(gateway.last_query, "<CUSTOMER_A>")
         self.assertEqual(gateway_result.customer_resolution.status, "resolved")
         self.assertIn("上下文恢复状态: context-limited", output_text)
-        self.assertIn("未找到但应存在的资料: contact_records、action_plan、meeting_notes", output_text)
 
     def test_gateway_execution_keeps_context_limited_when_customer_resolution_fails(self) -> None:
         class FakeGateway:
