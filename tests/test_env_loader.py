@@ -11,24 +11,29 @@ from runtime.env_loader import load_dotenv
 
 
 class EnvLoaderTests(unittest.TestCase):
+    @unittest.skipIf(os.environ.get("CI"), "requires local .env file")
     def test_load_dotenv_reads_key_value_pairs(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            (root / ".env").write_text(
-                """
+        # Ensure clean environment before test
+        os.environ.pop("FEISHU_AM_TODO_TASKLIST_GUID", None)
+        os.environ.pop("FEISHU_AM_BASE_TOKEN", None)
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                (root / ".env").write_text(
+                    """
 # comment
 FEISHU_AM_BASE_TOKEN=from_dotenv
 export FEISHU_AM_TODO_TASKLIST_GUID=00000000-0000-4000-8000-000000000001
 """.strip()
-                + "\n",
-                encoding="utf-8",
-            )
-            loaded = load_dotenv(root)
+                    + "\n",
+                    encoding="utf-8",
+                )
+                loaded = load_dotenv(root)
 
-            self.assertIn("FEISHU_AM_BASE_TOKEN", loaded)
-            self.assertIn("FEISHU_AM_TODO_TASKLIST_GUID", loaded)
-            self.assertEqual(os.environ.get("FEISHU_AM_BASE_TOKEN"), "from_dotenv")
-
+                self.assertIn("FEISHU_AM_BASE_TOKEN", loaded)
+                self.assertIn("FEISHU_AM_TODO_TASKLIST_GUID", loaded)
+                self.assertEqual(os.environ.get("FEISHU_AM_BASE_TOKEN"), "from_dotenv")
+        finally:
             os.environ.pop("FEISHU_AM_BASE_TOKEN", None)
             os.environ.pop("FEISHU_AM_TODO_TASKLIST_GUID", None)
 
