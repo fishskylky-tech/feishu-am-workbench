@@ -1,0 +1,7 @@
+NOT_REQUIRED
+
+Git history cleanup NOT required per CHECK-01-REPORT decision:
+- .planning/ and archive/ fully untracked (221 + 7 files removed)
+- Working tree fully sanitized (0 customer name residue)
+- Historical names exist only in now-untracked directories (LOW risk)
+- Filter-repo not executed
