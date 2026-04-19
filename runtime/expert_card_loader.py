@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -54,34 +55,44 @@ class RegistryCache:
     _instance: dict | None = None
     _loaded_at: float | None = None
     _agents_dir_mtime: float | None = None
+    _lock: threading.Lock | None = None
+
+    @classmethod
+    def _get_lock(cls) -> threading.Lock:
+        """Get or create the thread lock (lazily initialized)."""
+        if cls._lock is None:
+            cls._lock = threading.Lock()
+        return cls._lock
 
     @classmethod
     def get_registry(cls) -> dict:
         """Load and cache agent-registry.yaml with mtime-based invalidation."""
-        now = time.monotonic()
-        agents_dir = AGENTS_DIR
-        dir_mtime = agents_dir.stat().st_mtime if agents_dir.exists() else 0
+        lock = cls._get_lock()
+        with lock:
+            now = time.monotonic()
+            agents_dir = AGENTS_DIR
+            dir_mtime = agents_dir.stat().st_mtime if agents_dir.exists() else 0
 
-        # Invalidate if directory mtime changed (new agent file added/removed)
-        # or if TTL expired
-        cache_stale = (
-            cls._instance is None
-            or cls._loaded_at is None
-            or now - cls._loaded_at > 60
-            or cls._agents_dir_mtime != dir_mtime
-        )
+            # Invalidate if directory mtime changed (new agent file added/removed)
+            # or if TTL expired
+            cache_stale = (
+                cls._instance is None
+                or cls._loaded_at is None
+                or now - cls._loaded_at > 60
+                or cls._agents_dir_mtime != dir_mtime
+            )
 
-        if cache_stale:
-            registry_path = agents_dir / "agent-registry.yaml"
-            if registry_path.exists():
-                with registry_path.open(encoding="utf-8") as f:
-                    cls._instance = yaml.safe_load(f)
-            else:
-                cls._instance = {"agents": {}}
-            cls._loaded_at = now
-            cls._agents_dir_mtime = dir_mtime
+            if cache_stale:
+                registry_path = agents_dir / "agent-registry.yaml"
+                if registry_path.exists():
+                    with registry_path.open(encoding="utf-8") as f:
+                        cls._instance = yaml.safe_load(f)
+                else:
+                    cls._instance = {"agents": {}}
+                cls._loaded_at = now
+                cls._agents_dir_mtime = dir_mtime
 
-        return cls._instance or {"agents": {}}
+            return cls._instance or {"agents": {}}
 
     @classmethod
     def invalidate(cls) -> None:
