@@ -1,291 +1,130 @@
-# feishu-am-workbench
+# 飞书 AM 工作台
 
-Feishu AM Workbench 是一个面向客户经营工作的飞书技能仓库。它的目标不是做一个更长的 prompt，而是把 AM 高频工作沉淀成一套 live-first、recommendation-first、可验证的工作流。
+这是一个帮你在飞书上高效完成客户经营工作的技能。
 
-当前仓库已经形成一条可运行的最小闭环：
+如果你是一名客户经理（AM），经常需要整理会议纪要、跟进客户状态、准备会前材料、或者生成提案，这个工作台可以帮你把这些重复性工作自动化，让你把精力放在真正的客户沟通和决策上。
 
-- 先恢复客户上下文，再给经营判断
-- 先给推荐方案，再确认写回
-- 先做 schema preflight 和 write guard，再触发变更
+**这个技能的服务对象是 AM 本身，以及 AM 的智能助手（如 OpenClaw、Hermes 等 Agent）。**
 
-它优先服务的不是抽象平台化，而是你每天真的会用到的会前准备、会后整理、客户状态跟进和 Todo 执行闭环。
+---
 
-## 当前能力边界
+## 核心价值
 
-当前最成熟、验证最完整的是 scene runtime 主路径：
+**先理解，再判断。** 工作台会先拉取客户的最新上下文——包括最近的联系记录、合同进展、关系变化——然后再给出分析和建议，而不是凭空输出。
 
-1. 通过 runtime 做资源探测、客户解析和 capability diagnostics
-2. 在 `post-meeting-synthesis`、`customer-recent-status`、`archive-refresh`、`todo-capture-and-update` 里按共享 contract 恢复最小必要 live context
-3. 输出审计化结果，包括资源状态、客户结果、上下文恢复状态、已使用资料、写回上限和开放问题
-4. 在确认后让需要写回的场景继续走统一 Todo writer 的 preflight、guard、dedupe 和执行结果归一
+**先建议，再行动。** 所有变更都会先以"建议态"呈现，等你确认后才会真正写回到飞书。你始终知道将要发生什么，也有机会修改或取消。
 
-这意味着当前仓库已经不是“会议总结器”，而是一个带飞书工作台底座的 AM operating workflow。
+**操作有痕迹，变更有上限。** 每一次读、写、更改都有明确的记录和范围，不会发生意外的大范围修改。
 
-## 核心原则
+---
 
-### Live-first
+## 四大场景
 
-- 会议类场景优先尝试 live runtime，而不是把单份材料当成全部事实
-- live schema 和 live options 是写前真相，缓存只能做兼容或加速
+### 会后整理
 
-### Recommendation-first
+把会议内容粘贴进来，工作台会自动帮你：
 
-- 默认先给建议，不直接写回
-- 高风险主数据更新必须保持受控
-- 缺 owner、schema 不匹配、证据冲突时，宁可阻断也不盲写
+- 整理出客户状态更新（风险、机会、关键变化）
+- 识别需要跟进的待办事项
+- 判断是否需要更新客户档案或行动计划
 
-### Thin foundation
+**适合场景：** 刚结束一场客户会议，需要快速沉淀结论和下一步。
 
-- runtime 负责资源解析、客户解析、targeted read、schema preflight、write guard 和 normalized writer surface
-- scene 层负责决定读什么、如何判断、给什么建议
-- foundation 不默认拼装完整业务上下文
+---
 
-## 工作台信息层次
+### 客户状态查询
 
-当前 workbench 仍然遵循稳定的层次分工：
+输入客户名称，快速获得该客户的当前全貌：
 
-- `客户主数据`: 客户索引与快照层
-- detail tables: `客户联系记录`、`行动计划`、`合同清单`、`客户关键人地图`、`竞品交锋记录`
-- `客户档案`: 长周期叙事和经营解释层
-- Feishu Todo: 执行与提醒载体
+- 风险和机会在哪里
+- 与关键人的关系最近有没有变化
+- 正在进行中的项目进展如何
+- 有哪些待推进的事项
 
-这套分层决定了 skill 的路由方式，也决定了后续 scene skill 不应按表拆，而应按经营场景拆。
+**适合场景：** 明天要见客户，今天快速了解这家客户最近发生了什么。
 
-## 目标架构方向
+---
 
-当前仓库仍以一个根级 skill 为入口，但已经明确了后续演进方向：
+### 会前准备
 
-- 主 skill 保持薄入口和编排层
-- 新能力按 scene skill 方式扩展，而不是继续向根级 SKILL.md 堆规则
-- scene skill 在需要时按需调用专家 agent
-- 所有 scene 复用同一个 runtime foundation
-- 初始化安装、兼容性检查、config 生成、cache 刷新等能力走独立 admin/bootstrap path
+输入客户名称和会议目的，自动生成七维度简报：
 
-当前与目标的边界需要同时成立：
+1. 客户当前状态
+2. 关键人物关系
+3. 来访目的分析
+4. 可能的风险点
+5. 可能的机会点
+6. 建议的问题
+7. 后续推进建议
 
-- current state: 根级 skill 仍然是唯一正式入口，scene skill 目录化还没有作为运行时事实落地
-- target state: 根级入口只保留路由与顶层交互，scene skills 承载工作流规则，expert agents 作为场景内协作者按需拉起
+**适合场景：** 第一次见新客户，或者见重要客户前需要全面准备。
 
-Phase 7 的 canonical architecture references：
+---
 
-- [references/scene-skill-architecture.md](references/scene-skill-architecture.md)
-- [references/workspace-bootstrap.md](references/workspace-bootstrap.md)
-- [references/cache-governance.md](references/cache-governance.md)
+### 提案生成
 
-当前已经锁定的第一波 scene 方向是：
+输入你的目标和已有的客户材料，工作台会自动生成结构化的提案草案：
 
-- `post-meeting-synthesis`
-- `customer-recent-status`
-- `archive-refresh`
-- `todo-capture-and-update`
+- 目标是什么
+- 核心判断和建议
+- 主要叙事逻辑
+- 需要争取的资源
+- 还有哪些问题需要确认
 
-其中第一组 `post-meeting-synthesis` 和 `customer-recent-status` 已完成可执行 runtime 落地；第二组 `archive-refresh` 和 `todo-capture-and-update` 已按同一 contract 定义并接入 runtime surface。
+**适合场景：** 需要给客户写一份正式的方案或报告，不知道从哪里开始。
 
-## 快速开始
+---
 
-### 前置条件
+## 快速上手
 
-1. Python 3.10+
-2. 已安装并可用 `lark-cli`
-3. 已完成飞书认证并具备 Base、Drive、Task 的目标访问权限
-4. 本地有可用 Python 环境，推荐直接使用仓库内 `.venv`
+### 第一步：确认你有飞书访问权限
 
-### 1. 激活环境
+这个工作台依赖飞书上的客户档案、会议笔记、待办任务等数据。在开始之前，请确认：
 
-```bash
-source .venv/bin/activate
-```
+- 你能正常登录飞书
+- 你有访问客户相关 Base 表格的权限
+- 你有创建和编辑飞书文档的权限
 
-### 2. 准备本地运行时输入
+### 第二步：联系管理员完成初始配置
 
-在仓库根目录准备本地 `.env`，填入你的 `FEISHU_AM_*` 变量。真实 token、folder token、tasklist guid 不应提交到仓库。
+首次使用时，你需要提供一些基本信息来完成连接。请联系你的系统管理员，获取：
 
-常见项包括：
+- 你的飞书访问凭证
+- 客户档案库的访问路径
+- 会议笔记的存放位置
 
-- `FEISHU_AM_WORKBENCH_BASE_URL`
-- `FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER`
-- `FEISHU_AM_MEETING_NOTES_FOLDER`
-- `FEISHU_AM_TODO_TASKLIST_GUID`
-- `FEISHU_AM_TODO_CUSTOMER_FIELD_GUID`
-- `FEISHU_AM_TODO_PRIORITY_FIELD_GUID`
+这些信息配置一次即可，后续使用无需重复设置。
 
-### 3. 先跑 capability 诊断
+### 第三步：开始使用
 
-```bash
-python3 -m runtime .
-```
+配置完成后，你就可以使用上面的四大场景了。
 
-理想状态是：
-
-- `base_access: available`
-- `docs_access: available`
-- `task_access: available`
-
-### 4. 再跑会议主路径验证
-
-```bash
-python3 -m evals.meeting_output_bridge \
-  --eval-name <CUSTOMER_A>-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt \
-  --run-gateway \
-  --customer-query <CUSTOMER_A>
-```
-
-重点观察：
-
-- `资源状态`
-- `客户结果`
-- `上下文恢复状态`
-- `已使用资料`
-- `写回上限`
-- `开放问题`
+---
 
-### 4.5 优先走 canonical scene runtime 入口
+## 配置说明
 
-最近完成并已归档的主线 milestone：v1.1 Executable Scene Runtimes。
+这个工作台会读取你在飞书上的真实数据，包括客户主数据表、联系记录、合同清单、会议笔记等。它不会自动修改任何内容，所有变更都会先以"建议"的形式展示，等你确认后才执行。
 
-Phase 12 开始，runtime 的长期主入口是稳定 `scene` 名称，而不是继续增加一串一次性 operator 命令。
+---
 
-先预览 canonical post-meeting scene：
+## 下一步
 
-```bash
-python3 -m runtime scene post-meeting-synthesis   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>
-```
+想快速体验一次完整的工作流？查看 [GETTING-STARTED.md](GETTING-STARTED.md)，里面有详细的操作步骤和示例。
 
-如果你已经确认要执行当前建议态 Todo 写回，再显式加 `--confirm-write`。如果需要把结果接到脚本或别的 agent，再加 `--json`：
+---
 
-```bash
-python3 -m runtime scene post-meeting-synthesis   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>   --confirm-write   --json
-```
+## 更多能力
 
-旧的 `meeting-write-loop` 仍保留，但现在只作为 `post-meeting-synthesis` 的 compatibility wrapper，而不是长期 contract 本体：
+这个工作台目前支持 7 个注册场景：
 
-```bash
-python3 -m runtime meeting-write-loop   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>
-```
+| 场景 | 功能 |
+|------|------|
+| 会后整理 | 会议内容转化为结构化客户判断 |
+| 客户状态 | 四维度客户全貌快速查询 |
+| 档案刷新 | 客户历史弧线和更新建议 |
+| 待办管理 | 分类整理和创建跟进任务 |
+| 客户群分析 | 一类客户的聚合风险和机会分析 |
+| 会前准备 | 七维度会议简报生成 |
+| 提案生成 | 五维度结构化提案草案 |
 
-再看客户近期状态：
-
-```bash
-python3 -m runtime scene customer-recent-status \
-  --customer-query <CUSTOMER_A> \
-  --repo-root . \
-  --json
-```
-
-如果你要先整理 archive refresh 的建议态输入：
-
-```bash
-python3 -m runtime scene archive-refresh \
-  --customer-query <CUSTOMER_A> \
-  --topic-text 客户档案 \
-  --repo-root . \
-  --json
-```
-
-如果你已经有 follow-on 项，想先走统一 Todo contract 的候选整理：
-
-```bash
-python3 -m runtime scene todo-capture-and-update \
-  --customer-query <CUSTOMER_A> \
-  --todo-item-json '{"summary":"确认<CUSTOMER_A>复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}' \
-  --repo-root . \
-  --json
-```
-
-### 5. 跑自动化切片
-
-```bash
-python3 -m unittest tests.test_env_loader tests.test_runtime_smoke tests.test_meeting_output_bridge tests.test_validation_assets -q
-```
-
-## 仓库导航
-
-- [ARCHITECTURE.md](ARCHITECTURE.md)
-  - 当前实现边界与 phase 7 锁定的目标架构口径
-- [references/scene-skill-architecture.md](references/scene-skill-architecture.md)
-  - scene skills、expert agents 与 first-wave boundary 的 canonical contract
-- [references/scene-runtime-contract.md](references/scene-runtime-contract.md)
-  - shared scene contract、fallback visibility、write ceiling 与 non-bypass runtime boundary
-- [references/workspace-bootstrap.md](references/workspace-bootstrap.md)
-  - admin/bootstrap path 的最小交付物、compatibility 与强确认边界
-- [references/cache-governance.md](references/cache-governance.md)
-  - schema、manifest/index、semantic cache 的 trust hierarchy 与 refresh lifecycle
-- [CONFIGURATION.md](CONFIGURATION.md)
-  - 本地环境、workspace config 边界、bootstrap 与 cache 关系
-- [GETTING-STARTED.md](GETTING-STARTED.md)
-  - 首次跑通诊断与会议样例的最短路径
-- [DEVELOPMENT.md](DEVELOPMENT.md)
-  - 日常开发节奏、文档同步点和 phase/GSD 协作方式
-- [TESTING.md](TESTING.md)
-  - 自动化切片、人工 live 验证和文档一致性检查
-- [STATUS.md](STATUS.md)
-  - 当前实际实现状态与下一步主线
-- [ROADMAP.md](ROADMAP.md)
-  - 产品与经营能力演进方向
-
-## 当前版本
-
-- 版本：1.2.0（对应 milestone v1.2）
-- 当前状态：v1.0 phases 1-11 与 v1.1 phases 12-15 已完成并归档；v1.2 phases 16-20 已完成并归档
-
-## v1.2: Expert Customer Operating Scenes
-
-v1.2 将可执行的 scene surfaces 升级为专家级客户经营工作流。
-
-**新能力：**
-
-- **客户群分析 (Cohort Scan)**：查询一类客户群体，自动获取风险、机会、共性问题的聚合分析，无需手动筛选
-- **会前准备 (Meeting Prep)**：输入客户和会议信息，自动生成七维度简报（当前状态、关键人物、目的、风险、机会、建议问题、后续步骤）
-- **提案/报告生成 (Proposal)**：输入客户、目标、材料，自动生成五维度结构化草案（目的、核心判断、主要叙事、资源请求、待确认问题）
-
-**专家分析升级：**
-
-- 会议后分析：输出风险、机会、干系人变化、下轮推进路径的专家级判断
-- 客户现状分析：基于风险、机会、关系、进展四维度的账户姿态 readout
-- 档案刷新：提供历史弧线、关键人物、风险、机会、运营姿态五维度结构化更新建议
-
-**输出路由：**
-
-- 提案和报告默认路由到飞书云文档/任务，而非本地工作区
-- 所有结构性输出前增加确认清单，确保写回前已确认受众、目的、使用范围
-
-
-## 安装
-
-当前仓库没有 `pyproject.toml`、`requirements.txt` 或 `package.json` 这类声明式依赖清单；Python 侧实现以标准库为主，live 集成通过本机 `lark-cli` 可执行文件完成。因此安装路径是先准备本地仓库副本、Python 虚拟环境和 `.env`，再确认 `lark-cli` 已完成授权。
-
-```bash
-cd /path/to/feishu-am-workbench
-python3 -m venv .venv
-source .venv/bin/activate
-cp .env.example .env
-```
-
-完成后再补齐 `.env` 中对应的 `FEISHU_AM_*` 变量，并确保 `lark-cli` 已在当前 shell 的 `PATH` 中可用。
-
-## 使用示例
-
-### 1. 输出当前 live capability 诊断
-
-```bash
-python3 -m runtime diagnose . --json
-```
-
-适合先确认 Base、Drive/Docs、Task 三类资源是否可用。返回结果里重点看 `base_access`、`docs_access`、`task_access`。
-
-### 2. 跑一条 post-meeting scene 主路径
-
-```bash
-python3 -m runtime scene post-meeting-synthesis   --eval-name <CUSTOMER_A>-stage-review   --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A>\ Campaign活动分析优化-阶段汇报.txt   --customer-query <CUSTOMER_A>   --json
-```
-
-这个入口会走共享 scene runtime contract，输出结构化审计结果，包括资源状态、客户解析、上下文恢复、写回上限和开放问题。
-
-### 3. 先生成 Todo 候选而不直接写回
-
-```bash
-python3 -m runtime scene todo-capture-and-update   --customer-query <CUSTOMER_A>   --todo-item-json '{"summary":"确认<CUSTOMER_A>复盘结论","owner":"ou_owner","priority":"高","due_at":"2026-04-20"}'   --repo-root .   --json
-```
-
-默认行为是建议态候选整理，不会绕过 preflight 和 guard 直接落写；只有显式加 `--confirm-write` 时才会进入统一 Todo writer 执行路径。
+每个场景都遵循同样的原则：**先读清楚，再给建议，最后才行动。**
