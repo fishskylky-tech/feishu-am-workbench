@@ -1,0 +1,25 @@
+# Expert card config for post-meeting-synthesis scene.
+# AGENT-01 (D-06 Plan C): input_review + output_review both enabled.
+
+input_review:
+  enabled: true
+  expert_name: "会议材料审核专家"
+  review_type: "materials_audit"
+  check_signals:
+    - "遗漏的关联信息"
+    - "前后不一致的事实"
+    - "未明确的风险信号"
+  output_field: "input_audit_notes"
+
+output_review:
+  enabled: true
+  expert_name: "经营顾问"
+  review_type: "recommendation_audit"
+  check_signals:
+    - "专业性"
+    - "业务逻辑"
+    - "可执行性"
+  output_field: "output_audit_notes"
+  block_on_flags:
+    - "业务逻辑错误"
+    - "超出范围"

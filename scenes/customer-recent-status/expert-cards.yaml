@@ -1,0 +1,15 @@
+# Expert card config for customer-recent-status scene.
+# AGENT-01 (D-06 Plan C): input_review only (output_review disabled).
+
+input_review:
+  enabled: true
+  expert_name: "客户状态审核专家"
+  review_type: "status_audit"
+  check_signals:
+    - "遗漏的关联信息"
+    - "前后不一致的事实"
+    - "未明确的预警信号"
+  output_field: "input_audit_notes"
+
+output_review:
+  enabled: false
