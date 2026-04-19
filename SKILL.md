@@ -50,7 +50,7 @@ Use this skill for a personal AM workflow built around Feishu Base, docs, and To
 7. Read minimum extra context needed
 8. Run live schema preflight before any write plan
 9. Separate facts from judgment
-10. Produce account analysis + structured change plan; wait for confirmation
+10. Produce account analysis + structured change plan; wait for confirmation (recommendation-first)
 
 ## Hard Rules
 

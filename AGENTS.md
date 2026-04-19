@@ -1,10 +1,12 @@
 # AGENTS.md
 
+**核心原则：** live-first（实时数据优先）+ recommendation-first（建议态确认后再行动）。
+
 **Last Updated:** 2026-04-19
 
 ---
 
-本文档描述了在 Feishu AM Workbench skill 关键决策点可调用的专家角色。
+本文档描述了在 Feishu AM Workbench skill 关键决策点可调用的专家角色。Skill 可被 OpenClaw、Hermes、Codex 等 Agent 调用。
 
 ## 角色架构
 
