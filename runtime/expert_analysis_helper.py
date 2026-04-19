@@ -3,12 +3,18 @@
 This module provides assembly and combination logic only.
 Specific judgment decisions (what evidence means for a customer) remain at the scene layer.
 See D-04: helper kept deliberately thin — does not interpret evidence, only assembles it.
+
+AGENT-02: Expert card audit layer — input review before evidence assembly,
+output review before SceneResult returned.
 """
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Literal
+
+logger = logging.getLogger(__name__)
 
 WriteCeiling = Literal["normal", "recommendation-only"]
 
@@ -331,3 +337,156 @@ def build_lens_attributions(
             conclusions=list(conclusions),
         ))
     return attributions
+
+
+# AGENT-02: Expert card audit layer
+
+from runtime.expert_card_loader import ExpertCardConfig
+
+
+@dataclass
+class ExpertCardAuditResult:
+    """Result of an expert card audit pass.
+
+    Per interface contract (review MEDIUM-07):
+    "load card -> input audit -> evidence assembly -> output audit -> return"
+    """
+
+    expert_name: str
+    review_type: str
+    findings: list[str]  # Signals found or issues flagged
+    passed: bool
+    blocked: bool = False
+    block_reason: str | None = None
+
+
+def _check_signal_in_evidence(container: EvidenceContainer, signal: str) -> bool:
+    """Check if a signal keyword/phrase appears in evidence container sources.
+
+    Signals are matched case-insensitively against all available source content.
+    Returns True if found, False if missing.
+    """
+    if container is None:
+        return False
+    signal_lower = signal.lower()
+    for source in container.sources.values():
+        if not source.available:
+            continue
+        for content_item in source.content:
+            if signal_lower in content_item.lower():
+                return True
+    return False
+
+
+def _check_dimension_in_recommendations(
+    recommendations: list[str], dimension: str
+) -> bool:
+    """Check if a recommendation dimension is addressed.
+
+    Simple keyword presence check: dimension is considered PASS if any
+    recommendation contains a keyword related to the dimension.
+    Returns True if addressed, False if flagged.
+    """
+    dimension_keywords: dict[str, list[str]] = {
+        "专业性": ["专业", "规范", "标准", "符合", "proper", "professional"],
+        "业务逻辑": ["业务", "逻辑", "合理", "合规", "business", "logic"],
+        "可执行性": ["执行", "落地", "实施", "操作", "implement", "actionable"],
+    }
+    keywords = dimension_keywords.get(dimension, [dimension.lower()])
+    for rec in recommendations:
+        rec_lower = rec.lower()
+        if any(kw in rec_lower for kw in keywords):
+            return True
+    return False
+
+
+def run_input_audit(
+    container: EvidenceContainer,
+    input_card: ExpertCardConfig,
+) -> ExpertCardAuditResult:
+    """Run input audit: check evidence materials for missed signals.
+
+    Per D-08: user materials reviewed through expert lens,
+    checking for missed signals.
+
+    Interface contract step 2 (input audit before evidence assembly):
+    - Runs before evidence assembly in integrated scenes
+    - Fail-open: returns passed=True with empty findings if no evidence
+    """
+    findings: list[str] = []
+    if container is None:
+        logger.warning(
+            "run_input_audit: evidence_container is None, skipping audit (fail-open)"
+        )
+        return ExpertCardAuditResult(
+            expert_name=input_card.expert_name,
+            review_type=input_card.review_type,
+            findings=["Audit skipped: no evidence container available"],
+            passed=True,
+        )
+
+    for signal in input_card.check_signals:
+        if _check_signal_in_evidence(container, signal):
+            findings.append(f"FOUND: {signal}")
+        else:
+            findings.append(f"MISSING: {signal}")
+
+    # passed = all signals found, or no signals defined
+    passed = all(not f.startswith("MISSING") for f in findings) or len(findings) == 0
+    return ExpertCardAuditResult(
+        expert_name=input_card.expert_name,
+        review_type=input_card.review_type,
+        findings=findings,
+        passed=passed,
+    )
+
+
+def run_output_audit(
+    recommendations: list[str],
+    output_card: ExpertCardConfig,
+) -> ExpertCardAuditResult:
+    """Run output audit: check recommendations for professionalism and business logic.
+
+    Per D-09: Todo/recommendations reviewed by business consultant,
+    assessing professionalism and business logic.
+
+    Interface contract step 4 (output audit before SceneResult returned):
+    - Runs after recommendations built, before SceneResult is returned
+    - Fail-open: returns passed=True if no recommendations to audit
+    """
+    findings: list[str] = []
+    if not recommendations:
+        logger.warning(
+            "run_output_audit: no recommendations to audit, skipping (fail-open)"
+        )
+        return ExpertCardAuditResult(
+            expert_name=output_card.expert_name,
+            review_type=output_card.review_type,
+            findings=["Audit skipped: no recommendations available"],
+            passed=True,
+        )
+
+    for dimension in output_card.check_signals:
+        if _check_dimension_in_recommendations(recommendations, dimension):
+            findings.append(f"PASS: {dimension}")
+        else:
+            findings.append(f"FLAG: {dimension}")
+
+    # blocked if any block_on_flags are triggered
+    block_on_flags = output_card.block_on_flags or []
+    blocked = any(
+        flag in findings for flag in [
+            f"FLAG: {flag}" for flag in block_on_flags
+        ] if any(flag in f for f in findings)
+    ) or any(
+        f"FLAG: {flag}" in findings for flag in block_on_flags
+    )
+
+    return ExpertCardAuditResult(
+        expert_name=output_card.expert_name,
+        review_type=output_card.review_type,
+        findings=findings,
+        passed=not blocked,
+        blocked=blocked,
+        block_reason="Flagged dimensions" if blocked else None,
+    )
