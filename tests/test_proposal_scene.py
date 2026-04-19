@@ -354,7 +354,7 @@ class TestProposalRegression(unittest.TestCase):
         )
         result = dispatch_scene(request)
         self.assertEqual(result.scene_name, "proposal")
-        self.assertIn(result.resource_status, ("live", "partial", "resolved", "unresolved"))
+        self.assertIn(result.resource_status, ("partial", "resolved", "unresolved"))
         self.assertIn(result.customer_status, ("resolved", "missing"))
         self.assertIn(result.context_status, ("complete", "partial", "context-limited", "not-run"))
         self.assertIn(result.write_ceiling, ("normal", "recommendation-only"))
