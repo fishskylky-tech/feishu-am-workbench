@@ -445,7 +445,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(len(note_lines), 1)
         self.assertTrue(note_lines[0].index("new-note") < note_lines[0].index("old-note"))
 
-    def test_gateway_execution_marks_<CUSTOMER_A>_context_as_partial_until_stage3_reads_exist(self) -> None:
+    def test_gateway_execution_marks_customer_a_context_as_partial(self) -> None:
         class FakeGateway:
             def run(self, customer_query: str):
                 self.last_query = customer_query
@@ -527,7 +527,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         self.assertTrue(result["passed"], result)
 
-    def test_<CUSTOMER_A>_bridge_output_passes_eval_runner(self) -> None:
+    def test_customer_a_bridge_output_passes_eval_runner(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="resolved",
@@ -559,7 +559,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         result = evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)
         self.assertTrue(result["passed"], result)
 
-    def test_<CUSTOMER_B>_bridge_output_passes_eval_runner_with_fallback_reason(self) -> None:
+    def test_customer_b_bridge_output_passes_eval_runner_with_fallback_reason(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="partial",
@@ -582,7 +582,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         )
         self.assertTrue(result["passed"], result)
 
-    def test_<CUSTOMER_C>_bridge_output_passes_eval_runner_with_logic_focus(self) -> None:
+    def test_customer_c_bridge_output_passes_eval_runner_with_logic_focus(self) -> None:
         gateway_result = GatewayResult(
             resource_resolution=ResourceResolution(
                 status="partial",

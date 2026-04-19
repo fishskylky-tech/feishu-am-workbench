@@ -1,2 +1,2 @@
-达美乐神策会议纪要占位逐字稿。
+<CUSTOMER_A> Campaign 活动分析优化阶段汇报占位逐字稿。
 该文件用于 repo-relative validation fixtures，不代表完整真实会议内容。

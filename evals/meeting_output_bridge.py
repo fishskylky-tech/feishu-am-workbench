@@ -937,11 +937,11 @@ def _parse_note_date(date_str: str) -> datetime | None:
 
 def _render_case_body(eval_name: str, transcript_text: str) -> list[str]:
     if eval_name == "<CUSTOMER_A>-stage-review":
-        return _render_<CUSTOMER_A>_body(transcript_text)
+        return _render_customer_a_body(transcript_text)
     if eval_name == "<CUSTOMER_B>-product-solution-discussion":
-        return _render_<CUSTOMER_B>_body(transcript_text)
+        return _render_customer_b_body(transcript_text)
     if eval_name == "<CUSTOMER_C>-ad-tracking-qa":
-        return _render_<CUSTOMER_C>_body(transcript_text)
+        return _render_customer_c_body(transcript_text)
     raise KeyError(f"unsupported eval case: {eval_name}")
 
 
@@ -976,7 +976,7 @@ def _build_recommended_todo_summary(eval_name: str, customer_name: str) -> str:
     return f"跟进{customer_name}会议后续动作确认"
 
 
-def _render_<CUSTOMER_A>_body(transcript_text: str) -> list[str]:
+def _render_customer_a_body(transcript_text: str) -> list[str]:
     open_questions = [
         "招募来源口径",
         "激活来源口径",
@@ -1002,7 +1002,7 @@ def _render_<CUSTOMER_A>_body(transcript_text: str) -> list[str]:
     return lines
 
 
-def _render_<CUSTOMER_B>_body(transcript_text: str) -> list[str]:
+def _render_customer_b_body(transcript_text: str) -> list[str]:
     lines = [
         "Meeting type: alignment_clarification",
         "客户主数据: no-write",
@@ -1017,7 +1017,7 @@ def _render_<CUSTOMER_B>_body(transcript_text: str) -> list[str]:
     return lines
 
 
-def _render_<CUSTOMER_C>_body(transcript_text: str) -> list[str]:
+def _render_customer_c_body(transcript_text: str) -> list[str]:
     lines = [
         "Meeting type: delivery_issue_handling",
         "客户主数据: no-write",

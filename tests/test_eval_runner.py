@@ -14,10 +14,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class EvalRunnerTests(unittest.TestCase):
-    def test_runner_passes_unilever_output_with_live_first_evidence(self) -> None:
+    def test_runner_passes_customer_a_output_with_live_first_evidence(self) -> None:
         output_text = """
 资源解析状态: resolved
-客户解析结果: 联合利华 / 客户ID C_002
+客户解析结果: <CUSTOMER_A> / 客户ID C_002
 上下文恢复状态: completed
 已使用飞书资料: 客户主数据、客户联系记录、行动计划、客户档案
 Meeting type: stage_review
@@ -30,10 +30,10 @@ Schedule:
 - 2026-08 或 2026-09 高峰
 - precision gap: 2026年下半年
 """
-        result = evaluate_case(eval_name="unilever-stage-review", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)
         self.assertTrue(result["passed"])
 
-    def test_runner_fails_unilever_without_live_first_evidence(self) -> None:
+    def test_runner_fails_customer_a_without_live_first_evidence(self) -> None:
         output_text = """
 这是一次阶段汇报。
 客户主数据: no-write
@@ -41,7 +41,7 @@ Todo: no-write
 Open questions:
 - 招募来源口径
 """
-        result = evaluate_case(eval_name="unilever-stage-review", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_A>-stage-review", output_text=output_text)
         self.assertFalse(result["passed"])
         failing = {item["id"] for item in result["assertions"] if not item["passed"]}
         self.assertIn("u1-live-first-gate", failing)
@@ -58,7 +58,7 @@ fallback 原因: permission scope insufficient for current live lookup
 - 后续支持动作
 客户主数据: no-write
 """
-        result = evaluate_case(eval_name="dominos-ad-tracking-qa", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_C>-ad-tracking-qa", output_text=output_text)
         self.assertTrue(result["passed"])
 
     def test_runner_rejects_generic_reason_words_without_explicit_fallback_field(self) -> None:
@@ -70,7 +70,7 @@ This output mentions reason and scope in ordinary prose only.
 输出重点:
 - 归因逻辑解释
 """
-        result = evaluate_case(eval_name="dominos-ad-tracking-qa", output_text=output_text)
+        result = evaluate_case(eval_name="<CUSTOMER_C>-ad-tracking-qa", output_text=output_text)
         self.assertFalse(result["passed"])
         live_first_assertion = next(item for item in result["assertions"] if item["id"] == "d1-live-first-gate")
         self.assertFalse(live_first_assertion["details"]["has_fallback_reason"])
@@ -98,7 +98,7 @@ fallback 原因: permission scope insufficient for current live lookup
                 "-m",
                 "evals.runner",
                 "--eval-name",
-                "yonghe-product-solution-discussion",
+                "<CUSTOMER_B>-product-solution-discussion",
                 "--output-file",
                 path,
             ],
@@ -115,7 +115,7 @@ fallback 原因: permission scope insufficient for current live lookup
         artifact = {
             "output_text": """
 资源解析状态: resolved
-客户解析结果: 联合利华 / 客户ID C_002
+客户解析结果: <CUSTOMER_A> / 客户ID C_002
 上下文恢复状态: completed
 已使用飞书资料: 客户主数据、客户联系记录、行动计划、客户档案
 统一写回结果:
@@ -142,7 +142,7 @@ Schedule:
             ],
         }
 
-        result = evaluate_artifact(eval_name="unilever-stage-review", artifact=artifact)
+        result = evaluate_artifact(eval_name="<CUSTOMER_A>-stage-review", artifact=artifact)
 
         self.assertTrue(result["passed"])
         self.assertEqual(result["artifact"]["write_result_details"][0]["dedupe_decision"], "update_existing")
