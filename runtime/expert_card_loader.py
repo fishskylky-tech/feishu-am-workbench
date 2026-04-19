@@ -17,6 +17,9 @@ Failure strategy (MEDIUM-04):
 from __future__ import annotations
 
 import logging
+import os
+import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -24,6 +27,8 @@ from typing import Any
 import yaml
 
 logger = logging.getLogger(__name__)
+
+AGENTS_DIR = Path(__file__).parent.parent / "agents"
 
 # 7 registered scenes from scene_registry.py
 VALID_SCENES = frozenset({
@@ -35,6 +40,101 @@ VALID_SCENES = frozenset({
     "meeting-prep",
     "proposal",
 })
+
+
+class RegistryCache:
+    """Singleton cache for agent-registry.yaml with mtime-based invalidation.
+
+    Cache invalidation strategy (per OpenCode review concern MEDIUM-3):
+    1. Primary: mtime-based — cache invalidates when agents/ directory mtime changes
+    2. Secondary: TTL-based — cache expires after 60 seconds as a safety net
+
+    This prevents stale registry data in long-running processes when agent files are updated.
+    """
+    _instance: dict | None = None
+    _loaded_at: float | None = None
+    _agents_dir_mtime: float | None = None
+
+    @classmethod
+    def get_registry(cls) -> dict:
+        """Load and cache agent-registry.yaml with mtime-based invalidation."""
+        now = time.monotonic()
+        agents_dir = AGENTS_DIR
+        dir_mtime = agents_dir.stat().st_mtime if agents_dir.exists() else 0
+
+        # Invalidate if directory mtime changed (new agent file added/removed)
+        # or if TTL expired
+        cache_stale = (
+            cls._instance is None
+            or cls._loaded_at is None
+            or now - cls._loaded_at > 60
+            or cls._agents_dir_mtime != dir_mtime
+        )
+
+        if cache_stale:
+            registry_path = agents_dir / "agent-registry.yaml"
+            if registry_path.exists():
+                with registry_path.open(encoding="utf-8") as f:
+                    cls._instance = yaml.safe_load(f)
+            else:
+                cls._instance = {"agents": {}}
+            cls._loaded_at = now
+            cls._agents_dir_mtime = dir_mtime
+
+        return cls._instance or {"agents": {}}
+
+    @classmethod
+    def invalidate(cls) -> None:
+        """Clear cache to force reload on next access."""
+        cls._instance = None
+        cls._loaded_at = None
+        cls._agents_dir_mtime = None
+
+
+def normalize_agent_name(name: str) -> str:
+    """Normalize agent name for security validation.
+
+    - Lowercase
+    - Strip whitespace
+    - Only allow alphanumeric, dash, underscore
+    - Max 64 characters
+    - Prevents path traversal and injection attacks
+
+    Per OpenCode review concern MEDIUM-2: security boundary incomplete.
+    """
+    if not name or not isinstance(name, str):
+        return ""
+    normalized = name.strip().lower()
+    normalized = re.sub(r"[^a-z0-9_-]", "", normalized)
+    return normalized[:64]
+
+
+def validate_agent_reference(agent_name: str) -> tuple[bool, str | None]:
+    """Validate that agent_name exists in agent-registry.yaml.
+
+    Returns (is_valid, error_message).
+    SOLE SOURCE OF TRUTH invariant: only agent-registry.yaml defines valid agent names.
+    expert-cards.yaml may only REFERENCE agents by name; it cannot define them inline.
+
+    Per AA-01-PLAN.md Section 2: agent-registry.yaml is the ONLY source of truth.
+    Per OpenCode review concern MEDIUM-2: security normalization applied before validation.
+    """
+    # Security: normalize before validation
+    normalized = normalize_agent_name(agent_name)
+    if not normalized:
+        return False, f"Invalid agent_name format: '{agent_name}'"
+
+    registry = RegistryCache.get_registry()
+    agents = registry.get("agents", {})
+
+    if normalized not in agents:
+        return False, f"Agent '{normalized}' not found in agent-registry.yaml. Valid agents: {list(agents.keys())}"
+
+    agent_config = agents[normalized]
+    if not agent_config.get("enabled", True):
+        return False, f"Agent '{normalized}' is disabled in agent-registry.yaml"
+
+    return True, None
 
 
 @dataclass
@@ -135,6 +235,24 @@ def parse_output_card(raw: dict) -> ExpertCardConfig | None:
     )
 
 
+def _validate_expert_cards(raw: dict) -> None:
+    """Validate all agent_name references in expert-cards.yaml against registry.
+
+    Raises ValueError if any agent_name is not found in agent-registry.yaml.
+    Per SOLE SOURCE OF TRUTH invariant from AA-01-PLAN.md Section 2.
+    Per OpenCode review concern MEDIUM-04.
+    """
+    for card_type in ("input_review", "output_review"):
+        if card_type in raw and raw[card_type] is not None:
+            card = raw[card_type]
+            if isinstance(card, dict) and "agent_name" in card:
+                is_valid, err = validate_agent_reference(card["agent_name"])
+                if not is_valid:
+                    raise ValueError(
+                        f"expert-cards.yaml {card_type} references unknown agent '{card['agent_name']}': {err}"
+                    )
+
+
 def load_expert_cards(
     scene_name: str, repo_root: Path
 ) -> dict[str, ExpertCardConfig | None]:
@@ -153,6 +271,7 @@ def load_expert_cards(
         - YAML file missing: fail-open, log warning, return {"input_review": None, "output_review": None}
         - YAML syntax invalid: fail-closed, raise yaml.YAMLError
         - Schema validation failure: fail-closed, raise ValueError
+        - Invalid agent reference: fail-closed, raise ValueError
     """
     # Validate scene name against registry (path traversal prevention)
     if not validate_scene_name(scene_name):
@@ -187,6 +306,9 @@ def load_expert_cards(
 
     # YAML syntax error → fail-closed
     raw = load_yaml_config(config_path)
+
+    # Validate agent references against registry (SOLE SOURCE OF TRUTH)
+    _validate_expert_cards(raw)
 
     input_card: ExpertCardConfig | None = None
     output_card: ExpertCardConfig | None = None
