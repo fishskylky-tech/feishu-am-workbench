@@ -26,6 +26,9 @@ progress.md
 # Build outputs
 graphify-out/
 
+# Internal documentation
+docs/
+
 # Personal helper scripts
 commit-task1.sh
 do_commit.py
