@@ -127,9 +127,9 @@ class TestLoadExpertCards:
 
     def test_valid_yaml_loads_success(self, tmp_path):
         """BEHAVIOR: Valid YAML with all fields parses correctly."""
-        # Create scene directory structure
-        scene_dir = tmp_path / "post-meeting-synthesis"
-        scene_dir.mkdir()
+        # Create scene directory structure (repo_root/scenes/scene_name)
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
         expert_cards_file = scene_dir / "expert-cards.yaml"
 
         # Write valid expert-cards.yaml with all required fields
@@ -182,8 +182,8 @@ class TestLoadExpertCards:
 
     def test_yaml_missing_required_fields_raises(self, tmp_path):
         """BEHAVIOR: YAML missing required fields raises ValueError."""
-        scene_dir = tmp_path / "customer-recent-status"
-        scene_dir.mkdir()
+        scene_dir = tmp_path / "scenes" / "customer-recent-status"
+        scene_dir.mkdir(parents=True)
         expert_cards_file = scene_dir / "expert-cards.yaml"
 
         # YAML with missing required fields
@@ -200,8 +200,8 @@ class TestLoadExpertCards:
 
     def test_yaml_invalid_syntax_raises(self, tmp_path):
         """BEHAVIOR: Invalid YAML syntax raises yaml.YAMLError."""
-        scene_dir = tmp_path / "cohort-scan"
-        scene_dir.mkdir()
+        scene_dir = tmp_path / "scenes" / "cohort-scan"
+        scene_dir.mkdir(parents=True)
         expert_cards_file = scene_dir / "expert-cards.yaml"
 
         # Invalid YAML (unclosed quote)
@@ -212,8 +212,8 @@ class TestLoadExpertCards:
 
     def test_only_input_review_defined(self, tmp_path):
         """When only input_review is defined, output_review should be None."""
-        scene_dir = tmp_path / "meeting-prep"
-        scene_dir.mkdir()
+        scene_dir = tmp_path / "scenes" / "meeting-prep"
+        scene_dir.mkdir(parents=True)
         expert_cards_file = scene_dir / "expert-cards.yaml"
 
         expert_cards_file.write_text(yaml.dump({
@@ -233,8 +233,8 @@ class TestLoadExpertCards:
 
     def test_only_output_review_defined(self, tmp_path):
         """When only output_review is defined, input_review should be None."""
-        scene_dir = tmp_path / "proposal"
-        scene_dir.mkdir()
+        scene_dir = tmp_path / "scenes" / "proposal"
+        scene_dir.mkdir(parents=True)
         expert_cards_file = scene_dir / "expert-cards.yaml"
 
         expert_cards_file.write_text(yaml.dump({
@@ -255,8 +255,8 @@ class TestLoadExpertCards:
 
     def test_disabled_input_review_returns_none(self, tmp_path):
         """When input_review.enabled=False, returns None for input."""
-        scene_dir = tmp_path / "archive-refresh"
-        scene_dir.mkdir()
+        scene_dir = tmp_path / "scenes" / "archive-refresh"
+        scene_dir.mkdir(parents=True)
         expert_cards_file = scene_dir / "expert-cards.yaml"
 
         expert_cards_file.write_text(yaml.dump({
