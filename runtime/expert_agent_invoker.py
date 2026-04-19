@@ -106,13 +106,15 @@ class CircuitBreaker:
 
 
 _agent_circuit_breakers: dict[str, CircuitBreaker] = {}
+_agent_circuit_breakers_lock = asyncio.Lock()
 
 
-def get_circuit_breaker(agent_name: str) -> CircuitBreaker:
+async def get_circuit_breaker(agent_name: str) -> CircuitBreaker:
     """Get or create circuit breaker for agent_name."""
-    if agent_name not in _agent_circuit_breakers:
-        _agent_circuit_breakers[agent_name] = CircuitBreaker()
-    return _agent_circuit_breakers[agent_name]
+    async with _agent_circuit_breakers_lock:
+        if agent_name not in _agent_circuit_breakers:
+            _agent_circuit_breakers[agent_name] = CircuitBreaker()
+        return _agent_circuit_breakers[agent_name]
 
 
 async def async_invoke_with_timeout(
@@ -131,7 +133,7 @@ async def async_invoke_with_timeout(
     failures: list[tuple[str, Exception]] = []
 
     for agent, prompt in zip(agents, prompts):
-        cb = get_circuit_breaker(agent.get_platform())
+        cb = await get_circuit_breaker(agent.get_platform())
 
         if not cb.can_execute():
             failures.append((agent.get_platform(), CircuitOpenError(agent.get_platform())))
@@ -159,6 +161,16 @@ async def async_invoke_with_timeout(
     # If ALL agents failed, raise AggregatedFailureResult
     if len(successful) == 0 and failures:
         raise AggregatedFailureResult(successful=successful, failures=failures)
+
+    # If some agents succeeded but others failed, log partial failure warning
+    if failures:
+        logger.warning(
+            "Partial failure during expert invocation: %d succeeded, %d failed. "
+            "Failed agents: %s",
+            len(successful),
+            len(failures),
+            [name for name, _ in failures],
+        )
 
     return [r for r in results if isinstance(r, ExpertReviewResult)]
 
@@ -190,7 +202,7 @@ async def run_expert_review_with_fallback(
 
     # Try AI mode
     try:
-        if expert_cards.get("input_review") and expert_cards["input_review"].get("agent_name"):
+        if expert_cards.get("input_review") is not None and expert_cards["input_review"].get("agent_name"):
             from runtime.expert_card_loader import validate_agent_reference, normalize_agent_name
 
             agent_name = normalize_agent_name(expert_cards["input_review"]["agent_name"])
