@@ -445,7 +445,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             "Expected the newer related meeting note to appear in key_context",
         )
 
-    def test_gateway_execution_marks_customer_a_context_as_partial(self) -> None:
+    def test_gateway_execution_marks_customer_a_context_as_context_limited(self) -> None:
         class FakeGateway:
             def run(self, customer_query: str):
                 self.last_query = customer_query

@@ -4,6 +4,21 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)。
 
+## [1.3.0] - 2026-04-19
+
+### 新增
+
+- **GitHub Actions CI** - 添加 pytest 和 pre-commit 工作流
+
+### 修复
+
+- 修复测试隔离和环境变量污染问题
+- 修复 Phase 23 函数迁移后的 mock 路径
+- 修复 `_normalize_terms` 中尖括号处理 bug
+- 修复 resource_status 断言与运行时合同不匹配
+
+---
+
 ## [1.2.0] - 2026-04-19
 
 ### 新增

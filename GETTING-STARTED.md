@@ -77,7 +77,7 @@ python3 -m runtime .
 ```bash
 python3 -m evals.meeting_output_bridge \
   --eval-name <CUSTOMER_A>-stage-review \
-  --transcript-file tests/fixtures/transcripts/20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt \
+  --transcript-file "tests/fixtures/transcripts/20260410-<CUSTOMER_A> Campaign活动分析优化-阶段汇报.txt" \
   --run-gateway \
   --customer-query <CUSTOMER_A>
 ```
