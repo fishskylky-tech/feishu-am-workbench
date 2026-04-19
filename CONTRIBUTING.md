@@ -47,8 +47,10 @@ source .venv/bin/activate  # macOS/Linux
 3. **安装依赖**
 
 ```bash
-pip install -e .
+pip install pytest pyyaml
 ```
+
+> 本仓库不是可编辑安装的 Python 包，使用 `PYTHONPATH=.` 运行
 
 4. **配置环境变量**
 
