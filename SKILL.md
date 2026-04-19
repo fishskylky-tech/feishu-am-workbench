@@ -1,6 +1,6 @@
 ---
 name: feishu-am-workbench
-version: 1.1.0
+version: 1.3.0
 author: fishskylky-tech
 license: MIT
 description: >
