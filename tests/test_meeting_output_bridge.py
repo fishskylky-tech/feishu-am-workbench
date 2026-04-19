@@ -491,6 +491,7 @@ class MeetingOutputBridgeTests(unittest.TestCase):
         self.assertEqual(gateway.last_query, "<CUSTOMER_A>")
         self.assertEqual(gateway_result.customer_resolution.status, "resolved")
         self.assertIn("上下文恢复状态: context-limited", output_text)
+        self.assertIn("未找到但应存在的资料: contact_records、action_plan、meeting_notes", output_text)
 
     def test_gateway_execution_keeps_context_limited_when_customer_resolution_fails(self) -> None:
         class FakeGateway:
