@@ -60,7 +60,7 @@
 5. AGENT-01 完成：独立 scene 配置文件机制建立（方案 C），可插拔
 6. AGENT-02 完成：至少 2 个 scene 接入专家审核层（输入或输出）
 
-**Plans:** pending
+**Plans:** 5/5 plans complete
 
 ## Archived Milestones
 
