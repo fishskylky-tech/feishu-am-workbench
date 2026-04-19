@@ -400,6 +400,11 @@ class MeetingOutputBridgeTests(unittest.TestCase):
 
         self.assertIn("meeting_notes", context["used_sources"])
         self.assertIsInstance(context["key_context"], list)
+        key_context_entries = [str(entry) for entry in context["key_context"]]
+        self.assertTrue(
+            any("note-1" in entry or "note-2" in entry for entry in key_context_entries),
+            "Expected the related meeting notes to appear in key_context",
+        )
 
     def test_recover_live_context_prefers_recent_note_when_titles_are_similar(self) -> None:
         class FakeQueryBackend:
@@ -439,9 +444,13 @@ class MeetingOutputBridgeTests(unittest.TestCase):
             topic_text="<CUSTOMER_A> 月度复盘",
         )
         self.assertIsInstance(context["key_context"], list)
-        self.assertGreaterEqual(len(context["key_context"]), 0)
+        key_context_entries = [str(entry) for entry in context["key_context"]]
+        self.assertTrue(
+            any("new-note" in entry for entry in key_context_entries),
+            "Expected the newer related meeting note to appear in key_context",
+        )
 
-    def test_gateway_execution_marks_customer_a_context_as_partial(self) -> None:
+    def test_gateway_execution_marks_customer_a_context_as_context_limited(self) -> None:
         class FakeGateway:
             def run(self, customer_query: str):
                 self.last_query = customer_query

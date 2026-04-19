@@ -7,13 +7,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOST_DOCS = [
     REPO_ROOT / "AGENTS.md",
-    REPO_ROOT / ".planning" / "PROJECT.md",
 ]
 RULE_DOCS = [
     REPO_ROOT / "README.md",
     REPO_ROOT / "AGENTS.md",
     REPO_ROOT / "SKILL.md",
-    REPO_ROOT / ".planning" / "PROJECT.md",
 ]
 CORE_CODE_PATHS = [
     REPO_ROOT / "runtime",

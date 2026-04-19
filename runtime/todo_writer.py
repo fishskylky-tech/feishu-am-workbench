@@ -541,7 +541,7 @@ class TodoWriter:
 
     def _normalize_terms(self, summary: str) -> set[str]:
         normalized = summary.lower()
-        normalized = re.sub(r"[（）()｜|,，/\\:：_\\-]+", " ", normalized)
+        normalized = re.sub(r"[（）()｜|,，/\\:：_\-<>]+", " ", normalized)
         normalized = re.sub(r"[·•。；;!！?？\[\]{}]+", " ", normalized)
         normalized = re.sub(r"([a-z0-9]+)([\u4e00-\u9fff])", r"\1 \2", normalized)
         normalized = re.sub(r"([\u4e00-\u9fff])([a-z0-9]+)", r"\1 \2", normalized)
