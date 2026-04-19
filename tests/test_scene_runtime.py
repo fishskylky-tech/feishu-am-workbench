@@ -644,7 +644,7 @@ class TestPostMeetingRegression(unittest.TestCase):
 
         self.assertEqual(result.scene_name, "post-meeting-synthesis")
         # resource_status values per runtime/resource_resolver.py: "resolved" | "unresolved" | "partial"
-        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved"))
+        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved", "unresolved"))
         # customer_status can be "resolved" | "ambiguous" | "not_found" | "missing"
         self.assertIn(result.customer_status, ("resolved", "ambiguous", "not_found", "missing"))
         # context_status values per recover_live_context: "completed" | "partial" | "minimal" | "context-limited"
@@ -728,7 +728,7 @@ class TestCustomerRecentStatusRegression(unittest.TestCase):
 
         self.assertEqual(result.scene_name, "customer-recent-status")
         # resource_status values per resource_resolver.py: "resolved" | "unresolved" | "partial"
-        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved"))
+        self.assertIn(result.resource_status, ("live", "partial", "unavailable", "resolved", "unresolved"))
         # customer_status can be "resolved" | "ambiguous" | "not_found" | "missing"
         self.assertIn(result.customer_status, ("resolved", "ambiguous", "not_found", "missing"))
         # context_status per recover_live_context: "completed" | "partial" | "minimal" | "context-limited"
