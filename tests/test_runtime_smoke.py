@@ -2388,8 +2388,11 @@ class RuntimeSmokeTests(unittest.TestCase):
             registry.available_scenes(),
             [
                 "archive-refresh",
+                "cohort-scan",
                 "customer-recent-status",
+                "meeting-prep",
                 "post-meeting-synthesis",
+                "proposal",
                 "todo-capture-and-update",
             ],
         )
