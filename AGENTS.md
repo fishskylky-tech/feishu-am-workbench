@@ -4,87 +4,87 @@
 
 ---
 
-This document describes the expert agent roles that can be invoked at key decision points in the Feishu AM Workbench skill.
+本文档描述了在 Feishu AM Workbench skill 关键决策点可调用的专家角色。
 
-## Role Architecture
+## 角色架构
 
-The skill uses a "活页夹" (loose-leaf binder) pattern for expert roles. Each expert is defined in a separate configuration file that can be loaded on demand when the skill encounters specific input/output boundary points.
+Skill 采用"活页夹"（loose-leaf binder）模式管理专家角色。每个专家定义在独立配置文件中，在 skill 遇到特定输入/输出边界点时按需加载。
 
-Expert roles are **not hardcoded** into the scene logic. They are invoked as reviewers at critical checkpoints:
+专家角色**不硬编码**到场景逻辑中。它们在关键检查点作为审核者被调用：
 
-- **Input checkpoint**: User materials are reviewed by a domain expert before analysis
-- **Output checkpoint**: Recommendations are reviewed by a business consultant before delivery
+- **输入检查点**：用户材料在分析前由领域专家审核
+- **输出检查点**：建议在交付前由经营顾问审核
 
-## Registered Expert Roles
+## 已注册专家角色
 
 ### 1. 风险分析师 (Risk Analyst)
 
-**Purpose:** Review raw user input for missed risk signals before analysis begins.
+**用途：** 在分析开始前审核原始用户输入，识别遗漏的风险信号。
 
-**Triggers:**
-- When the input contains customer meeting materials or status updates
-- When the task involves identifying risks and mitigation strategies
+**触发条件：**
+- 输入包含客户会议材料或状态更新时
+- 任务涉及识别风险和缓解策略时
 
-**Expertise:**
--识别合同执行风险
+**专业领域：**
+- 识别合同执行风险
 - 识别收款风险
 - 识别客户关系风险
 - 识别项目交付风险
 
 ### 2. 经营顾问 (Business Consultant)
 
-**Purpose:** Review output recommendations for business professionalism before delivery.
+**用途：** 在交付前审核输出建议的业务专业性。
 
-**Triggers:**
-- When the task produces Todo items, action plans, or strategic recommendations
-- When the output involves writing back to Feishu tables
+**触发条件：**
+- 任务产生 Todo 事项、执行计划或战略建议时
+- 输出涉及回写 Feishu 表格时
 
-**Expertise:**
+**专业领域：**
 - 建议的专业性和可执行性
 - 业务逻辑的一致性
 - 优先级判断的合理性
 
 ### 3. 客户档案官 (Archive Officer)
 
-**Purpose:** Review customer archive updates for completeness and accuracy.
+**用途：** 审核客户档案更新的完整性和准确性。
 
-**Triggers:**
-- When creating or updating customer archive documents
-- When linking meeting notes to customer archives
+**触发条件：**
+- 创建或更新客户档案文档时
+- 关联会议记录与客户档案时
 
-**Expertise:**
+**专业领域：**
 - 档案结构的完整性
 - 历史弧线的连贯性
 - 关键决策的溯源性
 
-## Expert Configuration Schema
+## 专家配置架构
 
-Each expert configuration follows this structure:
+每个专家配置遵循以下结构：
 
 ```yaml
-name: <expert-name-zh>
-name_en: <expert-name-en>
+name: <专家名称-中文>
+name_en: <专家名称-英文>
 role: <input|output>
 trigger_scenes:
-  - <scene-name>
+  - <场景名称>
 checkpoints:
   - input_validation
   - output_review
 expertise:
-  - <expertise-area-1>
-  - <expertise-area-2>
+  - <专业领域-1>
+  - <专业领域-2>
 review_criteria:
-  - <criterion-1>
-  - <criterion-2>
+  - <审核标准-1>
+  - <审核标准-2>
 ```
 
-## Loading Mechanism
+## 加载机制
 
-Experts are loaded via the scene runtime contract. See [references/scene-runtime-contract.md](references/scene-runtime-contract.md) for the technical integration details.
+专家通过场景运行时契约加载。技术集成细节请参阅 [references/scene-runtime-contract.md](references/scene-runtime-contract.md)。
 
-## Scene-to-Expert Mapping
+## 场景到专家映射
 
-| Scene | Input Expert | Output Expert |
+| 场景 | 输入专家 | 输出专家 |
 |-------|-------------|---------------|
 | post-meeting-synthesis | 风险分析师 | 经营顾问 |
 | customer-recent-status | 风险分析师 | 经营顾问 |
@@ -96,4 +96,4 @@ Experts are loaded via the scene runtime contract. See [references/scene-runtime
 
 ---
 
-*This document defines the expert role interface. Individual expert configurations are loaded on demand during scene execution.*
+*本文档定义专家角色接口。各个专家配置在场景执行期间按需加载。*
