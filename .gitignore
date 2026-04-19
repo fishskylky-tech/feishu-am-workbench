@@ -33,19 +33,8 @@ docs/
 commit-task1.sh
 do_commit.py
 
-# Phase planning transient files
-# Keep: STATE.md, ROADMAP.md, MILESTONES.md, PROJECT.md, REQUIREMENTS.md, milestones/
-.planning/phases/
-.planning/tmp/
-.planning/quick/
-.planning/research/
-.planning/threads/
-.planning/todos/
-.planning/debug/
-.planning/seeds/
-.planning/codebase/
-.planning/ui-reviews/
-.planning/graphs/
+# Phase planning and milestone artifacts — all local, not shipped
+.planning/
 
 # Archive directory — contains customer-sensitive meeting transcripts
 archive/

@@ -1,65 +1,64 @@
-# CHANGELOG.md
+# 更新日志
 
-All notable changes to the `feishu-am-workbench` skill are documented in this file.
+本文档记录 `feishu-am-workbench` 技能的所有重要变更。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)。
 
 ## [1.2.0] - 2026-04-19
 
-### Added
+### 新增
 
-- **7th registered scene: `proposal`** - Generate structured proposal/report/resource-coordination draft with five-dimension output (objective, core judgment, main narrative, resource asks, open questions)
-- **Meeting type taxonomy** - Classification system for meeting types with associated write ceilings
-- **Scene runtime contract** - Standardized interface for scene execution and expert role loading
-- **Meeting live-first policy** - Execution gate requiring live context recovery before formal analysis
-- **Context hydrator** - Multi-source context recovery from Feishu Base, Docs, and meeting notes
+- **第7个注册场景：`proposal`** - 生成结构化提案/报告/资源协调草案，包含五维度输出（目标、核心判断、主要叙事逻辑、需要争取的资源、待确认问题）
+- **会议类型分类体系** - 会议类型分类系统及其对应的写入上限
+- **场景运行时契约** - 场景执行和专家角色加载的标准化接口
+- **会议实时优先策略** - 在正式分析前必须先恢复实时上下文的执行门槛
+- **上下文补水器** - 从飞书 Base、文档、会议笔记等多源恢复上下文
 
-### Changed
+### 变更
 
-- **Meeting output standard** - Updated to include meeting type, write ceiling, and context recovery status
-- **Entity extraction schema** - Enhanced with meeting-specific fields and fact grading
-- **Scene registry** - Expanded from 5 to 7 registered scenes
+- **会议输出标准** - 更新后包含会议类型、写入上限和上下文恢复状态
+- **实体提取模式** - 增强了会议特定字段和事实分级
+- **场景注册表** - 从 5 个扩展到 7 个注册场景
 
-### Fixed
+### 修复
 
-- Archive folder resolution now uses live resource discovery
-- Customer archive link resolution handles stale links correctly
-- Todo dedupe logic now considers meaning, not just exact title match
+- 档案文件夹解析现在使用实时资源发现
+- 客户档案链接解析正确处理过期链接
+- 待办去重逻辑现在考虑语义，而不仅仅是精确标题匹配
 
 ---
 
 ## [1.1.0] - 2026-04-17
 
-### Added
+### 新增
 
-- **5 registered scenes**: post-meeting-synthesis, customer-recent-status, archive-refresh, todo-capture-and-update, cohort-scan, meeting-prep
-- **Progressive loading tiers** - L1/L2/L3 disclosure model to minimize context usage
-- **Write confirmation gate** - All writes require explicit user confirmation before execution
-- **Master data guardrails** - Protected field policy for customer master table
-- **Update routing rules** - Idempotency and routing logic for Feishu writes
-- **Schema compatibility layer** - Handling for schema drift and alias matching
+- **5 个注册场景**：会后整理、客户状态查询、档案刷新、待办捕获与更新、客户群分析、会前准备
+- **渐进式加载层级** - L1/L2/L3  Disclosure 模型，最小化上下文使用
+- **写入确认门槛** - 所有写入在执行前需要用户明确确认
+- **主数据防护栏** - 客户主表的受保护字段策略
+- **更新路由规则** - 飞书写入的幂等性和路由逻辑
+- **Schema 兼容层** - Schema 漂移和别名匹配处理
 
-### Changed
+### 变更
 
-- Separated fact extraction from judgment to prevent inferred business judgment from being presented as objective fact
-- Improved date handling to use absolute time expressions only
-- Customer archive creation now requires finding existing archive before creating new one
+- 将事实提取与判断分离，防止将推断的业务判断作为客观事实呈现
+- 改进日期处理，只使用绝对时间表达
+- 客户档案创建现在需要先查找现有档案，再创建新的
 
 ---
 
 ## [1.0.0] - 2026-04-16
 
-### Added
+### 新增
 
-- Initial release of feishu-am-workbench skill
-- Feishu Base table integration for customer master data, contracts, action plans, contact maps, and competitive records
-- Feishu Docs integration for customer archive documents
-- Feishu Todo integration for action item tracking
-- Meeting note cold-memory document standard
-- Local evaluation harness (`evals/`)
-- Runtime layer for live Feishu access
+- feishu-am-workbench 技能初始版本发布
+- 飞书 Base 表格集成：客户主数据、合同、行动计划、关键人关系、竞品记录
+- 飞书文档集成：客户档案
+- 飞书待办集成：行动项跟踪
+- 会议笔记冷记忆文档标准
+- 本地评估工具（`evals/`）
+- 实时飞书访问运行时层
 
 ---
 
-*This changelog tracks user-facing changes only. Internal technical debt, refactoring, and process changes are documented in commit messages.*
+*本更新日志仅追踪面向用户的变更。内部技术债务、重构和流程变更记录在提交信息中。*
