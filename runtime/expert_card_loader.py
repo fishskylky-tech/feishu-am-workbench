@@ -158,6 +158,7 @@ class ExpertCardConfig:
     check_signals: list[str]
     output_field: str
     block_on_flags: list[str] | None = None
+    prompt_file: str | None = None  # Path to agents/{filename}.md for LLM-based review, None = keyword mode
 
 
 def validate_scene_name(scene_name: str) -> bool:
@@ -213,6 +214,34 @@ def parse_input_card(raw: dict) -> ExpertCardConfig | None:
     if not is_valid:
         raise ValueError(f"input_review schema validation failed: {err}")
 
+    # D-02: Extract prompt_file if present with strict path security
+    prompt_file = raw.get("prompt_file")
+    if prompt_file:
+        # Strict path security rules (per OpenCode review):
+        # 1. Reject non-.md extensions to prevent arbitrary file inclusion
+        if not prompt_file.endswith(".md"):
+            raise ValueError(f"prompt_file must have .md extension: {prompt_file}")
+
+        # 2. Build path (do not resolve yet)
+        prompt_path = AGENTS_DIR / prompt_file
+
+        # 3. Reject symlinks BEFORE resolve (resolve() follows symlinks making is_symlink() always False)
+        if prompt_path.is_symlink():
+            raise ValueError(f"prompt_file cannot be a symlink: {prompt_path}")
+
+        # 4. Resolve to absolute path to prevent relative path traversal
+        prompt_path = prompt_path.resolve()
+
+        # 5. Verify resolved path is still under AGENTS_DIR (prevents symlink + path traversal)
+        try:
+            prompt_path.relative_to(AGENTS_DIR)
+        except ValueError:
+            raise ValueError(f"prompt_file must be under AGENTS_DIR: {prompt_path}")
+
+        # 6. Verify file exists and is readable
+        if not prompt_path.exists():
+            raise ValueError(f"prompt_file not found: {prompt_path}")
+
     return ExpertCardConfig(
         enabled=raw.get("enabled", True),
         expert_name=raw["expert_name"],
@@ -220,6 +249,7 @@ def parse_input_card(raw: dict) -> ExpertCardConfig | None:
         check_signals=raw["check_signals"],
         output_field=raw["output_field"],
         block_on_flags=raw.get("block_on_flags"),
+        prompt_file=prompt_file,
     )
 
 
@@ -236,6 +266,34 @@ def parse_output_card(raw: dict) -> ExpertCardConfig | None:
     if not is_valid:
         raise ValueError(f"output_review schema validation failed: {err}")
 
+    # D-02: Extract prompt_file if present with strict path security
+    prompt_file = raw.get("prompt_file")
+    if prompt_file:
+        # Strict path security rules (per OpenCode review):
+        # 1. Reject non-.md extensions to prevent arbitrary file inclusion
+        if not prompt_file.endswith(".md"):
+            raise ValueError(f"prompt_file must have .md extension: {prompt_file}")
+
+        # 2. Build path (do not resolve yet)
+        prompt_path = AGENTS_DIR / prompt_file
+
+        # 3. Reject symlinks BEFORE resolve (resolve() follows symlinks making is_symlink() always False)
+        if prompt_path.is_symlink():
+            raise ValueError(f"prompt_file cannot be a symlink: {prompt_path}")
+
+        # 4. Resolve to absolute path to prevent relative path traversal
+        prompt_path = prompt_path.resolve()
+
+        # 5. Verify resolved path is still under AGENTS_DIR (prevents symlink + path traversal)
+        try:
+            prompt_path.relative_to(AGENTS_DIR)
+        except ValueError:
+            raise ValueError(f"prompt_file must be under AGENTS_DIR: {prompt_path}")
+
+        # 6. Verify file exists and is readable
+        if not prompt_path.exists():
+            raise ValueError(f"prompt_file not found: {prompt_path}")
+
     return ExpertCardConfig(
         enabled=raw.get("enabled", True),
         expert_name=raw["expert_name"],
@@ -243,6 +301,7 @@ def parse_output_card(raw: dict) -> ExpertCardConfig | None:
         check_signals=raw["check_signals"],
         output_field=raw["output_field"],
         block_on_flags=raw.get("block_on_flags"),
+        prompt_file=prompt_file,
     )
 
 
