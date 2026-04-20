@@ -117,7 +117,7 @@ class DefaultLLMExpertAgent:
             else:
                 result_text = await self._invoke_openai(prompt, api_key)
 
-            return self._parse_result(result_text)
+            return self._parse_result(result_text, context, in_eval_context=False)
 
         except asyncio.TimeoutError:
             logger.warning(f"LLM timeout for {self.expert_name}")
@@ -219,7 +219,30 @@ class DefaultLLMExpertAgent:
             logger.warning(f"Anthropic API error: {e}")
             raise
 
-    def _parse_result(self, text: str) -> "ExpertReviewResult":
+    def _check_hallucination(self, findings: list[str], check_signals: list[str]) -> tuple[bool, str | None]:
+        """Check if any finding references a signal not in check_signals.
+
+        Returns (has_hallucination, block_reason).
+        Signal comparison is case-insensitive and whitespace-tolerant.
+        """
+        import re
+        fabricated = []
+        signal_pattern = re.compile(r'^(PASS|FLAG|BLOCK):\s*([^\n]+)')
+
+        for finding in findings:
+            match = signal_pattern.match(finding)
+            if match:
+                # Normalize: strip whitespace, lowercase for comparison
+                signal = match.group(2).strip().lower()
+                if check_signals and signal not in [s.strip().lower() for s in check_signals]:
+                    fabricated.append(signal)
+
+        if fabricated:
+            # Per review MEDIUM fix: block entire result if ANY fabricated signal detected
+            return True, f"fabricated_signal: {fabricated[0]} not in check_signals"
+        return False, None
+
+    def _parse_result(self, text: str, context: dict | None = None, in_eval_context: bool = False) -> "ExpertReviewResult":
         """Parse LLM response into ExpertReviewResult.
 
         Expected format from agency-agents prompts:
@@ -227,6 +250,9 @@ class DefaultLLMExpertAgent:
         - FLAG: signal missing/blocked
 
         Per OpenCode review: explicit handling for empty or malformed response.
+
+        in_eval_context: If True, allows "accept all" fallback when check_signals is empty.
+                         If False (production), check_signals is required and missing = parse error.
 
         Returns ExpertReviewResult with findings list.
         Raises ValueError on parse failure (caller handles fallback).
@@ -240,6 +266,8 @@ class DefaultLLMExpertAgent:
         passed = True
         blocked = False
         block_reason = None
+
+        check_signals = (context or {}).get("check_signals", [])
 
         try:
             for line in text.strip().split("\n"):
@@ -260,6 +288,22 @@ class DefaultLLMExpertAgent:
             if not findings:
                 # No parseable findings — treat as parse failure
                 raise ValueError(f"No parseable findings in LLM response: {text[:100]}")
+
+            # Hallucination check (per review HIGH fix: scoped to eval context only)
+            if check_signals:
+                # Normal mode: validate against check_signals
+                has_hallucination, hallucination_reason = self._check_hallucination(findings, check_signals)
+                if has_hallucination:
+                    blocked = True
+                    passed = False
+                    block_reason = hallucination_reason
+            elif in_eval_context:
+                # Eval context fallback: no check_signals means accept all (backward compat for old evals)
+                # Documented in eval runner — NOT for production use
+                pass
+            else:
+                # Production: no check_signals is a parse error, not silent accept-all
+                raise ValueError("check_signals missing in production context — hallucination guardrail requires validation list")
 
         except ValueError:
             raise  # Re-raise parse errors for fallback handling
