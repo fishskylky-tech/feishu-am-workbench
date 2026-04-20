@@ -33,3 +33,10 @@ jobs:
       - name: Run tests
         run: |
           PYTHONPATH=. pytest --tb=short
+
+      - name: Run LLM expert review evals
+        run: |
+          python -m evals.runner --eval-id 101 --output-file /tmp/eval-101.json
+          python -m evals.runner --eval-id 106 --output-file /tmp/eval-106.json
+          python -m evals.runner --eval-id 111 --output-file /tmp/eval-111.json
+        continue-on-error: false
