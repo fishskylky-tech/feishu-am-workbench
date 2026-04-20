@@ -1,0 +1,42 @@
+# agent-registry.yaml — Schema Version 1.1
+# SOLE SOURCE OF TRUTH for agent definitions
+# Per D-05: Only agents in this registry can be invoked
+
+schema_version: "1.1"
+
+agents:
+  sales-account-strategist:
+    platform: openclaw  # Per AA-01-PLAN.md, default platform; D-01 uses direct API
+    enabled: true
+    description: "Account strategy expert for sales opportunities"
+    prompt_file: agents/sales-account-strategist.md
+    supports_council: true
+    supports_sequential: true
+    schema_version: "1.1"
+
+  customer-service:
+    platform: hermes
+    enabled: true
+    description: "Customer service quality expert"
+    prompt_file: agents/customer-service.md
+    supports_council: true
+    supports_sequential: true
+    schema_version: "1.1"
+
+  sales-proposal-strategist:
+    platform: claude_code
+    enabled: true
+    description: "Sales proposal strategy expert"
+    prompt_file: agents/sales-proposal-strategist.md
+    supports_council: true
+    supports_sequential: true
+    schema_version: "1.1"
+
+  sales-data-extraction-agent:
+    platform: codex
+    enabled: false  # Deferred: not yet integrated
+    description: "Data extraction from structured documents"
+    prompt_file: agents/sales-data-extraction-agent.md
+    supports_council: false
+    supports_sequential: true
+    schema_version: "1.1"
