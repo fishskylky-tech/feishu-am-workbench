@@ -18,7 +18,7 @@ load_strategy: progressive
 tier:
   L1: frontmatter + scene_index
   L2: core_workflow + hard_rules + output_pattern + write_order + closed_loop + scope
-  L3: references/*.md + scenes/*/expert-cards.yaml (on-demand)
+  L3: references/*.md + scenes/*/expert-cards.yaml + agents/*.md (on-demand)
 ---
 
 # Feishu AM Workbench
@@ -110,3 +110,32 @@ For quick overview: see [references/INDEX.md](./references/INDEX.md)
 ## Expert Cards
 
 Each scene has expert card configurations in `scenes/{scene_name}/expert-cards.yaml`. These provide input/output audit at key scene nodes.
+
+### LLM-Based Expert Review
+
+For scenes with `prompt_file` field in expert-cards.yaml, the runtime uses LLM-based expert review instead of keyword-based audit:
+
+```yaml
+input_review:
+  enabled: true
+  expert_name: "会议材料审核专家"
+  review_type: "materials_audit"
+  check_signals:
+    - "遗漏的关联信息"
+  output_field: "input_audit_notes"
+  prompt_file: agents/sales-account-strategist.md  # LLM mode
+```
+
+When `prompt_file` is set:
+1. Runtime reads the agent prompt template from `agents/{filename}.md`
+2. Substitutes placeholders: {evidence}, {check_signals}, {expert_name}
+3. Invokes LLM via OpenAI or Anthropic API
+4. Parses LLM response into findings (PASS/FLAG/BLOCK format)
+
+Fallback: If LLM invocation fails (missing API key, timeout, rate limit), the runtime falls back to keyword-based audit.
+
+Available expert prompts in `agents/`:
+- `sales-account-strategist.md` — Account strategy expert
+- `customer-service.md` — Customer service quality expert
+- `sales-proposal-strategist.md` — Sales proposal strategy expert
+- `sales-data-extraction-agent.md` — Data extraction (future use)
