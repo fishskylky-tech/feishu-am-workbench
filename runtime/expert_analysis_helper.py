@@ -425,7 +425,7 @@ def run_input_audit(
             )
 
             prompt = build_input_review_prompt(input_card, container)
-            result = invoke_llm_expert(input_card, prompt)
+            result = asyncio.run(invoke_llm_expert(input_card, prompt))
 
             return ExpertCardAuditResult(
                 expert_name=result.expert_name,
@@ -510,7 +510,7 @@ def run_output_audit(
             )
 
             prompt = build_output_review_prompt(output_card, recommendations)
-            result = invoke_llm_expert(output_card, prompt)
+            result = asyncio.run(invoke_llm_expert(output_card, prompt))
 
             return ExpertCardAuditResult(
                 expert_name=result.expert_name,
