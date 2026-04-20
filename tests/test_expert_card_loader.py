@@ -290,6 +290,230 @@ class TestLoadExpertCards:
         assert result == {"key": "value", "list": ["item1", "item2"]}
 
 
+class TestPromptFileField:
+    """BEHAVIOR: ExpertCardConfig accepts prompt_file field without breaking existing YAML parsing."""
+
+    def test_prompt_file_field_defaults_to_none(self):
+        """prompt_file should default to None when not specified."""
+        card = ExpertCardConfig(
+            enabled=True,
+            expert_name="测试专家",
+            review_type="test_audit",
+            check_signals=["信号1"],
+            output_field="output",
+        )
+        assert card.prompt_file is None
+
+    def test_prompt_file_field_can_be_set(self):
+        """prompt_file field can be set explicitly."""
+        card = ExpertCardConfig(
+            enabled=True,
+            expert_name="测试专家",
+            review_type="test_audit",
+            check_signals=["信号1"],
+            output_field="output",
+            prompt_file="sales-account-strategist.md",
+        )
+        assert card.prompt_file == "sales-account-strategist.md"
+
+    def test_yaml_with_prompt_file_loads_successfully(self, tmp_path):
+        """BEHAVIOR: YAML with prompt_file field parses correctly."""
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "会议材料审核专家",
+                "review_type": "materials_audit",
+                "check_signals": ["遗漏的关联信息"],
+                "output_field": "input_audit_notes",
+                "prompt_file": "sales-account-strategist.md",
+            },
+        }))
+
+        cards = load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+
+        assert cards["input_review"] is not None
+        assert cards["input_review"].prompt_file == "sales-account-strategist.md"
+
+    def test_yaml_without_prompt_file_still_works(self, tmp_path):
+        """BEHAVIOR: Cards without prompt_file continue using keyword-based audit (backward compatible)."""
+        scene_dir = tmp_path / "scenes" / "customer-recent-status"
+        scene_dir.mkdir(parents=True)
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "客户状态专家",
+                "review_type": "status_audit",
+                "check_signals": ["状态更新"],
+                "output_field": "status_notes",
+            },
+        }))
+
+        cards = load_expert_cards("customer-recent-status", repo_root=tmp_path)
+
+        assert cards["input_review"] is not None
+        assert cards["input_review"].prompt_file is None
+
+
+class TestPromptFilePathSecurity:
+    """BEHAVIOR: prompt_file path security — resolve, symlink rejection, extension filtering."""
+
+    def test_rejects_non_md_extension(self, tmp_path):
+        """Non-.md files are rejected to prevent arbitrary file inclusion."""
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "测试专家",
+                "review_type": "test_audit",
+                "check_signals": ["信号1"],
+                "output_field": "output",
+                "prompt_file": "malicious.txt",
+            },
+        }))
+
+        with pytest.raises(ValueError, match="must have .md extension"):
+            load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+
+    def test_rejects_symlink_escape(self, tmp_path, monkeypatch):
+        """Symlinks outside AGENTS_DIR are rejected."""
+        from runtime import expert_card_loader
+
+        # Patch AGENTS_DIR to use tmp_path's agents dir for this test
+        agents_dir = tmp_path / "agents"
+        agents_dir.mkdir(parents=True)
+        monkeypatch.setattr(expert_card_loader, "AGENTS_DIR", agents_dir)
+
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+
+        # Create a legitimate .md file
+        legitimate = agents_dir / "legitimate.md"
+        legitimate.write_text("# Legitimate")
+
+        # Create a symlink pointing outside AGENTS_DIR (escape to tmp_path parent)
+        escape_link = agents_dir / "escape.md"
+        escape_link.symlink_to(tmp_path / "..")  # Symlink escape attempt
+
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "测试专家",
+                "review_type": "test_audit",
+                "check_signals": ["信号1"],
+                "output_field": "output",
+                "prompt_file": "escape.md",
+            },
+        }))
+
+        with pytest.raises(ValueError, match="cannot be a symlink"):
+            load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+
+    def test_resolved_path_must_stay_under_agents_dir(self, tmp_path):
+        """Path traversal via relative components is blocked by resolve() + relative_to check."""
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+        agents_dir = tmp_path / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create a legitimate .md file
+        legitimate = agents_dir / "legitimate.md"
+        legitimate.write_text("# Legitimate")
+
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+        # Path traversal attempt: agents/../../../etc/passwd
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "测试专家",
+                "review_type": "test_audit",
+                "check_signals": ["信号1"],
+                "output_field": "output",
+                "prompt_file": "../../../etc/passwd.md",
+            },
+        }))
+
+        with pytest.raises(ValueError, match="must be under AGENTS_DIR"):
+            load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+
+    def test_rejects_prompt_file_not_found(self, tmp_path):
+        """Non-existent prompt_file raises error."""
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+        agents_dir = tmp_path / "agents"
+        agents_dir.mkdir(parents=True)
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "测试专家",
+                "review_type": "test_audit",
+                "check_signals": ["信号1"],
+                "output_field": "output",
+                "prompt_file": "nonexistent-file.md",
+            },
+        }))
+
+        with pytest.raises(ValueError, match="not found"):
+            load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+
+    def test_valid_prompt_file_passes_validation(self, tmp_path):
+        """Valid .md file under AGENTS_DIR passes validation."""
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+        agents_dir = tmp_path / "agents"
+        agents_dir.mkdir(parents=True)
+
+        # Create a legitimate .md file
+        legitimate = agents_dir / "sales-account-strategist.md"
+        legitimate.write_text("# Sales Account Strategist")
+
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+        expert_cards_file.write_text(yaml.dump({
+            "input_review": {
+                "enabled": True,
+                "expert_name": "测试专家",
+                "review_type": "test_audit",
+                "check_signals": ["信号1"],
+                "output_field": "output",
+                "prompt_file": "sales-account-strategist.md",
+            },
+        }))
+
+        cards = load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+        assert cards["input_review"] is not None
+        assert cards["input_review"].prompt_file == "sales-account-strategist.md"
+
+    def test_output_card_prompt_file_security(self, tmp_path):
+        """output_review card also enforces strict path security for prompt_file."""
+        scene_dir = tmp_path / "scenes" / "post-meeting-synthesis"
+        scene_dir.mkdir(parents=True)
+        agents_dir = tmp_path / "agents"
+        agents_dir.mkdir(parents=True)
+        expert_cards_file = scene_dir / "expert-cards.yaml"
+        expert_cards_file.write_text(yaml.dump({
+            "output_review": {
+                "enabled": True,
+                "expert_name": "测试专家",
+                "review_type": "test_audit",
+                "check_signals": ["信号1"],
+                "output_field": "output",
+                "prompt_file": "malicious.sh",
+            },
+        }))
+
+        with pytest.raises(ValueError, match="must have .md extension"):
+            load_expert_cards("post-meeting-synthesis", repo_root=tmp_path)
+
+
 class TestOutputAuditBlocking:
     """BEHAVIOR: block_on_flags triggers blocked=True in output audit."""
 
