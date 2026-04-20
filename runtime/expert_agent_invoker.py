@@ -255,3 +255,133 @@ class ExpertAgent(ABC):
     def get_platform(self) -> Literal["openclaw", "hermes", "claude_code", "codex"]:
         """Return the platform identifier."""
         ...
+
+
+# =============================================================================
+# LLM-based Expert Invocation (Phase 26-02)
+# =============================================================================
+
+from pathlib import Path as Pathlib_Path
+
+AGENTS_DIR = Pathlib_Path(__file__).parent.parent / "agents"
+
+
+def build_input_review_prompt(
+    card: "ExpertCardConfig",
+    container: "EvidenceContainer",
+) -> str:
+    """Build input review prompt from agency-agents template.
+
+    Per D-05: Template + placeholder replacement with {evidence}, {check_signals}.
+
+    Args:
+        card: ExpertCardConfig with prompt_file field
+        container: EvidenceContainer with available sources
+
+    Returns:
+        Formatted prompt string with evidence and check_signals substituted.
+
+    Raises:
+        FileNotFoundError: If prompt_file does not exist under AGENTS_DIR
+    """
+    from runtime.expert_analysis_helper import EvidenceContainer
+
+    if not card.prompt_file:
+        raise ValueError("prompt_file not set on card")
+
+    # Read prompt template from agents/ directory
+    prompt_path = AGENTS_DIR / card.prompt_file
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    # Render evidence from container
+    evidence_parts: list[str] = []
+    for source_name, source in container.sources.items():
+        if source.available and source.content:
+            content_preview = "\n".join(source.content[:10])  # Limit to first 10 items
+            evidence_parts.append(f"[{source_name}]\n{content_preview}")
+
+    evidence_text = "\n\n".join(evidence_parts) if evidence_parts else "(No evidence available)"
+
+    # Substitute placeholders
+    prompt = prompt_template.replace("{evidence}", evidence_text)
+    prompt = prompt.replace("{check_signals}", ", ".join(card.check_signals))
+    prompt = prompt.replace("{expert_name}", card.expert_name)
+
+    return prompt
+
+
+def build_output_review_prompt(
+    card: "ExpertCardConfig",
+    recommendations: list[str],
+) -> str:
+    """Build output review prompt from agency-agents template.
+
+    Per D-05: Template + placeholder replacement with {recommendations}, {check_signals}.
+
+    Args:
+        card: ExpertCardConfig with prompt_file field
+        recommendations: List of recommendation strings to audit
+
+    Returns:
+        Formatted prompt string with recommendations and check_signals substituted.
+
+    Raises:
+        FileNotFoundError: If prompt_file does not exist under AGENTS_DIR
+    """
+    if not card.prompt_file:
+        raise ValueError("prompt_file not set on card")
+
+    prompt_path = AGENTS_DIR / card.prompt_file
+    if not prompt_path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
+
+    prompt_template = prompt_path.read_text(encoding="utf-8")
+
+    recommendations_text = "\n".join(f"- {rec}" for rec in recommendations)
+    prompt = prompt_template.replace("{recommendations}", recommendations_text)
+    prompt = prompt.replace("{check_signals}", ", ".join(card.check_signals))
+    prompt = prompt.replace("{expert_name}", card.expert_name)
+
+    return prompt
+
+
+async def invoke_llm_expert(
+    card: "ExpertCardConfig",
+    prompt: str,
+) -> ExpertReviewResult:
+    """Invoke LLM-based expert review.
+
+    Per D-06: Fail-open to keyword mode on LLM failure.
+    Per D-01: Uses DefaultLLMExpertAgent with OpenAI/Anthropic API.
+
+    Error handling (per OpenCode HIGH concern):
+    - Timeout: asyncio.TimeoutError
+    - Auth failure (401): AuthenticationError
+    - Rate limit (429): RateLimitError
+    - Empty response: ValueError("Empty response from LLM")
+    - Parse failure: ValueError("No parseable findings")
+    - All other exceptions: fallback to keyword mode
+
+    Args:
+        card: ExpertCardConfig with expert_name and prompt_file
+        prompt: Pre-built prompt from build_input_review_prompt or build_output_review_prompt
+
+    Returns:
+        ExpertReviewResult from LLM parsing
+
+    Raises:
+        ValueError: If API keys missing
+        asyncio.TimeoutError: On timeout
+        Exception: On LLM API failure — caller catches and falls back to keyword mode
+    """
+    from runtime.default_llm_adapter import DefaultLLMExpertAgent
+
+    agent = DefaultLLMExpertAgent(
+        expert_name=card.expert_name,
+        prompt_file=card.prompt_file or "",
+    )
+
+    return await agent.invoke(prompt, {})
