@@ -71,6 +71,91 @@ class TestDefaultLLMExpertAgent:
         error = Exception("Some other error")
         assert agent._classify_error(error) == LLMError.API_ERROR
 
+    def test_hallucination_guardrail_blocks_fabricated_signal(self) -> None:
+        """Single fabricated signal → entire result BLOCKED (per review MEDIUM fix)."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: expansion_plan\nPASS: totally_fabricated_signal",
+            {"check_signals": ["expansion_plan"]},
+            in_eval_context=False
+        )
+        assert result.passed is False
+        assert result.blocked is True
+        assert "fabricated_signal" in (result.block_reason or "")
+
+    def test_hallucination_guardrail_all_signals_valid_passes(self) -> None:
+        """All LLM findings reference signals in check_signals → PASSED."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: expansion_plan\nPASS: timeline",
+            {"check_signals": ["expansion_plan", "timeline"]},
+            in_eval_context=False
+        )
+        assert result.passed is True
+        assert result.blocked is False
+
+    def test_hallucination_guardrail_eval_context_fallback(self) -> None:
+        """No check_signals + in_eval_context=True → all findings accepted (backward compat)."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: some_signal\nPASS: another_signal",
+            {},
+            in_eval_context=True
+        )
+        assert result.passed is True
+        assert result.blocked is False
+
+    def test_hallucination_guardrail_production_requires_check_signals(self) -> None:
+        """Production (in_eval_context=False) without check_signals raises ValueError."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        with pytest.raises(ValueError) as ctx:
+            agent._parse_result("PASS: some_signal", {}, in_eval_context=False)
+        assert "check_signals missing" in str(ctx.value)
+
+    def test_hallucination_guardrail_case_insensitive(self) -> None:
+        """Signal matching is case-insensitive."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: EXPANSION_PLAN",
+            {"check_signals": ["expansion_plan"]},
+            in_eval_context=False
+        )
+        assert result.passed is True
+        assert result.blocked is False
+
+    def test_hallucination_guardrail_hyphenated_signal(self) -> None:
+        """Hyphenated signal names handled (per review HIGH fix)."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: expansion-plan",
+            {"check_signals": ["expansion-plan"]},
+            in_eval_context=False
+        )
+        assert result.passed is True
+        assert result.blocked is False
+
+    def test_hallucination_guardrail_multi_word_signal(self) -> None:
+        """Multi-word signal names handled (per review HIGH fix)."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: champion transition plan",
+            {"check_signals": ["champion transition plan"]},
+            in_eval_context=False
+        )
+        assert result.passed is True
+
+    def test_hallucination_guardrail_mixed_valid_fabricated(self) -> None:
+        """Mixed valid + fabricated: fabricated blocks entire result even if some valid."""
+        agent = DefaultLLMExpertAgent("Test", "test.md")
+        result = agent._parse_result(
+            "PASS: expansion_plan\nPASS: fabricated_signal",
+            {"check_signals": ["expansion_plan"]},
+            in_eval_context=False
+        )
+        assert result.passed is False
+        assert result.blocked is True
+        assert "fabricated_signal" in (result.block_reason or "")
+
 
 class TestValidateApiKeyConfig:
     """Tests for API key startup validation (per OpenCode review: friendly error)."""
