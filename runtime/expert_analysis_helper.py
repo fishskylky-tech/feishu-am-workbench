@@ -418,6 +418,13 @@ def run_input_audit(
     """
     # D-02: LLM mode when prompt_file present
     if input_card.prompt_file:
+        # D-03: LLM mode requires BOTH prompt_file AND agent_name
+        if not input_card.agent_name:
+            raise ValueError(
+                f"LLM mode requires agent_name when prompt_file is set. "
+                f"expert_name={input_card.expert_name} has prompt_file='{input_card.prompt_file}' "
+                f"but agent_name is None. Add agent_name to the expert card in scene YAML."
+            )
         try:
             from runtime.expert_agent_invoker import (
                 invoke_llm_expert,
@@ -503,6 +510,13 @@ def run_output_audit(
     """
     # D-02: LLM mode when prompt_file present
     if output_card.prompt_file:
+        # D-03: LLM mode requires BOTH prompt_file AND agent_name
+        if not output_card.agent_name:
+            raise ValueError(
+                f"LLM mode requires agent_name when prompt_file is set. "
+                f"expert_name={output_card.expert_name} has prompt_file='{output_card.prompt_file}' "
+                f"but agent_name is None. Add agent_name to the expert card in scene YAML."
+            )
         try:
             from runtime.expert_agent_invoker import (
                 invoke_llm_expert,

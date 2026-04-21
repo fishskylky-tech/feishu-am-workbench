@@ -158,7 +158,8 @@ class ExpertCardConfig:
     check_signals: list[str]
     output_field: str
     block_on_flags: list[str] | None = None
-    prompt_file: str | None = None  # Path to agents/{filename}.md for LLM-based review, None = keyword mode
+    prompt_file: str | None = None
+    agent_name: str | None = None  # LLM agent name; required when prompt_file is set
 
 
 def validate_scene_name(scene_name: str) -> bool:
@@ -242,6 +243,13 @@ def parse_input_card(raw: dict) -> ExpertCardConfig | None:
         if not prompt_path.exists():
             raise ValueError(f"prompt_file not found: {prompt_path}")
 
+    # D-03: Extract agent_name if present and validate against registry
+    agent_name = raw.get("agent_name")
+    if agent_name:
+        is_valid, err = validate_agent_reference(agent_name)
+        if not is_valid:
+            raise ValueError(f"agent_name '{agent_name}' not found in agent-registry.yaml: {err}")
+
     return ExpertCardConfig(
         enabled=raw.get("enabled", True),
         expert_name=raw["expert_name"],
@@ -250,6 +258,7 @@ def parse_input_card(raw: dict) -> ExpertCardConfig | None:
         output_field=raw["output_field"],
         block_on_flags=raw.get("block_on_flags"),
         prompt_file=prompt_file,
+        agent_name=agent_name,
     )
 
 
@@ -294,6 +303,13 @@ def parse_output_card(raw: dict) -> ExpertCardConfig | None:
         if not prompt_path.exists():
             raise ValueError(f"prompt_file not found: {prompt_path}")
 
+    # D-03: Extract agent_name if present and validate against registry
+    agent_name = raw.get("agent_name")
+    if agent_name:
+        is_valid, err = validate_agent_reference(agent_name)
+        if not is_valid:
+            raise ValueError(f"agent_name '{agent_name}' not found in agent-registry.yaml: {err}")
+
     return ExpertCardConfig(
         enabled=raw.get("enabled", True),
         expert_name=raw["expert_name"],
@@ -302,6 +318,7 @@ def parse_output_card(raw: dict) -> ExpertCardConfig | None:
         output_field=raw["output_field"],
         block_on_flags=raw.get("block_on_flags"),
         prompt_file=prompt_file,
+        agent_name=agent_name,
     )
 
 

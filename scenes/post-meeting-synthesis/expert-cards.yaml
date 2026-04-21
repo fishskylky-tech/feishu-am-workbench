@@ -10,6 +10,8 @@ input_review:
     - "前后不一致的事实"
     - "未明确的风险信号"
   output_field: "input_audit_notes"
+  prompt_file: agents/sales-account-strategist.md
+  agent_name: sales-account-strategist
 
 output_review:
   enabled: true
@@ -20,6 +22,8 @@ output_review:
     - "业务逻辑"
     - "可执行性"
   output_field: "output_audit_notes"
+  prompt_file: agents/sales-account-strategist.md
+  agent_name: sales-account-strategist
   block_on_flags:
     - "业务逻辑"
     - "超出范围"
