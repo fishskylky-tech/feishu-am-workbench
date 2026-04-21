@@ -148,7 +148,7 @@ def validate_agent_reference(agent_name: str) -> tuple[bool, str | None]:
     return True, None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExpertCardConfig:
     """Expert card configuration per scene."""
 
