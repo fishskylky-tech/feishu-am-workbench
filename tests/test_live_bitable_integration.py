@@ -36,13 +36,13 @@ TODO_TABLE_ID = os.environ.get(
     "FEISHU_AM_TEST_TODO_TABLE_ID", "tbl_todo"
 )
 CUSTOMER_ARCHIVE_FOLDER = os.environ.get(
-    "FEISHU_AM_TEST_CUSTOMER_ARCHIVE_FOLDER", "P2ZgfnJwYlb8FBdis1dcxxKen0f"
+    "FEISHU_AM_TEST_CUSTOMER_ARCHIVE_FOLDER", "P2ZgfnJwYlb8FBdis1dcxxKen0f"  # pragma: allowlist secret
 )
 MEETING_NOTES_FOLDER = os.environ.get(
-    "FEISHU_AM_TEST_MEETING_NOTES_FOLDER", "QJ4rf3h2ZlQBuKdIs3FcAvexnim"
+    "FEISHU_AM_TEST_MEETING_NOTES_FOLDER", "QJ4rf3h2ZlQBuKdIs3FcAvexnim"  # pragma: allowlist secret
 )
 CUSTOMER_INFO_FOLDER = os.environ.get(
-    "FEISHU_AM_TEST_CUSTOMER_INFO_FOLDER", "XuZVfyoWZlkbyqdZhGXc4ocCnZs"
+    "FEISHU_AM_TEST_CUSTOMER_INFO_FOLDER", "XuZVfyoWZlkbyqdZhGXc4ocCnZs"  # pragma: allowlist secret
 )
 
 RUN_LIVE_TESTS = os.environ.get("FEISHU_AM_TEST_LIVE", "false").lower() == "true"

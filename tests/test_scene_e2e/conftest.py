@@ -36,10 +36,10 @@ def live_env():
     os.environ["FEISHU_AM_CUSTOMER_MASTER_TABLE"] = "客户主数据"
     os.environ["FEISHU_AM_ACTION_PLAN_TABLE"] = "行动计划"
     os.environ["FEISHU_AM_TODO_TABLE"] = "待办"
-    os.environ["FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER"] = "P2ZgfnJwYlb8FBdis1dcxxKen0f"
-    os.environ["FEISHU_AM_MEETING_NOTES_FOLDER"] = "QJ4rf3h2ZlQBuKdIs3FcAvexnim"
-    os.environ["FEISHU_AM_CUSTOMER_INFO_FOLDER"] = "XuZVfyoWZlkbyqdZhGXc4ocCnZs"
-    os.environ["FEISHU_AM_TODO_TASKLIST_GUID"] = "e50dda19-63e4-410a-a167-6813f3b3c86d"
+    os.environ["FEISHU_AM_CUSTOMER_ARCHIVE_FOLDER"] = "P2ZgfnJwYlb8FBdis1dcxxKen0f"  # pragma: allowlist secret
+    os.environ["FEISHU_AM_MEETING_NOTES_FOLDER"] = "QJ4rf3h2ZlQBuKdIs3FcAvexnim"  # pragma: allowlist secret
+    os.environ["FEISHU_AM_CUSTOMER_INFO_FOLDER"] = "XuZVfyoWZlkbyqdZhGXc4ocCnZs"  # pragma: allowlist secret
+    os.environ["FEISHU_AM_TODO_TASKLIST_GUID"] = "e50dda19-63e4-410a-a167-6813f3b3c86d"  # pragma: allowlist secret
 
     yield
 

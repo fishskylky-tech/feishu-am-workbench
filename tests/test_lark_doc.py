@@ -28,7 +28,7 @@ CUSTOMER_ARCHIVE_FOLDER = os.environ.get(
 )
 MEETING_NOTES_FOLDER = os.environ.get(
     "FEISHU_AM_TEST_MEETING_NOTES_FOLDER",
-    "QJ4rf3h2ZlQBuKdIs3FcAvexnim",
+    "QJ4rf3h2ZlQBuKdIs3FcAvexnim",  # pragma: allowlist secret
 )
 
 pytestmark = pytest.mark.skipif(
