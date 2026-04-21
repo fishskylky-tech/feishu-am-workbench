@@ -59,6 +59,7 @@ class TestLLMDispatchInputAudit:
             check_signals=["signal1"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
@@ -97,6 +98,7 @@ class TestLLMDispatchInputAudit:
             check_signals=["signal1"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
@@ -127,6 +129,7 @@ class TestLLMDispatchInputAudit:
             check_signals=["signal1"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
@@ -156,6 +159,7 @@ class TestLLMDispatchInputAudit:
             check_signals=["signal1"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
@@ -185,6 +189,7 @@ class TestLLMDispatchInputAudit:
             check_signals=["signal1"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
@@ -214,6 +219,7 @@ class TestLLMDispatchInputAudit:
             check_signals=["signal1"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         from runtime.expert_analysis_helper import EvidenceContainer, EvidenceSource
@@ -265,6 +271,7 @@ class TestLLMDispatchOutputAudit:
             check_signals=["专业性"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         recommendations = ["recommendation 1", "recommendation 2"]
@@ -295,6 +302,7 @@ class TestLLMDispatchOutputAudit:
             check_signals=["专业性"],
             output_field="output",
             prompt_file="sales-account-strategist.md",
+            agent_name="sales-account-strategist",
         )
 
         recommendations = ["使用规范的专业术语"]
