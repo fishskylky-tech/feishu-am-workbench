@@ -40,28 +40,3 @@ jobs:
             echo "Running eval case $id..."
             python -m evals.runner --eval-id $id --output-file /tmp/eval-$id.json
           done
-
-  scene-e2e:
-    name: Scene E2E Tests
-    runs-on: ubuntu-latest
-    if: false  # Disabled by default; enable via workflow_dispatch or secrets
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: |
-          pip install pytest pyyaml
-
-      - name: Run scene E2E tests
-        env:
-          FEISHU_AM_TEST_LIVE: "true"
-          FEISHU_AM_BOT_APP_ID: ${{ secrets.FEISHU_AM_BOT_APP_ID }}
-          FEISHU_AM_BOT_APP_SECRET: ${{ secrets.FEISHU_AM_BOT_APP_SECRET }}
-          FEISHU_AM_BASE_TOKEN: ${{ secrets.FEISHU_AM_BASE_TOKEN }}
-        run: |
-          PYTHONPATH=. python -m pytest tests/test_scene_e2e/ -v
