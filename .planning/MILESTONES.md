@@ -5,7 +5,7 @@
 **Shipped:** 2026-04-19
 **PR:** v1.3-skill-and-open-source-prep → main (merged d521217)
 **Phases:** 22-23 (15 plans total), 27
-**Status:** 🔄 IN PROGRESS
+**Status:** ✅ SHIPPED
 
 ### Accomplishments
 
@@ -153,4 +153,4 @@
 
 ---
 
-*Last updated: 2026-04-21*
+*Last updated: 2026-04-21 after v1.3.1 milestone*
