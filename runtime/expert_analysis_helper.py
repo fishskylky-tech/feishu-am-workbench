@@ -460,8 +460,8 @@ def run_input_audit(
             else:
                 # Other ValueError — fall back to keyword mode
                 logger.warning(f"LLM error in input audit for {input_card.expert_name}: {e}")
-        except Exception as e:
-            # Any other LLM error — fall back to keyword mode
+except (asyncio.TimeoutError, ValueError, IOError, OSError) as e:
+            # LLM infrastructure errors — fall back to keyword mode
             logger.warning(f"LLM input audit failed for {input_card.expert_name}, falling back to keyword: {e}")
 
     # Keyword mode (existing behavior)
@@ -552,8 +552,8 @@ def run_output_audit(
             else:
                 # Other ValueError — fall back to keyword mode
                 logger.warning(f"LLM error in output audit for {output_card.expert_name}: {e}")
-        except Exception as e:
-            # Any other LLM error — fall back to keyword mode
+        except (asyncio.TimeoutError, ValueError, IOError, OSError) as e:
+            # LLM infrastructure errors — fall back to keyword mode
             logger.warning(f"LLM output audit failed for {output_card.expert_name}, falling back to keyword: {e}")
 
     # Keyword mode (existing behavior)
