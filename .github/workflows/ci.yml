@@ -34,9 +34,9 @@ jobs:
         run: |
           PYTHONPATH=. pytest --tb=short
 
-      - name: Run LLM expert review evals
+      - name: Run LLM expert review evals (all 15 cases)
         run: |
-          python -m evals.runner --eval-id 101 --output-file /tmp/eval-101.json
-          python -m evals.runner --eval-id 106 --output-file /tmp/eval-106.json
-          python -m evals.runner --eval-id 111 --output-file /tmp/eval-111.json
-        continue-on-error: false
+          for id in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115; do
+            echo "Running eval case $id..."
+            python -m evals.runner --eval-id $id --output-file /tmp/eval-$id.json
+          done
