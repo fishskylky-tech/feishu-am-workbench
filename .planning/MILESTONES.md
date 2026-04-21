@@ -1,5 +1,32 @@
 # Milestones
 
+## v1.3.1 — LLM Expert Review Infrastructure
+
+**Shipped:** 2026-04-21
+**Phases:** 24, 25, 26, 27, 31, 32 (15 plans total)
+**Status:** ✅ SHIPPED
+
+### Accomplishments
+
+1. **Phase 24 (agency-agents integration):** ExpertAgent ABC + CircuitBreaker + RegistryCache + PlatformCapabilities
+2. **Phase 25 (expert prompt files):** 4 expert prompts copied from agency-agents (sales-account-strategist, customer-service, sales-proposal-strategist, sales-data-extraction-agent) — 909 lines
+3. **Phase 26 (LLM runtime integration):** prompt_file field + DefaultLLMExpertAgent + OpenAI/Anthropic dispatch with fallback, 10/10 verified
+4. **Phase 27 (eval infrastructure):** 15 LLM eval cases (5/5/5 distribution) + hallucination guardrail, CI integrated
+5. **Phase 31 (Lark E2E):** 26 tests (14 Task + 12 Doc) via lark-cli
+6. **Phase 32 (gap fixes):** agent_name field enforcement, CI eval expansion to all 15 cases
+
+### Known Deferred Items
+
+- 3 quick tasks acknowledged at close — see STATE.md Deferred Items
+
+### Stats
+
+- **Requirements:** 6/6 satisfied (100%)
+- **Timeline:** 2026-04-21
+- **Phases complete:** 5/5 + Phase 31-32 (all shipped)
+
+---
+
 ## v1.3 — 开源准备与Skill巩固
 
 **Shipped:** 2026-04-19
