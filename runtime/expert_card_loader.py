@@ -413,3 +413,48 @@ def load_expert_cards(
             output_card = parse_output_card(raw_output)
 
     return {"input_review": input_card, "output_review": output_card}
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    import sys
+
+    repo_root = Path(__file__).parent.parent
+
+    # Test post-meeting-synthesis scene
+    cards = load_expert_cards("post-meeting-synthesis", repo_root)
+    input_card = cards["input_review"]
+    assert input_card is not None, "input_review should not be None"
+    assert input_card.prompt_file == "sales-account-strategist.md", \
+        f"Expected prompt_file='agents/sales-account-strategist.md', got {input_card.prompt_file}"
+    assert input_card.agent_name == "sales-account-strategist", \
+        f"Expected agent_name='sales-account-strategist', got {input_card.agent_name}"
+
+    output_card = cards["output_review"]
+    assert output_card is not None, "output_review should not be None"
+    assert output_card.prompt_file == "sales-account-strategist.md", \
+        f"Expected prompt_file='agents/sales-account-strategist.md', got {output_card.prompt_file}"
+    assert output_card.agent_name == "sales-account-strategist", \
+        f"Expected agent_name='sales-account-strategist', got {output_card.agent_name}"
+
+    # Test customer-recent-status scene
+    cards2 = load_expert_cards("customer-recent-status", repo_root)
+    input_card2 = cards2["input_review"]
+    assert input_card2 is not None, "input_review should not be None"
+    assert input_card2.prompt_file == "sales-account-strategist.md"
+    assert input_card2.agent_name == "sales-account-strategist"
+
+    # Verify LLM path activation conditions
+    # Both prompt_file AND agent_name must be non-None for LLM path
+    assert input_card.prompt_file and input_card.agent_name, \
+        f"LLM path requires BOTH prompt_file and agent_name. Got prompt_file={input_card.prompt_file}, agent_name={input_card.agent_name}"
+    assert output_card.prompt_file and output_card.agent_name, \
+        f"LLM path requires BOTH prompt_file and agent_name. Got prompt_file={output_card.prompt_file}, agent_name={output_card.agent_name}"
+    assert input_card2.prompt_file and input_card2.agent_name, \
+        f"LLM path requires BOTH prompt_file and agent_name. Got prompt_file={input_card2.prompt_file}, agent_name={input_card2.agent_name}"
+
+    print("E2E smoke test PASSED: LLM mode fields wired correctly in both scenes")
+    print("  - post-meeting-synthesis input_review: LLM path will activate")
+    print("  - post-meeting-synthesis output_review: LLM path will activate")
+    print("  - customer-recent-status input_review: LLM path will activate")
+    sys.exit(0)
