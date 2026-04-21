@@ -34,9 +34,34 @@ jobs:
         run: |
           PYTHONPATH=. pytest --tb=short
 
-      - name: Run LLM expert review evals
+      - name: Run LLM expert review evals (all 15 cases)
         run: |
-          python -m evals.runner --eval-id 101 --output-file /tmp/eval-101.json
-          python -m evals.runner --eval-id 106 --output-file /tmp/eval-106.json
-          python -m evals.runner --eval-id 111 --output-file /tmp/eval-111.json
-        continue-on-error: false
+          for id in 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115; do
+            echo "Running eval case $id..."
+            python -m evals.runner --eval-id $id --output-file /tmp/eval-$id.json
+          done
+
+  scene-e2e:
+    name: Scene E2E Tests
+    runs-on: ubuntu-latest
+    if: false  # Disabled by default; enable via workflow_dispatch or secrets
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install pytest pyyaml
+
+      - name: Run scene E2E tests
+        env:
+          FEISHU_AM_TEST_LIVE: "true"
+          FEISHU_AM_BOT_APP_ID: ${{ secrets.FEISHU_AM_BOT_APP_ID }}
+          FEISHU_AM_BOT_APP_SECRET: ${{ secrets.FEISHU_AM_BOT_APP_SECRET }}
+          FEISHU_AM_BASE_TOKEN: ${{ secrets.FEISHU_AM_BASE_TOKEN }}
+        run: |
+          PYTHONPATH=. python -m pytest tests/test_scene_e2e/ -v
