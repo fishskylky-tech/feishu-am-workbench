@@ -179,8 +179,8 @@ python3 -m runtime .
 | [GETTING-STARTED.md](GETTING-STARTED.md) | 详细的环境配置和快速体验指南 |
 | [SKILL.md](SKILL.md) | Skill 定义、7 个场景详解、核心工作流 |
 | [WORKFLOW.md](WORKFLOW.md) | 10 步核心工作流分步说明 |
-| ARCHITECTURE.md | 系统架构设计（计划中） |
-| CONFIGURATION.md | 环境变量和配置项详解（计划中） |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统架构设计说明 |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | 开发与配置相关说明 |
 | [SECURITY-MODEL.md](SECURITY-MODEL.md) | 安全模型和写入保护机制 |
 
 ---

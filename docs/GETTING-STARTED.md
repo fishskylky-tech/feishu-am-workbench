@@ -94,13 +94,13 @@ nano .env
 python -m runtime diagnose
 ```
 
-诊断结果会显示三项核心能力的状态：
+诊断结果会显示三项核心能力的状态，使用以下三种状态值：
 
-| 能力 | 正常状态 | 异常状态 |
-|------|----------|----------|
-| `base_access` | `available` | `unavailable` |
-| `docs_access` | `available` | `unavailable` |
-| `task_access` | `available` | `unavailable` |
+| 能力 | 可能状态 | 含义 |
+|------|----------|------|
+| `base_access` | `available` / `degraded` / `blocked` | 可用 / 部分受限 / 不可用 |
+| `docs_access` | `available` / `degraded` / `blocked` | 可用 / 部分受限 / 不可用 |
+| `task_access` | `available` / `degraded` / `blocked` | 可用 / 部分受限 / 不可用 |
 
 如果全部显示 `available`，说明配置成功。如果有异常，系统会提示具体原因。
 

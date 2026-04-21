@@ -123,7 +123,7 @@ input_review:
   check_signals:
     - "遗漏的关联信息"
   output_field: "input_audit_notes"
-  prompt_file: agents/sales-account-strategist.md  # LLM mode
+  prompt_file: sales-account-strategist.md  # LLM mode (filename relative to agents/)
 ```
 
 When `prompt_file` is set:

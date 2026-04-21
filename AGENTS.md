@@ -32,11 +32,11 @@ When an expert card has `prompt_file` field set:
 input_review:
   enabled: true
   expert_name: "会议材料审核专家"
-  prompt_file: agents/sales-account-strategist.md  # Triggers LLM mode
+  prompt_file: sales-account-strategist.md  # Triggers LLM mode (filename only, under agents/)
 ```
 
 The runtime:
-1. Loads the prompt template from `agents/sales-account-strategist.md`
+1. Loads the prompt template from `sales-account-strategist.md` (stored under `agents/` directory)
 2. Substitutes placeholders: {evidence}, {check_signals}, {expert_name}
 3. Invokes LLM via OpenAI or Anthropic API
 4. Parses response into findings (PASS/FLAG/BLOCK format)

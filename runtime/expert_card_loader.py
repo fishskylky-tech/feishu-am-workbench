@@ -47,14 +47,14 @@ class RegistryCache:
     """Singleton cache for agent-registry.yaml with mtime-based invalidation.
 
     Cache invalidation strategy (per OpenCode review concern MEDIUM-3):
-    1. Primary: mtime-based — cache invalidates when agents/ directory mtime changes
+    1. Primary: mtime-based — cache invalidates when registry file mtime changes
     2. Secondary: TTL-based — cache expires after 60 seconds as a safety net
 
     This prevents stale registry data in long-running processes when agent files are updated.
     """
     _instance: dict | None = None
     _loaded_at: float | None = None
-    _agents_dir_mtime: float | None = None
+    _registry_mtime: float | None = None
     _lock: threading.Lock | None = None
 
     @classmethod
@@ -70,27 +70,26 @@ class RegistryCache:
         lock = cls._get_lock()
         with lock:
             now = time.monotonic()
-            agents_dir = AGENTS_DIR
-            dir_mtime = agents_dir.stat().st_mtime if agents_dir.exists() else 0
+            registry_path = AGENTS_DIR / "agent-registry.yaml"
+            file_mtime = registry_path.stat().st_mtime if registry_path.exists() else 0
 
-            # Invalidate if directory mtime changed (new agent file added/removed)
+            # Invalidate if registry file mtime changed (registry edited)
             # or if TTL expired
             cache_stale = (
                 cls._instance is None
                 or cls._loaded_at is None
                 or now - cls._loaded_at > 60
-                or cls._agents_dir_mtime != dir_mtime
+                or cls._registry_mtime != file_mtime
             )
 
             if cache_stale:
-                registry_path = agents_dir / "agent-registry.yaml"
                 if registry_path.exists():
                     with registry_path.open(encoding="utf-8") as f:
                         cls._instance = yaml.safe_load(f)
                 else:
                     cls._instance = {"agents": {}}
                 cls._loaded_at = now
-                cls._agents_dir_mtime = dir_mtime
+                cls._registry_mtime = file_mtime
 
             return cls._instance or {"agents": {}}
 
@@ -99,7 +98,7 @@ class RegistryCache:
         """Clear cache to force reload on next access."""
         cls._instance = None
         cls._loaded_at = None
-        cls._agents_dir_mtime = None
+        cls._registry_mtime = None
 
 
 def normalize_agent_name(name: str) -> str:

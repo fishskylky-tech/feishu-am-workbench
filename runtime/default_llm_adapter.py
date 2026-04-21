@@ -166,7 +166,7 @@ class DefaultLLMExpertAgent:
 
         client = openai.OpenAI(api_key=api_key, timeout=30.0)  # 30s timeout
 
-        try:
+        def _call() -> str:
             response = client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
@@ -176,6 +176,9 @@ class DefaultLLMExpertAgent:
             if not content:
                 raise ValueError("Empty response from OpenAI")
             return content
+
+        try:
+            return await asyncio.to_thread(_call)
 
         except RateLimitError as e:
             logger.warning(f"OpenAI rate limit hit: {e}")

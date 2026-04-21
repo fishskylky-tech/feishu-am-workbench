@@ -266,4 +266,4 @@ async def invoke_llm_expert(
         prompt_file=card.prompt_file or "",
     )
 
-    return await agent.invoke(prompt, {})
+    return await agent.invoke(prompt, {"check_signals": card.check_signals})
