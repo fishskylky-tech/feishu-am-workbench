@@ -1,3 +1,31 @@
+# The concrete conftest.py lines to replace were not included in the provided snippet.
+# Update the Feishu E2E test bootstrap near line 42 as follows:
+#
+# - Remove any literal assignments such as:
+#     os.environ["FEISHU_AM_BASE_TOKEN"] = "..."
+#     os.environ["..."] = "..."
+#
+# - Replace them with environment-driven logic, for example:
+#
+#   required_env_vars = [
+#       "FEISHU_AM_BASE_TOKEN",
+#       "FEISHU_FOLDER_TOKEN",
+#       "FEISHU_TASKLIST_GUID",
+#   ]
+#   missing = [name for name in required_env_vars if not os.getenv(name)]
+#   if missing:
+#       pytest.skip(
+#           "Skipping Feishu E2E tests; missing required environment variables: "
+#           + ", ".join(missing),
+#           allow_module_level=True,
+#       )
+#
+# - If downstream code relies on keys existing in os.environ, normalize from the
+#   externally provided values only, e.g.:
+#     os.environ["FEISHU_AM_BASE_TOKEN"] = os.getenv("FEISHU_AM_BASE_TOKEN", "")
+#
+# Please provide the actual conftest.py snippet around line 42 to generate an
+# exact programmatic replacement block with the original lines preserved verbatim.
 """Shared fixtures for scene E2E tests."""
 
 from __future__ import annotations
