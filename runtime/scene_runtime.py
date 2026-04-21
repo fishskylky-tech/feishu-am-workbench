@@ -24,7 +24,6 @@ from .confirmation_checklist import (
     build_proposal_checklist,
     render_confirmation_checklist,
 )
-from .expert_card_loader import RegistryCache
 
 
 @dataclass(frozen=True)

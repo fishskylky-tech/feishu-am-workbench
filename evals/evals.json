@@ -24,28 +24,54 @@
           "description": "不直接推进客户主数据写回",
           "check": "output marks 客户主数据 as no-write, blocked, or recommendation-only",
           "type": "contains_any",
-          "patterns": ["客户主数据: no-write", "客户主数据：no-write", "客户主数据: blocked", "客户主数据：blocked", "客户主数据: recommendation-only", "客户主数据：recommendation-only"]
+          "patterns": [
+            "客户主数据: no-write",
+            "客户主数据：no-write",
+            "客户主数据: blocked",
+            "客户主数据：blocked",
+            "客户主数据: recommendation-only",
+            "客户主数据：recommendation-only"
+          ]
         },
         {
           "id": "u3-no-auto-todo",
           "description": "不自动创建 Todo",
           "check": "output marks Todo as no-write or recommendation-only because owner and maturity are insufficient",
           "type": "contains_any",
-          "patterns": ["Todo: no-write", "Todo：no-write", "Todo: recommendation-only", "Todo：recommendation-only", "Todo: blocked", "Todo：blocked"]
+          "patterns": [
+            "Todo: no-write",
+            "Todo：no-write",
+            "Todo: recommendation-only",
+            "Todo：recommendation-only",
+            "Todo: blocked",
+            "Todo：blocked"
+          ]
         },
         {
           "id": "u4-open-questions-present",
           "description": "输出包含明确 open questions",
           "check": "output includes open questions such as 招募来源/激活来源口径 or 画像如何落地到投放",
           "type": "contains_any",
-          "patterns": ["Open questions", "open questions", "招募来源", "激活来源", "画像如何落地到投放"]
+          "patterns": [
+            "Open questions",
+            "open questions",
+            "招募来源",
+            "激活来源",
+            "画像如何落地到投放"
+          ]
         },
         {
           "id": "u5-absolute-date-handling",
           "description": "相对时间已规范化或标注精度缺口",
           "check": "output converts 八九月份/下半年 to absolute forms or marks precision gap explicitly",
           "type": "contains_any",
-          "patterns": ["precision gap", "2026-08", "2026-09", "2026年下半年", "2026年末"]
+          "patterns": [
+            "precision gap",
+            "2026-08",
+            "2026-09",
+            "2026年下半年",
+            "2026年末"
+          ]
         }
       ]
     },
@@ -70,21 +96,39 @@
           "description": "不默认生成典型客户经营写回计划",
           "check": "output does not propose standard 客户主数据, 客户联系记录, or 行动计划 writes unless explicitly justified as recommendation-only",
           "type": "not_contains_any",
-          "patterns": ["客户主数据: update", "客户主数据：update", "客户联系记录: create", "客户联系记录：create", "行动计划: create", "行动计划：create"]
+          "patterns": [
+            "客户主数据: update",
+            "客户主数据：update",
+            "客户联系记录: create",
+            "客户联系记录：create",
+            "行动计划: create",
+            "行动计划：create"
+          ]
         },
         {
           "id": "y3-focus-on-capability-boundaries",
           "description": "输出重点放在能力边界与后续跟进",
           "check": "output focuses on topics such as 知识库, 记忆, 归因能力边界, and next-step clarification",
           "type": "contains_any",
-          "patterns": ["知识库", "记忆", "归因", "能力边界", "后续跟进"]
+          "patterns": [
+            "知识库",
+            "记忆",
+            "归因",
+            "能力边界",
+            "后续跟进"
+          ]
         },
         {
           "id": "y4-no-fabricated-account-state",
           "description": "不伪造客户经营状态变化",
           "check": "output does not invent renewal status, budget changes, or account-strategy shifts",
           "type": "not_contains_any",
-          "patterns": ["续费", "预算已获批", "经营状态变化", "策略更新"]
+          "patterns": [
+            "续费",
+            "预算已获批",
+            "经营状态变化",
+            "策略更新"
+          ]
         }
       ]
     },
@@ -109,21 +153,41 @@
           "description": "不伪造客户经营进展",
           "check": "output does not invent business progress, contract change, renewal signal, or strategy shift",
           "type": "not_contains_any",
-          "patterns": ["合同变化", "续费信号", "经营进展", "策略变化", "策略更新"]
+          "patterns": [
+            "合同变化",
+            "续费信号",
+            "经营进展",
+            "策略变化",
+            "策略更新"
+          ]
         },
         {
           "id": "d3-focus-on-logic-and-support",
           "description": "输出聚焦口径解释和后续支持建议",
           "check": "output focuses on attribution logic, tracking logic, landing definition, dashboard or next-step support",
           "type": "contains_any",
-          "patterns": ["归因", "UTM", "landing", "dashboard", "口径", "支持动作"]
+          "patterns": [
+            "归因",
+            "UTM",
+            "landing",
+            "dashboard",
+            "口径",
+            "支持动作"
+          ]
         },
         {
           "id": "d4-no-master-data-route",
           "description": "不错误路由到主数据或标准经营动作",
           "check": "output keeps 客户主数据 and strategic workbench updates in no-write or not-applicable state",
           "type": "contains_any",
-          "patterns": ["客户主数据: no-write", "客户主数据：no-write", "客户主数据: not-applicable", "客户主数据：not-applicable", "客户主数据: blocked", "客户主数据：blocked"]
+          "patterns": [
+            "客户主数据: no-write",
+            "客户主数据：no-write",
+            "客户主数据: not-applicable",
+            "客户主数据：not-applicable",
+            "客户主数据: blocked",
+            "客户主数据：blocked"
+          ]
         }
       ]
     },
@@ -132,195 +196,837 @@
       "name": "expert-review-sales-account-normal-1",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $1.2M, renewal Q3 2026", "Champion: VP Sales Maria Chen, promoted to CTO as of Jan 2026"],
-        "recent_meetings": ["2026-03-15 QBR: expansion discussed, timeline Q4 2026"],
-        "account_health": ["Usage 85%, NPS 72, 3 executive sponsors active"]
+        "customer_master": [
+          "ARR $1.2M, renewal Q3 2026",
+          "Champion: VP Sales Maria Chen, promoted to CTO as of Jan 2026"
+        ],
+        "recent_meetings": [
+          "2026-03-15 QBR: expansion discussed, timeline Q4 2026"
+        ],
+        "account_health": [
+          "Usage 85%, NPS 72, 3 executive sponsors active"
+        ]
       },
-      "check_signals": ["expansion_plan", "champion_transition", "usage_threshold"],
-      "expected_findings": ["PASS: expansion_plan", "PASS: champion_transition", "PASS: usage_threshold"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "expansion_plan",
+        "champion_transition",
+        "usage_threshold"
+      ],
+      "expected_findings": [
+        "PASS: expansion_plan",
+        "PASS: champion_transition",
+        "PASS: usage_threshold"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-101-expansion_plan",
+          "description": "LLM output contains: PASS: expansion_plan",
+          "check": "output contains 'PASS: expansion_plan'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: expansion_plan"
+          ]
+        },
+        {
+          "id": "llm-101-champion_transition",
+          "description": "LLM output contains: PASS: champion_transition",
+          "check": "output contains 'PASS: champion_transition'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: champion_transition"
+          ]
+        },
+        {
+          "id": "llm-101-usage_threshold",
+          "description": "LLM output contains: PASS: usage_threshold",
+          "check": "output contains 'PASS: usage_threshold'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: usage_threshold"
+          ]
+        }
+      ]
     },
     {
       "id": 102,
       "name": "expert-review-sales-account-normal-2",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $800K, renewal Q1 2027", "Champion: Director of Ops Li Wei, 3 years tenure"],
-        "recent_meetings": ["2026-02-28: discovery call on expansion to marketing dept, budget owner identified as CFO"],
-        "account_health": ["Usage 92%, NPS 65, 2 active sponsors, expansion readiness confirmed"]
+        "customer_master": [
+          "ARR $800K, renewal Q1 2027",
+          "Champion: Director of Ops Li Wei, 3 years tenure"
+        ],
+        "recent_meetings": [
+          "2026-02-28: discovery call on expansion to marketing dept, budget owner identified as CFO"
+        ],
+        "account_health": [
+          "Usage 92%, NPS 65, 2 active sponsors, expansion readiness confirmed"
+        ]
       },
-      "check_signals": ["expansion_discussed", "champion_engaged", "expansion_readiness"],
-      "expected_findings": ["PASS: expansion_discussed", "PASS: champion_engaged", "PASS: expansion_readiness"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "expansion_discussed",
+        "champion_engaged",
+        "expansion_readiness"
+      ],
+      "expected_findings": [
+        "PASS: expansion_discussed",
+        "PASS: champion_engaged",
+        "PASS: expansion_readiness"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-102-expansion_discussed",
+          "description": "LLM output contains: PASS: expansion_discussed",
+          "check": "output contains 'PASS: expansion_discussed'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: expansion_discussed"
+          ]
+        },
+        {
+          "id": "llm-102-champion_engaged",
+          "description": "LLM output contains: PASS: champion_engaged",
+          "check": "output contains 'PASS: champion_engaged'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: champion_engaged"
+          ]
+        },
+        {
+          "id": "llm-102-expansion_readiness",
+          "description": "LLM output contains: PASS: expansion_readiness",
+          "check": "output contains 'PASS: expansion_readiness'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: expansion_readiness"
+          ]
+        }
+      ]
     },
     {
       "id": 103,
       "name": "expert-review-sales-account-normal-3",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $2.1M, renewal Aug 2026", "Multi-product: analytics + marketing cloud"],
-        "recent_meetings": ["2026-04-10: QBR confirmed NRR 135%, upsell to enterprise tier discussed"],
-        "account_health": ["Usage 78%, NPS 80, executive sponsor VP Eng David Liu, at-risk signal: low usage in marketing cloud"]
+        "customer_master": [
+          "ARR $2.1M, renewal Aug 2026",
+          "Multi-product: analytics + marketing cloud"
+        ],
+        "recent_meetings": [
+          "2026-04-10: QBR confirmed NRR 135%, upsell to enterprise tier discussed"
+        ],
+        "account_health": [
+          "Usage 78%, NPS 80, executive sponsor VP Eng David Liu, at-risk signal: low usage in marketing cloud"
+        ]
       },
-      "check_signals": ["nrr_above_120", "executive_sponsor_active", "multi_product_expansion"],
-      "expected_findings": ["PASS: nrr_above_120", "PASS: executive_sponsor_active", "PASS: multi_product_expansion"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "nrr_above_120",
+        "executive_sponsor_active",
+        "multi_product_expansion"
+      ],
+      "expected_findings": [
+        "PASS: nrr_above_120",
+        "PASS: executive_sponsor_active",
+        "PASS: multi_product_expansion"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-103-nrr_above_120",
+          "description": "LLM output contains: PASS: nrr_above_120",
+          "check": "output contains 'PASS: nrr_above_120'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: nrr_above_120"
+          ]
+        },
+        {
+          "id": "llm-103-executive_sponsor_active",
+          "description": "LLM output contains: PASS: executive_sponsor_active",
+          "check": "output contains 'PASS: executive_sponsor_active'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: executive_sponsor_active"
+          ]
+        },
+        {
+          "id": "llm-103-multi_product_expansion",
+          "description": "LLM output contains: PASS: multi_product_expansion",
+          "check": "output contains 'PASS: multi_product_expansion'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: multi_product_expansion"
+          ]
+        }
+      ]
     },
     {
       "id": 104,
       "name": "expert-review-sales-account-normal-4",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $450K, renewal Dec 2026", "Champion: Marketing Manager Wang Fang"],
-        "recent_meetings": ["2026-03-20: usage review, capacity at 88%, champion requested expansion analysis"],
-        "account_health": ["Usage 88%, NPS 58, single-threaded but champion is strong advocate"]
+        "customer_master": [
+          "ARR $450K, renewal Dec 2026",
+          "Champion: Marketing Manager Wang Fang"
+        ],
+        "recent_meetings": [
+          "2026-03-20: usage review, capacity at 88%, champion requested expansion analysis"
+        ],
+        "account_health": [
+          "Usage 88%, NPS 58, single-threaded but champion is strong advocate"
+        ]
       },
-      "check_signals": ["usage_near_capacity", "champion_active", "expansion_qualifies"],
-      "expected_findings": ["PASS: usage_near_capacity", "PASS: champion_active", "PASS: expansion_qualifies"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "usage_near_capacity",
+        "champion_active",
+        "expansion_qualifies"
+      ],
+      "expected_findings": [
+        "PASS: usage_near_capacity",
+        "PASS: champion_active",
+        "PASS: expansion_qualifies"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-104-usage_near_capacity",
+          "description": "LLM output contains: PASS: usage_near_capacity",
+          "check": "output contains 'PASS: usage_near_capacity'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: usage_near_capacity"
+          ]
+        },
+        {
+          "id": "llm-104-champion_active",
+          "description": "LLM output contains: PASS: champion_active",
+          "check": "output contains 'PASS: champion_active'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: champion_active"
+          ]
+        },
+        {
+          "id": "llm-104-expansion_qualifies",
+          "description": "LLM output contains: PASS: expansion_qualifies",
+          "check": "output contains 'PASS: expansion_qualifies'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: expansion_qualifies"
+          ]
+        }
+      ]
     },
     {
       "id": 105,
       "name": "expert-review-sales-account-normal-5",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $3.2M, multi-year contract to 2027", "Decision maker: CIO Zhang Wei, economic buyer: CFO Chen Min"],
-        "recent_meetings": ["2026-01-15: annual planning, expansion to APAC region approved, new stakeholders onboarded"],
-        "account_health": ["Usage 95%, NPS 85, 5 executive sponsors, competitive displacement of legacy vendor"]
+        "customer_master": [
+          "ARR $3.2M, multi-year contract to 2027",
+          "Decision maker: CIO Zhang Wei, economic buyer: CFO Chen Min"
+        ],
+        "recent_meetings": [
+          "2026-01-15: annual planning, expansion to APAC region approved, new stakeholders onboarded"
+        ],
+        "account_health": [
+          "Usage 95%, NPS 85, 5 executive sponsors, competitive displacement of legacy vendor"
+        ]
       },
-      "check_signals": ["multi_year_contract", "regional_expansion", "competitive_win"],
-      "expected_findings": ["PASS: multi_year_contract", "PASS: regional_expansion", "PASS: competitive_win"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "multi_year_contract",
+        "regional_expansion",
+        "competitive_win"
+      ],
+      "expected_findings": [
+        "PASS: multi_year_contract",
+        "PASS: regional_expansion",
+        "PASS: competitive_win"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-105-multi_year_contract",
+          "description": "LLM output contains: PASS: multi_year_contract",
+          "check": "output contains 'PASS: multi_year_contract'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: multi_year_contract"
+          ]
+        },
+        {
+          "id": "llm-105-regional_expansion",
+          "description": "LLM output contains: PASS: regional_expansion",
+          "check": "output contains 'PASS: regional_expansion'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: regional_expansion"
+          ]
+        },
+        {
+          "id": "llm-105-competitive_win",
+          "description": "LLM output contains: PASS: competitive_win",
+          "check": "output contains 'PASS: competitive_win'",
+          "type": "contains_all",
+          "patterns": [
+            "PASS: competitive_win"
+          ]
+        }
+      ]
     },
     {
       "id": 106,
       "name": "expert-review-missing-signal-1",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $800K, renewal Q1 2027"],
+        "customer_master": [
+          "ARR $800K, renewal Q1 2027"
+        ],
         "recent_meetings": [],
         "account_health": []
       },
-      "check_signals": ["expansion_plan", "champion", "usage_threshold"],
-      "expected_findings": ["FLAG: expansion_plan not discussed", "FLAG: champion info stale", "FLAG: usage_threshold data unavailable"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "expansion_plan",
+        "champion",
+        "usage_threshold"
+      ],
+      "expected_findings": [
+        "FLAG: expansion_plan not discussed",
+        "FLAG: champion info stale",
+        "FLAG: usage_threshold data unavailable"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-106-expansion_plan",
+          "description": "LLM output contains: FLAG: expansion_plan not discussed",
+          "check": "output contains 'FLAG: expansion_plan not discussed'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: expansion_plan not discussed"
+          ]
+        },
+        {
+          "id": "llm-106-champion",
+          "description": "LLM output contains: FLAG: champion info stale",
+          "check": "output contains 'FLAG: champion info stale'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: champion info stale"
+          ]
+        },
+        {
+          "id": "llm-106-usage_threshold",
+          "description": "LLM output contains: FLAG: usage_threshold data unavailable",
+          "check": "output contains 'FLAG: usage_threshold data unavailable'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: usage_threshold data unavailable"
+          ]
+        }
+      ]
     },
     {
       "id": 107,
       "name": "expert-review-missing-signal-2",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $600K, renewal Q2 2027", "Last contact 90+ days ago"],
-        "recent_meetings": ["2026-01-10: initial demo, no follow-up scheduled"],
+        "customer_master": [
+          "ARR $600K, renewal Q2 2027",
+          "Last contact 90+ days ago"
+        ],
+        "recent_meetings": [
+          "2026-01-10: initial demo, no follow-up scheduled"
+        ],
         "account_health": []
       },
-      "check_signals": ["champion_engaged", "expansion_intent", "health_score"],
-      "expected_findings": ["FLAG: champion_engaged uncertain", "FLAG: expansion_intent not confirmed", "FLAG: health_score insufficient data"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "champion_engaged",
+        "expansion_intent",
+        "health_score"
+      ],
+      "expected_findings": [
+        "FLAG: champion_engaged uncertain",
+        "FLAG: expansion_intent not confirmed",
+        "FLAG: health_score insufficient data"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-107-champion_engaged",
+          "description": "LLM output contains: FLAG: champion_engaged uncertain",
+          "check": "output contains 'FLAG: champion_engaged uncertain'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: champion_engaged uncertain"
+          ]
+        },
+        {
+          "id": "llm-107-expansion_intent",
+          "description": "LLM output contains: FLAG: expansion_intent not confirmed",
+          "check": "output contains 'FLAG: expansion_intent not confirmed'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: expansion_intent not confirmed"
+          ]
+        },
+        {
+          "id": "llm-107-health_score",
+          "description": "LLM output contains: FLAG: health_score insufficient data",
+          "check": "output contains 'FLAG: health_score insufficient data'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: health_score insufficient data"
+          ]
+        }
+      ]
     },
     {
       "id": 108,
       "name": "expert-review-missing-signal-3",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $1.5M, renewal 2027"],
-        "recent_meetings": ["2026-02-15: QBR scheduled but champion no-showed"],
-        "account_health": ["Usage trend: declining 15% over 2 quarters, cause unknown"]
+        "customer_master": [
+          "ARR $1.5M, renewal 2027"
+        ],
+        "recent_meetings": [
+          "2026-02-15: QBR scheduled but champion no-showed"
+        ],
+        "account_health": [
+          "Usage trend: declining 15% over 2 quarters, cause unknown"
+        ]
       },
-      "check_signals": ["expansion_readiness", "champion_active", "usage_stability"],
-      "expected_findings": ["FLAG: expansion_readiness inconclusive", "FLAG: champion_active no-show at QBR", "FLAG: usage_stability declining trend"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "expansion_readiness",
+        "champion_active",
+        "usage_stability"
+      ],
+      "expected_findings": [
+        "FLAG: expansion_readiness inconclusive",
+        "FLAG: champion_active no-show at QBR",
+        "FLAG: usage_stability declining trend"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-108-expansion_readiness",
+          "description": "LLM output contains: FLAG: expansion_readiness inconclusive",
+          "check": "output contains 'FLAG: expansion_readiness inconclusive'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: expansion_readiness inconclusive"
+          ]
+        },
+        {
+          "id": "llm-108-champion_active",
+          "description": "LLM output contains: FLAG: champion_active no-show at QBR",
+          "check": "output contains 'FLAG: champion_active no-show at QBR'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: champion_active no-show at QBR"
+          ]
+        },
+        {
+          "id": "llm-108-usage_stability",
+          "description": "LLM output contains: FLAG: usage_stability declining trend",
+          "check": "output contains 'FLAG: usage_stability declining trend'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: usage_stability declining trend"
+          ]
+        }
+      ]
     },
     {
       "id": 109,
       "name": "expert-review-missing-signal-4",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $400K, renewal Nov 2026"],
-        "recent_meetings": ["2026-03-01: contract discussion, but terms not finalized"],
-        "account_health": ["NPS 42, usage 35%, multiple support escalations unresolved"]
+        "customer_master": [
+          "ARR $400K, renewal Nov 2026"
+        ],
+        "recent_meetings": [
+          "2026-03-01: contract discussion, but terms not finalized"
+        ],
+        "account_health": [
+          "NPS 42, usage 35%, multiple support escalations unresolved"
+        ]
       },
-      "check_signals": ["renewal_confirmed", "expansion_candidates", "health_above_threshold"],
-      "expected_findings": ["FLAG: renewal_confirmed terms pending", "FLAG: expansion_candidates not identified", "FLAG: health_above_threshold NPS below 50"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "renewal_confirmed",
+        "expansion_candidates",
+        "health_above_threshold"
+      ],
+      "expected_findings": [
+        "FLAG: renewal_confirmed terms pending",
+        "FLAG: expansion_candidates not identified",
+        "FLAG: health_above_threshold NPS below 50"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-109-renewal_confirmed",
+          "description": "LLM output contains: FLAG: renewal_confirmed terms pending",
+          "check": "output contains 'FLAG: renewal_confirmed terms pending'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: renewal_confirmed terms pending"
+          ]
+        },
+        {
+          "id": "llm-109-expansion_candidates",
+          "description": "LLM output contains: FLAG: expansion_candidates not identified",
+          "check": "output contains 'FLAG: expansion_candidates not identified'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: expansion_candidates not identified"
+          ]
+        },
+        {
+          "id": "llm-109-health_above_threshold",
+          "description": "LLM output contains: FLAG: health_above_threshold NPS below 50",
+          "check": "output contains 'FLAG: health_above_threshold NPS below 50'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: health_above_threshold NPS below 50"
+          ]
+        }
+      ]
     },
     {
       "id": 110,
       "name": "expert-review-missing-signal-5",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $900K, renewal Q4 2026", "Champion left company 2 months ago, replacement not yet assigned"],
+        "customer_master": [
+          "ARR $900K, renewal Q4 2026",
+          "Champion left company 2 months ago, replacement not yet assigned"
+        ],
         "recent_meetings": [],
-        "account_health": ["Usage 62%, trend flat"]
+        "account_health": [
+          "Usage 62%, trend flat"
+        ]
       },
-      "check_signals": ["champion_active", "expansion_plan", "usage_accelerating"],
-      "expected_findings": ["FLAG: champion_active departed, no replacement", "FLAG: expansion_plan blocked by champion gap", "FLAG: usage_accelerating flat trend"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "champion_active",
+        "expansion_plan",
+        "usage_accelerating"
+      ],
+      "expected_findings": [
+        "FLAG: champion_active departed, no replacement",
+        "FLAG: expansion_plan blocked by champion gap",
+        "FLAG: usage_accelerating flat trend"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-110-champion_active",
+          "description": "LLM output contains: FLAG: champion_active departed, no replacement",
+          "check": "output contains 'FLAG: champion_active departed, no replacement'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: champion_active departed, no replacement"
+          ]
+        },
+        {
+          "id": "llm-110-expansion_plan",
+          "description": "LLM output contains: FLAG: expansion_plan blocked by champion gap",
+          "check": "output contains 'FLAG: expansion_plan blocked by champion gap'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: expansion_plan blocked by champion gap"
+          ]
+        },
+        {
+          "id": "llm-110-usage_accelerating",
+          "description": "LLM output contains: FLAG: usage_accelerating flat trend",
+          "check": "output contains 'FLAG: usage_accelerating flat trend'",
+          "type": "contains_all",
+          "patterns": [
+            "FLAG: usage_accelerating flat trend"
+          ]
+        }
+      ]
     },
     {
       "id": 111,
       "name": "expert-review-fabricated-signal-1",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $500K, renewal Dec 2026"],
-        "recent_meetings": ["2026-02-20: initial discovery call"],
+        "customer_master": [
+          "ARR $500K, renewal Dec 2026"
+        ],
+        "recent_meetings": [
+          "2026-02-20: initial discovery call"
+        ],
         "account_health": []
       },
-      "check_signals": ["expansion_plan", "champion", "usage_threshold"],
-      "expected_findings": ["BLOCK: expansion_plan not in evidence", "BLOCK: champion not identified", "BLOCK: usage_threshold not in evidence"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "expansion_plan",
+        "champion",
+        "usage_threshold"
+      ],
+      "expected_findings": [
+        "BLOCK: expansion_plan not in evidence",
+        "BLOCK: champion not identified",
+        "BLOCK: usage_threshold not in evidence"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-111-expansion_plan",
+          "description": "LLM output contains: BLOCK: expansion_plan not in evidence",
+          "check": "output contains 'BLOCK: expansion_plan not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: expansion_plan not in evidence"
+          ]
+        },
+        {
+          "id": "llm-111-champion",
+          "description": "LLM output contains: BLOCK: champion not identified",
+          "check": "output contains 'BLOCK: champion not identified'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: champion not identified"
+          ]
+        },
+        {
+          "id": "llm-111-usage_threshold",
+          "description": "LLM output contains: BLOCK: usage_threshold not in evidence",
+          "check": "output contains 'BLOCK: usage_threshold not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: usage_threshold not in evidence"
+          ]
+        }
+      ]
     },
     {
       "id": 112,
       "name": "expert-review-fabricated-signal-2",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $700K, renewal Q2 2027"],
-        "recent_meetings": ["2026-03-05: product feedback session, support issue resolved"],
-        "account_health": ["NPS 55, usage 58%"]
+        "customer_master": [
+          "ARR $700K, renewal Q2 2027"
+        ],
+        "recent_meetings": [
+          "2026-03-05: product feedback session, support issue resolved"
+        ],
+        "account_health": [
+          "NPS 55, usage 58%"
+        ]
       },
-      "check_signals": ["renewal_kickoff", "expansion_approved", "executive_sponsor_meeting"],
-      "expected_findings": ["BLOCK: renewal_kickoff not in evidence", "BLOCK: expansion_approved not in evidence", "BLOCK: executive_sponsor_meeting not in evidence"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "renewal_kickoff",
+        "expansion_approved",
+        "executive_sponsor_meeting"
+      ],
+      "expected_findings": [
+        "BLOCK: renewal_kickoff not in evidence",
+        "BLOCK: expansion_approved not in evidence",
+        "BLOCK: executive_sponsor_meeting not in evidence"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-112-renewal_kickoff",
+          "description": "LLM output contains: BLOCK: renewal_kickoff not in evidence",
+          "check": "output contains 'BLOCK: renewal_kickoff not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: renewal_kickoff not in evidence"
+          ]
+        },
+        {
+          "id": "llm-112-expansion_approved",
+          "description": "LLM output contains: BLOCK: expansion_approved not in evidence",
+          "check": "output contains 'BLOCK: expansion_approved not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: expansion_approved not in evidence"
+          ]
+        },
+        {
+          "id": "llm-112-executive_sponsor_meeting",
+          "description": "LLM output contains: BLOCK: executive_sponsor_meeting not in evidence",
+          "check": "output contains 'BLOCK: executive_sponsor_meeting not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: executive_sponsor_meeting not in evidence"
+          ]
+        }
+      ]
     },
     {
       "id": 113,
       "name": "expert-review-fabricated-signal-3",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $1.1M, renewal 2027"],
-        "recent_meetings": ["2026-01-20: onboarding check-in"],
-        "account_health": ["Usage 45%, early stage adoption"]
+        "customer_master": [
+          "ARR $1.1M, renewal 2027"
+        ],
+        "recent_meetings": [
+          "2026-01-20: onboarding check-in"
+        ],
+        "account_health": [
+          "Usage 45%, early stage adoption"
+        ]
       },
-      "check_signals": ["nrr_above_120", "multi_product_expansion", "contract_negotiation_started"],
-      "expected_findings": ["BLOCK: nrr_above_120 not in evidence", "BLOCK: multi_product_expansion not in evidence", "BLOCK: contract_negotiation_started not in evidence"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "nrr_above_120",
+        "multi_product_expansion",
+        "contract_negotiation_started"
+      ],
+      "expected_findings": [
+        "BLOCK: nrr_above_120 not in evidence",
+        "BLOCK: multi_product_expansion not in evidence",
+        "BLOCK: contract_negotiation_started not in evidence"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-113-nrr_above_120",
+          "description": "LLM output contains: BLOCK: nrr_above_120 not in evidence",
+          "check": "output contains 'BLOCK: nrr_above_120 not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: nrr_above_120 not in evidence"
+          ]
+        },
+        {
+          "id": "llm-113-multi_product_expansion",
+          "description": "LLM output contains: BLOCK: multi_product_expansion not in evidence",
+          "check": "output contains 'BLOCK: multi_product_expansion not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: multi_product_expansion not in evidence"
+          ]
+        },
+        {
+          "id": "llm-113-contract_negotiation_started",
+          "description": "LLM output contains: BLOCK: contract_negotiation_started not in evidence",
+          "check": "output contains 'BLOCK: contract_negotiation_started not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: contract_negotiation_started not in evidence"
+          ]
+        }
+      ]
     },
     {
       "id": 114,
       "name": "expert-review-fabricated-signal-4",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $650K, renewal Oct 2026"],
-        "recent_meetings": ["2026-04-02: routine health check, nothing major"],
-        "account_health": ["Usage 71%, NPS 60, stable account"]
+        "customer_master": [
+          "ARR $650K, renewal Oct 2026"
+        ],
+        "recent_meetings": [
+          "2026-04-02: routine health check, nothing major"
+        ],
+        "account_health": [
+          "Usage 71%, NPS 60, stable account"
+        ]
       },
-      "check_signals": ["champion_transition", "competitive_displacement", "expansion_to_apac"],
-      "expected_findings": ["BLOCK: champion_transition not in evidence", "BLOCK: competitive_displacement not in evidence", "BLOCK: expansion_to_apac not in evidence"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "champion_transition",
+        "competitive_displacement",
+        "expansion_to_apac"
+      ],
+      "expected_findings": [
+        "BLOCK: champion_transition not in evidence",
+        "BLOCK: competitive_displacement not in evidence",
+        "BLOCK: expansion_to_apac not in evidence"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-114-champion_transition",
+          "description": "LLM output contains: BLOCK: champion_transition not in evidence",
+          "check": "output contains 'BLOCK: champion_transition not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: champion_transition not in evidence"
+          ]
+        },
+        {
+          "id": "llm-114-competitive_displacement",
+          "description": "LLM output contains: BLOCK: competitive_displacement not in evidence",
+          "check": "output contains 'BLOCK: competitive_displacement not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: competitive_displacement not in evidence"
+          ]
+        },
+        {
+          "id": "llm-114-expansion_to_apac",
+          "description": "LLM output contains: BLOCK: expansion_to_apac not in evidence",
+          "check": "output contains 'BLOCK: expansion_to_apac not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: expansion_to_apac not in evidence"
+          ]
+        }
+      ]
     },
     {
       "id": 115,
       "name": "expert-review-fabricated-signal-5",
       "scenario": "LLM expert review accuracy",
       "evidence": {
-        "customer_master": ["ARR $380K, SMB segment, renewal Jan 2027"],
-        "recent_meetings": ["2026-02-28: product demo for expansion use case"],
-        "account_health": ["Usage 55%, NPS 48"]
+        "customer_master": [
+          "ARR $380K, SMB segment, renewal Jan 2027"
+        ],
+        "recent_meetings": [
+          "2026-02-28: product demo for expansion use case"
+        ],
+        "account_health": [
+          "Usage 55%, NPS 48"
+        ]
       },
-      "check_signals": ["enterprise_upgrade_ready", "executive_alignment_complete", "budget_approved_q2"],
-      "expected_findings": ["BLOCK: enterprise_upgrade_ready not in evidence", "BLOCK: executive_alignment_complete not in evidence", "BLOCK: budget_approved_q2 not in evidence"],
-      "prompt_file": "sales-account-strategist.md"
+      "check_signals": [
+        "enterprise_upgrade_ready",
+        "executive_alignment_complete",
+        "budget_approved_q2"
+      ],
+      "expected_findings": [
+        "BLOCK: enterprise_upgrade_ready not in evidence",
+        "BLOCK: executive_alignment_complete not in evidence",
+        "BLOCK: budget_approved_q2 not in evidence"
+      ],
+      "prompt_file": "sales-account-strategist.md",
+      "assertions": [
+        {
+          "id": "llm-115-enterprise_upgrade_ready",
+          "description": "LLM output contains: BLOCK: enterprise_upgrade_ready not in evidence",
+          "check": "output contains 'BLOCK: enterprise_upgrade_ready not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: enterprise_upgrade_ready not in evidence"
+          ]
+        },
+        {
+          "id": "llm-115-executive_alignment_complete",
+          "description": "LLM output contains: BLOCK: executive_alignment_complete not in evidence",
+          "check": "output contains 'BLOCK: executive_alignment_complete not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: executive_alignment_complete not in evidence"
+          ]
+        },
+        {
+          "id": "llm-115-budget_approved_q2",
+          "description": "LLM output contains: BLOCK: budget_approved_q2 not in evidence",
+          "check": "output contains 'BLOCK: budget_approved_q2 not in evidence'",
+          "type": "contains_all",
+          "patterns": [
+            "BLOCK: budget_approved_q2 not in evidence"
+          ]
+        }
+      ]
     }
   ]
 }
