@@ -177,6 +177,10 @@ output_review:
     - "超出范围"
 ```
 
+### LLM 专家审核模式
+
+对于需要 AI 深度审核的场景，可在 `input_review` 或 `output_review` 中添加 `prompt_file` 字段，指向 `agents/` 目录下的专家提示模板（如 `sales-account-strategist.md`）。运行时将调用 LLM 进行专家审核，支持降级到关键词模式。详见 [AGENTS.md](../AGENTS.md)。
+
 ### 步骤 2：注册场景
 
 在 `runtime/scene_registry.py` 中添加注册：
