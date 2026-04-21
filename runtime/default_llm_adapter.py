@@ -232,8 +232,8 @@ class DefaultLLMExpertAgent:
         for finding in findings:
             match = signal_pattern.match(finding)
             if match:
-                # Normalize: strip whitespace, lowercase for comparison
-                signal = match.group(2).strip().lower()
+                # Normalize: strip trailing punctuation, whitespace, lowercase for comparison
+                signal = re.sub(r'[^\w\s-]', '', match.group(2)).strip().lower()
                 if check_signals and signal not in [s.strip().lower() for s in check_signals]:
                     fabricated.append(signal)
 
