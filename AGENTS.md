@@ -2,7 +2,7 @@
 
 **核心原则：** live-first（实时数据优先）+ recommendation-first（建议态确认后再行动）。
 
-**Last Updated:** 2026-04-19
+**Last Updated:** 2026-04-21
 
 ---
 

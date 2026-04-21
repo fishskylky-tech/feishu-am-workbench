@@ -4,6 +4,16 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，本项目遵循[语义化版本](https://semver.org/spec/v2.0.0.html)。
 
+## [1.3.1] - 2026-04-21
+
+### 修复
+
+- **Copilot review 反馈修复** — 修复 LLM 模式上下文 bug、添加 15 个 eval cases 断言、规范化 prompt_file 路径、修复 async 阻塞调用、修复 RegistryCache 失效逻辑
+- **测试资产更新** — 将断言更新为 18 个 evals（原有 3 个 + 新增 15 个 LLM 专家审核 cases）
+- **CI 修复** — 移除 broken LLM eval loop
+
+---
+
 ## [1.3.0] - 2026-04-19
 
 ### 新增
