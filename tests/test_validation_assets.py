@@ -22,18 +22,33 @@ class ValidationAssetTests(unittest.TestCase):
         evals = json.loads(EVALS_PATH.read_text())
         self.assertIn("version", evals)
         self.assertIn("evals", evals)
-        self.assertEqual(len(evals["evals"]), 3)
+        self.assertEqual(len(evals["evals"]), 18)
 
     def test_evals_have_sanitized_customer_names(self) -> None:
         evals = json.loads(EVALS_PATH.read_text())["evals"]
         names = {item["name"] for item in evals}
-        self.assertEqual(len(evals), 3)
+        self.assertEqual(len(evals), 18)
         self.assertEqual(
             names,
             {
                 "<CUSTOMER_A>-stage-review",
                 "<CUSTOMER_B>-product-solution-discussion",
                 "<CUSTOMER_C>-ad-tracking-qa",
+                "expert-review-sales-account-normal-1",
+                "expert-review-sales-account-normal-2",
+                "expert-review-sales-account-normal-3",
+                "expert-review-sales-account-normal-4",
+                "expert-review-sales-account-normal-5",
+                "expert-review-missing-signal-1",
+                "expert-review-missing-signal-2",
+                "expert-review-missing-signal-3",
+                "expert-review-missing-signal-4",
+                "expert-review-missing-signal-5",
+                "expert-review-fabricated-signal-1",
+                "expert-review-fabricated-signal-2",
+                "expert-review-fabricated-signal-3",
+                "expert-review-fabricated-signal-4",
+                "expert-review-fabricated-signal-5",
             },
         )
 

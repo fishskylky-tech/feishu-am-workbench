@@ -10,6 +10,7 @@ output review before SceneResult returned.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -406,13 +407,64 @@ def run_input_audit(
 ) -> ExpertCardAuditResult:
     """Run input audit: check evidence materials for missed signals.
 
-    Per D-08: user materials reviewed through expert lens,
-    checking for missed signals.
+    Per D-02: If prompt_file is set, use LLM mode instead of keyword mode.
+    Per D-06: Fall back to keyword mode on LLM failure.
+    Per OpenCode HIGH concern: explicit handling for timeout, auth failure,
+    rate limit, empty response, parse failure.
 
     Interface contract step 2 (input audit before evidence assembly):
     - Runs before evidence assembly in integrated scenes
     - Fail-open: returns passed=True with empty findings if no evidence
     """
+    # D-02: LLM mode when prompt_file present
+    if input_card.prompt_file:
+        # D-03: LLM mode requires BOTH prompt_file AND agent_name
+        if not input_card.agent_name:
+            raise ValueError(
+                f"LLM mode requires agent_name when prompt_file is set. "
+                f"expert_name={input_card.expert_name} has prompt_file='{input_card.prompt_file}' "
+                f"but agent_name is None. Add agent_name to the expert card in scene YAML."
+            )
+        try:
+            from runtime.expert_agent_invoker import (
+                invoke_llm_expert,
+                build_input_review_prompt,
+            )
+
+            prompt = build_input_review_prompt(input_card, container)
+            result = asyncio.run(invoke_llm_expert(input_card, prompt))
+
+            return ExpertCardAuditResult(
+                expert_name=result.expert_name,
+                review_type=input_card.review_type,
+                findings=result.findings,
+                passed=result.passed,
+                blocked=result.blocked,
+                block_reason=result.block_reason,
+            )
+
+        except asyncio.TimeoutError:
+            # LLM timeout — fall back to keyword mode
+            logger.warning(f"LLM timeout in input audit for {input_card.expert_name}, falling back to keyword")
+        except ValueError as e:
+            err_str = str(e).lower()
+            if "api_key" in err_str or "auth" in err_str or "401" in err_str:
+                # Auth failure (401) — fall back to keyword mode
+                logger.warning(f"LLM auth failure in input audit for {input_card.expert_name}: {e}")
+            elif "rate limit" in err_str or "429" in err_str:
+                # Rate limit (429) — fall back to keyword mode
+                logger.warning(f"LLM rate limit in input audit for {input_card.expert_name}, falling back to keyword")
+            elif "empty" in err_str or "parse" in err_str or "no parseable" in err_str:
+                # Empty response or parse failure — fall back to keyword mode
+                logger.warning(f"LLM parse/empty error in input audit for {input_card.expert_name}: {e}")
+            else:
+                # Other ValueError — fall back to keyword mode
+                logger.warning(f"LLM error in input audit for {input_card.expert_name}: {e}")
+        except Exception as e:
+            # Unexpected error — fall back to keyword mode
+            logger.warning(f"LLM error in input audit for {input_card.expert_name}: {e}")
+
+    # Keyword mode (existing behavior)
     findings: list[str] = []
     if container is None:
         logger.warning(
@@ -447,13 +499,64 @@ def run_output_audit(
 ) -> ExpertCardAuditResult:
     """Run output audit: check recommendations for professionalism and business logic.
 
-    Per D-09: Todo/recommendations reviewed by business consultant,
-    assessing professionalism and business logic.
+    Per D-02: If prompt_file is set, use LLM mode instead of keyword mode.
+    Per D-06: Fall back to keyword mode on LLM failure.
+    Per OpenCode HIGH concern: explicit handling for timeout, auth failure,
+    rate limit, empty response, parse failure.
 
     Interface contract step 4 (output audit before SceneResult returned):
     - Runs after recommendations built, before SceneResult is returned
     - Fail-open: returns passed=True if no recommendations to audit
     """
+    # D-02: LLM mode when prompt_file present
+    if output_card.prompt_file:
+        # D-03: LLM mode requires BOTH prompt_file AND agent_name
+        if not output_card.agent_name:
+            raise ValueError(
+                f"LLM mode requires agent_name when prompt_file is set. "
+                f"expert_name={output_card.expert_name} has prompt_file='{output_card.prompt_file}' "
+                f"but agent_name is None. Add agent_name to the expert card in scene YAML."
+            )
+        try:
+            from runtime.expert_agent_invoker import (
+                invoke_llm_expert,
+                build_output_review_prompt,
+            )
+
+            prompt = build_output_review_prompt(output_card, recommendations)
+            result = asyncio.run(invoke_llm_expert(output_card, prompt))
+
+            return ExpertCardAuditResult(
+                expert_name=result.expert_name,
+                review_type=output_card.review_type,
+                findings=result.findings,
+                passed=result.passed,
+                blocked=result.blocked,
+                block_reason=result.block_reason,
+            )
+
+        except asyncio.TimeoutError:
+            # LLM timeout — fall back to keyword mode
+            logger.warning(f"LLM timeout in output audit for {output_card.expert_name}, falling back to keyword")
+        except ValueError as e:
+            err_str = str(e).lower()
+            if "api_key" in err_str or "auth" in err_str or "401" in err_str:
+                # Auth failure (401) — fall back to keyword mode
+                logger.warning(f"LLM auth failure in output audit for {output_card.expert_name}: {e}")
+            elif "rate limit" in err_str or "429" in err_str:
+                # Rate limit (429) — fall back to keyword mode
+                logger.warning(f"LLM rate limit in output audit for {output_card.expert_name}, falling back to keyword")
+            elif "empty" in err_str or "parse" in err_str or "no parseable" in err_str:
+                # Empty response or parse failure — fall back to keyword mode
+                logger.warning(f"LLM parse/empty error in output audit for {output_card.expert_name}: {e}")
+            else:
+                # Other ValueError — fall back to keyword mode
+                logger.warning(f"LLM error in output audit for {output_card.expert_name}: {e}")
+        except Exception as e:
+            # Unexpected error — fall back to keyword mode
+            logger.warning(f"LLM error in output audit for {output_card.expert_name}: {e}")
+
+    # Keyword mode (existing behavior)
     findings: list[str] = []
     if not recommendations:
         logger.warning(

@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
+
+logger = logging.getLogger(__name__)
 
 
 from .gateway import FeishuWorkbenchGateway
@@ -21,6 +24,121 @@ from .confirmation_checklist import (
     build_proposal_checklist,
     render_confirmation_checklist,
 )
+
+
+@dataclass(frozen=True)
+class PlatformCapabilities:
+    """Per-platform capability map for orchestration strategy selection.
+
+    Per OpenCode review concern LOW-09: capability detection per platform.
+    Per AA-01-PLAN.md Section 4: platform adapter selection.
+    """
+    platform: str
+    supports_parallel: bool          # Can run multiple subagents concurrently
+    supports_streaming: bool         # Can stream responses
+    supports_structured_output: bool # Can return typed/structured responses
+    supports_toolsets: bool          # Has tool-calling capability
+    max_concurrent: int              # Maximum concurrent subagent invocations
+    timeout_default: int             # Default timeout in seconds
+
+
+PLATFORM_CAPABILITY_MAP: dict[str, PlatformCapabilities] = {
+    # openclaw: KNOWN — verified via /openclaw/openclaw docs
+    "openclaw": PlatformCapabilities(
+        platform="openclaw",
+        supports_parallel=True,
+        supports_streaming=False,
+        supports_structured_output=True,
+        supports_toolsets=True,
+        max_concurrent=3,
+        timeout_default=120,
+    ),
+    # hermes: ASSUMED — capability research deferred to Phase 27+
+    "hermes": PlatformCapabilities(
+        platform="hermes",
+        supports_parallel=True,
+        supports_streaming=False,
+        supports_structured_output=True,
+        supports_toolsets=True,
+        max_concurrent=3,
+        timeout_default=120,
+    ),
+    # claude_code: ASSUMED — capability research deferred to Phase 27+
+    "claude_code": PlatformCapabilities(
+        platform="claude_code",
+        supports_parallel=True,
+        supports_streaming=False,
+        supports_structured_output=True,
+        supports_toolsets=True,
+        max_concurrent=3,
+        timeout_default=120,
+    ),
+    # codex: ASSUMED — capability research deferred to Phase 27+
+    "codex": PlatformCapabilities(
+        platform="codex",
+        supports_parallel=True,
+        supports_streaming=False,
+        supports_structured_output=False,
+        supports_toolsets=False,
+        max_concurrent=2,
+        timeout_default=120,
+    ),
+}
+
+
+OrchestrationStrategy = Literal["sequential", "council", "parallel"]
+
+
+def get_platform_capabilities(platform: str) -> PlatformCapabilities | None:
+    """Get capabilities for a platform.
+
+    Returns None if platform is unknown.
+    """
+    return PLATFORM_CAPABILITY_MAP.get(platform)
+
+
+def select_orchestration_strategy(
+    expert_count: int,
+    platforms: list[str],
+    force: OrchestrationStrategy | None = None
+) -> OrchestrationStrategy:
+    """Select optimal orchestration strategy based on expert count and platform capabilities.
+
+    Rules:
+    - 1 expert: always sequential
+    - 2 experts: sequential (safer, lower token cost)
+    - 3+ experts: council if all platforms support parallel, else sequential
+    - force parameter overrides automatic selection
+
+    Per AA-01-PLAN.md Section 5: Pattern Selection Matrix.
+    Per OpenCode review concern LOW-09: capability-based strategy selection.
+    """
+    if force:
+        return force
+
+    if expert_count == 1:
+        return "sequential"
+
+    if expert_count == 2:
+        return "sequential"
+
+    # 3+ experts: check if all platforms support parallel
+    if expert_count >= 3:
+        unknown_platforms = [p for p in platforms if p not in PLATFORM_CAPABILITY_MAP]
+        if unknown_platforms:
+            logger.warning(
+                "Unknown platform(s) %s encountered in select_orchestration_strategy. "
+                "These will be treated as openclaw. Verify platform names are correct.",
+                unknown_platforms,
+            )
+        all_support_parallel = all(
+            PLATFORM_CAPABILITY_MAP.get(p, PLATFORM_CAPABILITY_MAP["openclaw"]).supports_parallel
+            for p in platforms
+        )
+        if all_support_parallel:
+            return "council"
+
+    return "sequential"
 
 # STAT-01: Four-lens keyword sets for account posture derivation
 _STAT_RISK_KEYWORDS = {"风险", "预警", "下降", "流失", "竞品", "问题", "挑战", "障碍", "下滑", "收紧", "压力", "危机", "逾期", "负向"}

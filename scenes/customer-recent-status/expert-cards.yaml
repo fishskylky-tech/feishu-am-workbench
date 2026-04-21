@@ -10,6 +10,8 @@ input_review:
     - "前后不一致的事实"
     - "未明确的预警信号"
   output_field: "input_audit_notes"
+  prompt_file: sales-account-strategist.md
+  agent_name: sales-account-strategist
 
 output_review:
   enabled: false
